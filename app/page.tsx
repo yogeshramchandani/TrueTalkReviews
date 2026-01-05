@@ -153,9 +153,9 @@ export default function LandingPage() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 max-w-6xl mx-auto">
               {[
-                { title: "Home Services", img: "https://images.unsplash.com/photo-1581578731117-104f8a33837d?auto=format&fit=crop&w=600&q=80" },
+                { title: "Home Services", img: "https://cdn.pixabay.com/photo/2025/06/16/12/52/cleaning-services-9663247_1280.jpg" },
                 { title: "Tech Experts", img: "https://images.unsplash.com/photo-1573164713988-8665fc963095?auto=format&fit=crop&w=600&q=80" },
-                { title: "Creative", img: "https://images.unsplash.com/photo-1626785774573-4b799312c95d?auto=format&fit=crop&w=600&q=80" },
+                { title: "Creative", img: "https://cdn.pixabay.com/photo/2023/08/20/17/00/crochet-8202792_1280.jpg" },
                 { title: "Health & Fitness", img: "https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?auto=format&fit=crop&w=600&q=80" },
               ].map((cat, i) => (
                 // CHANGED: Added shadow-md and hover:shadow-xl to make cards pop on light bg
