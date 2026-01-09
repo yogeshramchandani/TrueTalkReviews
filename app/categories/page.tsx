@@ -1,7 +1,8 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import Link from "next/link"
+import { useSearchParams } from "next/navigation" 
 import { supabase } from "@/lib/supabaseClient"
 import { 
   Briefcase, ChevronRight, Search, Loader2, Code, Stethoscope, Home, 
@@ -27,93 +28,124 @@ const sectorIcons: Record<string, any> = {
 }
 
 export default function CategoriesPage() {
+  const searchParams = useSearchParams()
   const [categories, setCategories] = useState<any[]>([])
   const [activeCategory, setActiveCategory] = useState<any>(null)
   const [loading, setLoading] = useState(true)
+  
+  // --- SEARCH STATE ---
   const [searchTerm, setSearchTerm] = useState("")
+  const [suggestions, setSuggestions] = useState<string[]>([])
+  const [showSuggestions, setShowSuggestions] = useState(false)
+  const wrapperRef = useRef<HTMLDivElement>(null)
 
+  // 1. Fetch Suggestions Logic
+  useEffect(() => {
+    async function fetchSuggestions() {
+      if (searchTerm.length < 2) {
+        setSuggestions([])
+        return
+      }
+
+      // Search in Taxonomy for Autocomplete
+      const { data } = await supabase
+        .from('profession_taxonomy')
+        .select('profession')
+        .ilike('profession', `%${searchTerm}%`)
+        .limit(5)
+
+      if (data) {
+        // Remove duplicates if any
+        const unique = Array.from(new Set(data.map(d => d.profession)))
+        setSuggestions(unique)
+      }
+    }
+
+    // Debounce: Wait 300ms after typing stops before querying DB
+    const timer = setTimeout(fetchSuggestions, 300)
+    return () => clearTimeout(timer)
+  }, [searchTerm])
+
+  // 2. Click Outside to Close
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (wrapperRef.current && !wrapperRef.current.contains(event.target as Node)) {
+        setShowSuggestions(false)
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => document.removeEventListener("mousedown", handleClickOutside)
+  }, [])
+
+  // 3. Fetch Main Data (Existing Logic)
   useEffect(() => {
     async function fetchData() {
       try {
         setLoading(true)
 
-        // 1. Get ALL Professionals (The Source of Truth)
         const { data: profiles, error: profError } = await supabase
           .from('profiles')
           .select('profession')
-          // FILTER: Only fetch profiles that actually have a profession set
           .not('profession', 'is', null) 
-          // OPTIONAL: Filter by role if you use it (comment out if unsure)
-           .eq('role', 'professional')
 
         if (profError) throw profError
 
-        // 2. Get the Taxonomy (The Dictionary)
-        // We use this just to know which "Sector" a profession belongs to.
         const { data: taxonomy, error: taxError } = await supabase
           .from('profession_taxonomy')
           .select('sector, profession')
 
         if (taxError) throw taxError
 
-        // --- PROCESSING LOGIC ---
-
-        // A. Create a Lookup Map for Taxonomy: "Software Developer" -> "Technology"
         const professionToSectorMap: Record<string, string> = {}
         taxonomy?.forEach((item: any) => {
           professionToSectorMap[item.profession.toLowerCase().trim()] = item.sector
         })
 
-        // B. Group Profiles by Sector
         const groupedData: Record<string, any> = {}
 
         profiles?.forEach((p) => {
           if (!p.profession) return
-
           const originalName = p.profession.trim()
           const lowerName = originalName.toLowerCase()
+          const sectorName = professionToSectorMap[lowerName] || "Other" 
 
-          // Find which sector this belongs to. 
-          // If not found in taxonomy, put it in "Other / Uncategorized"
-          const sectorName = professionToSectorMap[lowerName] || "Uncategorized"
-
-          // Initialize Sector Bucket if missing
           if (!groupedData[sectorName]) {
             groupedData[sectorName] = {
               id: sectorName,
               name: sectorName,
               icon: sectorIcons[sectorName] || sectorIcons.default,
-              professionsMap: {} // Nested map to count unique professions
+              professionsMap: {} 
             }
           }
-
-          // Count the profession inside this sector
-          // We use a map to handle duplicate profile counts: 
-          // groupedData["Health"].professionsMap["Doctor"] = 5
           const profMap = groupedData[sectorName].professionsMap
-          
           if (!profMap[originalName]) {
-            profMap[originalName] = {
-              name: originalName,
-              count: 0
-            }
+            profMap[originalName] = { name: originalName, count: 0 }
           }
           profMap[originalName].count += 1
         })
 
-        // C. Convert Object Map to Array for Rendering
-        // We sort sectors alphabetically, but put "Uncategorized" last.
         const finalCategories = Object.values(groupedData).map((sector: any) => ({
           ...sector,
-          subCategories: Object.values(sector.professionsMap) // Flatten the professions map
+          subCategories: Object.values(sector.professionsMap)
         })).sort((a: any, b: any) => {
-          if (a.name === "Uncategorized") return 1
-          if (b.name === "Uncategorized") return -1
+          if (a.name === "Other") return 1
+          if (b.name === "Other") return -1
           return a.name.localeCompare(b.name)
         })
 
         setCategories(finalCategories)
-        if (finalCategories.length > 0) setActiveCategory(finalCategories[0])
+
+        const urlSector = searchParams.get('sector')
+        if (urlSector) {
+           const found = finalCategories.find(c => c.name === urlSector)
+           if (found) {
+             setActiveCategory(found)
+           } else if (finalCategories.length > 0) {
+             setActiveCategory(finalCategories[0])
+           }
+        } else {
+           if (finalCategories.length > 0) setActiveCategory(finalCategories[0])
+        }
 
       } catch (err) {
         console.error("Error loading data:", err)
@@ -123,7 +155,7 @@ export default function CategoriesPage() {
     }
 
     fetchData()
-  }, [])
+  }, [searchParams])
 
   const handleSearch = () => {
      if(searchTerm) window.location.href = `/search?q=${searchTerm}`
@@ -131,15 +163,11 @@ export default function CategoriesPage() {
 
   if (loading) return <div className="flex h-screen items-center justify-center"><Loader2 className="animate-spin text-teal-700"/></div>
 
-  // EMPTY STATE
   if (categories.length === 0) {
     return (
       <div className="flex flex-col h-screen items-center justify-center bg-white p-4 text-center">
          <Layers className="w-16 h-16 text-slate-200 mb-4" />
          <h2 className="text-2xl font-bold text-slate-900">No Professionals Yet</h2>
-         <p className="text-slate-500 mt-2 max-w-md">
-           We checked the database, but no professional profiles were found.
-         </p>
          <Link href="/auth/signup?role=professional">
              <Button className="mt-6 bg-teal-700">Be the First to Join</Button>
          </Link>
@@ -155,37 +183,72 @@ export default function CategoriesPage() {
           <h1 className="text-3xl md:text-4xl font-bold mb-4">Browse by Category</h1>
           <p className="text-slate-500 mb-8">Discover top-rated experts across {categories.length} industries.</p>
           
-          <div className="max-w-xl mx-auto flex gap-2">
-            <Input 
-              className="h-12 bg-white border-slate-300" 
-              placeholder="Search services..." 
-              value={searchTerm} 
-              onChange={e => setSearchTerm(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-            />
-            <Button className="h-12 bg-teal-700 hover:bg-teal-800" onClick={handleSearch}>Search</Button>
+          {/* SEARCH BAR WITH SUGGESTIONS */}
+          <div className="max-w-xl mx-auto relative flex gap-2" ref={wrapperRef}>
+            <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
+                <Input 
+                  className="pl-10 h-12 rounded-lg text-base bg-white border-slate-300 shadow-sm focus-visible:ring-teal-600"
+                  placeholder="Search for 'Dentist' or 'Plumber'..."
+                  value={searchTerm}
+                  onChange={(e) => {
+                    setSearchTerm(e.target.value)
+                    setShowSuggestions(true)
+                  }}
+                  onFocus={() => setShowSuggestions(true)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                />
+
+                {/* --- SUGGESTIONS DROPDOWN --- */}
+                {showSuggestions && suggestions.length > 0 && (
+                  <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-xl border border-slate-100 overflow-hidden z-50 text-left animate-in fade-in zoom-in-95 duration-200">
+                    <div className="px-4 py-2 bg-slate-50 text-xs font-bold text-slate-400 uppercase tracking-wider">
+                      Suggestions
+                    </div>
+                    {suggestions.map((suggestion, index) => (
+                      <div 
+                        key={index}
+                        onClick={() => {
+                          setSearchTerm(suggestion)
+                          setShowSuggestions(false)
+                          // Navigate immediately on click
+                          window.location.href = `/search?q=${encodeURIComponent(suggestion)}`
+                        }}
+                        className="px-4 py-3 hover:bg-teal-50 cursor-pointer text-sm text-slate-700 font-medium flex items-center gap-3 border-b border-slate-50 last:border-0 transition-colors"
+                      >
+                        <Search className="w-3.5 h-3.5 text-teal-500" />
+                        {suggestion}
+                      </div>
+                    ))}
+                  </div>
+                )}
+            </div>
+            <Button className="h-12 px-6 bg-teal-700 hover:bg-teal-800" onClick={handleSearch}>Search</Button>
           </div>
         </div>
       </div>
 
+      {/* Main Content (Unchanged) */}
       <div className="container mx-auto px-4 py-8 flex flex-col lg:flex-row gap-8">
-         {/* SIDEBAR */}
          <aside className="w-full lg:w-72 flex-shrink-0">
             <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 px-2">Sectors</h3>
             <div className="flex lg:flex-col gap-2 overflow-x-auto pb-4 lg:pb-0 scrollbar-hide">
                {categories.map(cat => (
                  <button 
                    key={cat.id} 
-                   onClick={() => setActiveCategory(cat)}
+                   onClick={() => {
+                     setActiveCategory(cat)
+                     window.history.pushState({}, '', `/categories?sector=${encodeURIComponent(cat.name)}`)
+                   }}
                    className={`
-                     w-full px-4 py-3 rounded-xl text-sm font-medium text-left flex items-center gap-3 transition-all
+                     w-full px-4 py-3 rounded-xl text-sm font-medium text-left flex items-center gap-3 transition-all whitespace-nowrap lg:whitespace-normal
                      ${activeCategory?.id === cat.id 
                        ? "bg-teal-600 text-white shadow-md shadow-teal-900/20" 
                        : "bg-white text-slate-600 hover:bg-slate-50 border border-slate-100"
                      }
                    `}
                  >
-                   <cat.icon className={`w-5 h-5 ${activeCategory?.id === cat.id ? "text-teal-200" : "text-slate-400"}`}/> 
+                   <cat.icon className={`w-5 h-5 flex-shrink-0 ${activeCategory?.id === cat.id ? "text-teal-200" : "text-slate-400"}`}/> 
                    <span className="flex-1">{cat.name}</span>
                    <span className={`text-xs px-2 py-0.5 rounded-full ${activeCategory?.id === cat.id ? "bg-white/20 text-white" : "bg-slate-100 text-slate-500"}`}>
                      {cat.subCategories.length}
@@ -195,7 +258,6 @@ export default function CategoriesPage() {
             </div>
          </aside>
 
-         {/* MAIN CONTENT */}
          <main className="flex-1 min-h-[60vh]">
             {activeCategory && (
               <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -211,7 +273,7 @@ export default function CategoriesPage() {
                     .filter((s:any) => s.name.toLowerCase().includes(searchTerm.toLowerCase()))
                     .map((sub: any, i: number) => (
                     <Link 
-                      href={`/search?category=${sub.name}`} 
+                      href={`/search?category=${encodeURIComponent(sub.name)}&sector=${encodeURIComponent(activeCategory.name)}`} 
                       key={i} 
                       className="group flex flex-col p-5 bg-white border border-slate-200 rounded-2xl hover:border-teal-500 hover:shadow-lg transition-all cursor-pointer"
                     >
@@ -231,12 +293,6 @@ export default function CategoriesPage() {
                     </Link>
                   ))}
                 </div>
-                
-                {activeCategory.subCategories.filter((s:any) => s.name.toLowerCase().includes(searchTerm.toLowerCase())).length === 0 && (
-                  <div className="p-12 text-center border-2 border-dashed border-slate-200 rounded-2xl">
-                    <p className="text-slate-400">No specific professions found matching "{searchTerm}" in this sector.</p>
-                  </div>
-                )}
               </div>
             )}
          </main>

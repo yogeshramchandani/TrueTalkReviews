@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { supabase } from "@/lib/supabaseClient"
 import { usePathname } from "next/navigation"
 
@@ -21,10 +21,16 @@ export function Navbar() {
   const [user, setUser] = useState<any>(null)
   const [profile, setProfile] = useState<any>(null)
   const [isMenuOpen, setIsMenuOpen] = useState(false)
-  const [searchQuery, setSearchQuery] = useState("")
   const [initials, setInitials] = useState("U")
   const pathname = usePathname()
 
+  // --- SEARCH STATE ---
+  const [searchQuery, setSearchQuery] = useState("")
+  const [suggestions, setSuggestions] = useState<string[]>([])
+  const [showSuggestions, setShowSuggestions] = useState(false)
+  const wrapperRef = useRef<HTMLFormElement>(null)
+
+  // 1. Fetch User Data
   useEffect(() => {
     const getUser = async () => {
       const { data: { session } } = await supabase.auth.getSession()
@@ -50,6 +56,44 @@ export function Navbar() {
     getUser()
   }, [])
 
+  // 2. SEARCH SUGGESTIONS LOGIC
+  useEffect(() => {
+    async function fetchSuggestions() {
+      if (searchQuery.length < 2) {
+        setSuggestions([])
+        return
+      }
+
+      // Query the Taxonomy Table
+      const { data } = await supabase
+        .from('profession_taxonomy')
+        .select('profession')
+        .ilike('profession', `%${searchQuery}%`)
+        .limit(5)
+
+      if (data) {
+        // Remove duplicates
+        const unique = Array.from(new Set(data.map(d => d.profession)))
+        setSuggestions(unique)
+      }
+    }
+
+    // Debounce to prevent API spam
+    const timer = setTimeout(fetchSuggestions, 300)
+    return () => clearTimeout(timer)
+  }, [searchQuery])
+
+  // 3. Close Dropdown on Click Outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (wrapperRef.current && !wrapperRef.current.contains(event.target as Node)) {
+        setShowSuggestions(false)
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => document.removeEventListener("mousedown", handleClickOutside)
+  }, [])
+
   const handleSignOut = async () => {
     await supabase.auth.signOut()
     window.location.href = "/"
@@ -58,7 +102,8 @@ export function Navbar() {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
     if (searchQuery.trim()) {
-      window.location.href = `/search?q=${searchQuery}`
+      window.location.href = `/search?q=${encodeURIComponent(searchQuery)}`
+      setShowSuggestions(false)
     }
   }
 
@@ -71,22 +116,61 @@ export function Navbar() {
         
         {/* LOGO */}
         <Link href="/" className="flex items-center gap-2">
+
           <img src="/logo.png" alt="TrueTalkReviews Logo" className="h-10 w-auto object-contain" />
-          <span className="font-bold text-teal-900 text-xl tracking-tight hidden sm:block">
-            TrueTalk<span className="font-bold text-transparent text-xl bg-clip-text bg-gradient-to-r from-teal-700 to-teal-500">Reviews</span>
+
+          <span className="font-bold text-teal-900 text-xl tracking-tight sm:block">
+
+            TrueTalk<span className="font-bold text-transparent text-xl bg-clip-text bg-gradient-to-r from-teal-700 to-teal-500"> Reviews</span>
+
           </span>
+
         </Link>
 
-        {/* DESKTOP SEARCH */}
-        <div className="hidden md:flex flex-1 max-w-md mx-8">
-           <form onSubmit={handleSearch} className="relative w-full">
+
+
+        {/* DESKTOP SEARCH WITH SUGGESTIONS */}
+        <div className="hidden md:flex flex-1 max-w-md mx-8 relative">
+           <form 
+             ref={wrapperRef} 
+             onSubmit={handleSearch} 
+             className="relative w-full"
+           >
              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
              <Input 
                placeholder="Search for services..." 
                className="pl-10 bg-slate-50 border-slate-200 focus:bg-white transition-all rounded-full h-10"
                value={searchQuery}
-               onChange={(e) => setSearchQuery(e.target.value)}
+               onChange={(e) => {
+                 setSearchQuery(e.target.value)
+                 setShowSuggestions(true)
+               }}
+               onFocus={() => setShowSuggestions(true)}
              />
+
+             {/* --- SUGGESTIONS DROPDOWN --- */}
+             {showSuggestions && suggestions.length > 0 && (
+                <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-xl border border-slate-100 overflow-hidden z-50 text-left animate-in fade-in zoom-in-95 duration-200">
+                  <div className="px-4 py-2 bg-slate-50 text-xs font-bold text-slate-400 uppercase tracking-wider">
+                    Suggestions
+                  </div>
+                  {suggestions.map((suggestion, index) => (
+                    <div 
+                      key={index}
+                      onClick={() => {
+                        setSearchQuery(suggestion)
+                        setShowSuggestions(false)
+                        // Navigate immediately
+                        window.location.href = `/search?q=${encodeURIComponent(suggestion)}`
+                      }}
+                      className="px-4 py-3 hover:bg-teal-50 cursor-pointer text-sm text-slate-700 font-medium flex items-center gap-3 border-b border-slate-50 last:border-0 transition-colors"
+                    >
+                      <Search className="w-3.5 h-3.5 text-teal-500" />
+                      {suggestion}
+                    </div>
+                  ))}
+                </div>
+             )}
            </form>
         </div>
 
@@ -188,10 +272,10 @@ export function Navbar() {
           </form>
 
           <div className="flex flex-col gap-1">
-             <Link href="/categories" className="block px-4 py-3 rounded-lg hover:bg-slate-50 text-slate-600 font-medium">Browse Categories</Link>
-             {profile?.role !== 'professional' && (
+              <Link href="/categories" className="block px-4 py-3 rounded-lg hover:bg-slate-50 text-slate-600 font-medium">Browse Categories</Link>
+              {profile?.role !== 'professional' && (
                 <Link href="/auth/signup?role=professional" className="block px-4 py-3 rounded-lg hover:bg-slate-50 text-slate-600 font-medium">For Business</Link>
-             )}
+              )}
           </div>
           
           <div className="border-t border-slate-100 pt-4">

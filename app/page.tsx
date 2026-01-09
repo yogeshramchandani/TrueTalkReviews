@@ -1,10 +1,13 @@
 "use client"
 
 import Link from "next/link"
+import { useEffect, useState } from "react"
+import { supabase } from "@/lib/supabaseClient"
 import { Button } from "@/components/ui/button"
 import { 
-  ShieldCheck, Star, TrendingUp, 
-  Gavel, Stethoscope, Hammer, Laptop, Dumbbell, Home, Store, UserCircle
+  ShieldCheck, Star, TrendingUp, Loader2,
+  Code, Stethoscope, Hammer, Laptop, Dumbbell, Home, Store, UserCircle,
+  Briefcase, Gavel, PenTool, GraduationCap, Truck, Music, PawPrint
 } from "lucide-react"
 
 // Import our new modular components
@@ -12,19 +15,76 @@ import { Navbar } from "@/components/navbar"
 import { Footer } from "@/components/footer"
 import { HeroButtons } from "@/components/hero-buttons"
 
-export default function LandingPage() {
+// SECTOR ICON MAP (Maps Database Sector Names to Icons)
+const sectorIcons: Record<string, any> = {
+  "Technology": Code,
+  "Freelancers & Tech": Laptop,
+  "Health & Medical": Stethoscope,
+  "Home Services": Home,
+  "Professional Services": Briefcase,
+  "Legal & Finance": Gavel,
+  "Creative & Arts": PenTool,
+  "Education & Training": GraduationCap,
+  "Events & Hospitality": Music,
+  "Automotive & Transport": Truck,
+  "Other": PawPrint,
+  "default": Briefcase
+}
 
-  // CATEGORIES DATA
-  const categories = [
-    { name: "Freelancers", icon: UserCircle, color: "text-blue-600", bg: "bg-blue-50" },
-    { name: "Doctors", icon: Stethoscope, color: "text-red-500", bg: "bg-red-50" },
-    { name: "Lawyers", icon: Gavel, color: "text-slate-700", bg: "bg-slate-100" },
-    { name: "Contractors", icon: Hammer, color: "text-orange-600", bg: "bg-orange-50" },
-    { name: "Tech Experts", icon: Laptop, color: "text-indigo-600", bg: "bg-indigo-50" },
-    { name: "Gym & Fit", icon: Dumbbell, color: "text-teal-600", bg: "bg-teal-50" },
-    { name: "Real Estate", icon: Home, color: "text-green-600", bg: "bg-green-50" },
-    { name: "Small Biz", icon: Store, color: "text-purple-600", bg: "bg-purple-50" },
-  ]
+// Background Colors Map for variety
+const bgColors = [
+  { text: "text-blue-600", bg: "bg-blue-50" },
+  { text: "text-red-500", bg: "bg-red-50" },
+  { text: "text-slate-700", bg: "bg-slate-100" },
+  { text: "text-orange-600", bg: "bg-orange-50" },
+  { text: "text-indigo-600", bg: "bg-indigo-50" },
+  { text: "text-teal-600", bg: "bg-teal-50" },
+  { text: "text-green-600", bg: "bg-green-50" },
+  { text: "text-purple-600", bg: "bg-purple-50" },
+]
+
+export default function LandingPage() {
+  const [sectors, setSectors] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    async function fetchSectors() {
+      try {
+        // Fetch unique sectors from the taxonomy table
+        // We use .select('sector') and then filter for uniqueness in JS for simplicity
+        const { data, error } = await supabase
+          .from('profession_taxonomy')
+          .select('sector')
+        
+        if (error) throw error
+
+        if (data) {
+          // Get unique sectors
+          const uniqueSectors = Array.from(new Set(data.map(item => item.sector))).sort()
+          
+          // Map to UI format
+          const formattedSectors = uniqueSectors.map((sectorName, index) => {
+            // Cycle through colors
+            const colorTheme = bgColors[index % bgColors.length]
+            return {
+              name: sectorName,
+              icon: sectorIcons[sectorName] || sectorIcons.default,
+              color: colorTheme.text,
+              bg: colorTheme.bg
+            }
+          })
+          
+          setSectors(formattedSectors)
+        }
+      } catch (err) {
+        console.error("Error fetching sectors:", err)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchSectors()
+  }, [])
 
   return (
     <div className="min-h-screen bg-white font-sans text-slate-900 flex flex-col">
@@ -65,24 +125,34 @@ export default function LandingPage() {
           </div>
         </div>
 
-        {/* 3. "What are you looking for?" SECTION */}
+        {/* 3. "What are you looking for?" SECTION (DYNAMIC SECTORS) */}
         <section className="py-12 bg-white border-b border-slate-100">
           <div className="container mx-auto px-4">
             <h2 className="text-2xl font-bold text-slate-900 mb-8 text-center md:text-left">What are you looking for?</h2>
             
-            {/* Scrollable Container */}
-            <div className="flex flex-wrap md:flex-nowrap justify-center md:justify-start gap-4 md:gap-6 overflow-x-auto pb-4 scrollbar-hide">
-              {categories.map((cat, i) => (
-                <Link href={`/search?q=${cat.name}`} key={i} className="group min-w-[140px] md:min-w-[160px] flex-shrink-0">
-                  <div className="flex flex-col items-center p-6 rounded-2xl bg-slate-50 border border-slate-100 hover:shadow-lg hover:border-teal-200 transition-all cursor-pointer h-full">
-                    <div className={`w-12 h-12 rounded-full ${cat.bg} ${cat.color} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
-                      <cat.icon className="w-6 h-6" />
-                    </div>
-                    <span className="font-semibold text-slate-700 group-hover:text-teal-700 text-center">{cat.name}</span>
-                  </div>
-                </Link>
-              ))}
-            </div>
+            {loading ? (
+               <div className="flex justify-center py-10"><Loader2 className="animate-spin text-teal-600" /></div>
+            ) : sectors.length === 0 ? (
+               <div className="text-center text-slate-400 py-10">No sectors found.</div>
+            ) : (
+              /* Scrollable Container */
+              <div className="flex flex-wrap md:flex-nowrap justify-center md:justify-start gap-4 md:gap-6 overflow-x-auto pb-4 scrollbar-hide">
+                {sectors.map((cat, i) => (
+                  <Link 
+    href={`/categories?sector=${encodeURIComponent(cat.name)}`} 
+    key={i} 
+    className="group min-w-[140px] md:min-w-[160px] flex-shrink-0"
+  >
+    <div className="flex flex-col items-center p-6 rounded-2xl bg-slate-50 border border-slate-100 hover:shadow-lg hover:border-teal-200 transition-all cursor-pointer h-full">
+      <div className={`w-12 h-12 rounded-full ${cat.bg} ${cat.color} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
+        <cat.icon className="w-6 h-6" />
+      </div>
+      <span className="font-semibold text-slate-700 group-hover:text-teal-700 text-center line-clamp-1">{cat.name}</span>
+    </div>
+  </Link>
+                ))}
+              </div>
+            )}
           </div>
         </section>
 
@@ -132,16 +202,12 @@ export default function LandingPage() {
         </section>
 
         {/* 5. POPULAR THIS WEEK */}
-        {/* 5. POPULAR THIS WEEK */}
-        {/* CHANGED: bg-slate-900 -> bg-slate-50 (Light Background) */}
         <section className="py-16 md:py-24 bg-slate-50 border-b border-slate-200">
           <div className="container mx-auto px-4">
             
             <div className="flex flex-col sm:flex-row justify-between items-center md:items-end mb-12 max-w-6xl mx-auto gap-6 text-center md:text-left">
               <div>
-                {/* CHANGED: text-white -> text-slate-900 */}
                 <h2 className="text-3xl font-bold text-slate-900">Popular this Week</h2>
-                {/* CHANGED: text-slate-400 -> text-slate-500 */}
                 <p className="text-slate-500 mt-2">Browse top-rated professionals in your city.</p>
               </div>
               <Link href="/categories" className="w-full md:w-auto">
@@ -158,7 +224,6 @@ export default function LandingPage() {
                 { title: "Creative", img: "https://cdn.pixabay.com/photo/2023/08/20/17/00/crochet-8202792_1280.jpg" },
                 { title: "Health & Fitness", img: "https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?auto=format&fit=crop&w=600&q=80" },
               ].map((cat, i) => (
-                // CHANGED: Added shadow-md and hover:shadow-xl to make cards pop on light bg
                 <div key={i} className="group relative overflow-hidden rounded-2xl aspect-[4/5] cursor-pointer shadow-md hover:shadow-xl transition-all duration-300">
                   <div className="absolute inset-0 bg-slate-900/20 group-hover:bg-teal-900/40 transition-colors z-10" />
                   <img 
