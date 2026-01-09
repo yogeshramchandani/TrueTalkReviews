@@ -1,11 +1,11 @@
 "use client"
 
-import { useState, useEffect, useRef, Suspense } from "react" // 1. Import Suspense
+import { useState, useEffect, useRef, Suspense } from "react"
 import Link from "next/link"
 import { useSearchParams } from "next/navigation" 
 import { supabase } from "@/lib/supabaseClient"
 import { 
-  Briefcase, ChevronRight, Search, Loader2, Code, Stethoscope, Home, 
+  Briefcase, Search, Loader2, Code, Stethoscope, Home, 
   GraduationCap, Truck, Music, PawPrint, Gavel, PenTool, UserCircle, Layers
 } from "lucide-react"
 import { Input } from "@/components/ui/input"
@@ -27,7 +27,7 @@ const sectorIcons: Record<string, any> = {
   "default": Briefcase
 }
 
-// 2. RENAME MAIN COMPONENT TO "CategoriesContent"
+// 1. RENAME MAIN LOGIC TO "CategoriesContent"
 function CategoriesContent() {
   const searchParams = useSearchParams()
   const [categories, setCategories] = useState<any[]>([])
@@ -155,7 +155,7 @@ function CategoriesContent() {
   }, [searchParams])
 
   const handleSearch = () => {
-     if(searchTerm) window.location.href = `/search?q=${searchTerm}`
+     if(searchTerm) window.location.href = `/search?q=${encodeURIComponent(searchTerm)}`
   }
 
   if (loading) return <div className="flex h-screen items-center justify-center"><Loader2 className="animate-spin text-teal-700"/></div>
@@ -294,7 +294,7 @@ function CategoriesContent() {
   )
 }
 
-// 3. EXPORT WRAPPED COMPONENT
+// 2. EXPORT THE PAGE COMPONENT WITH SUSPENSE
 export default function CategoriesPage() {
   return (
     <Suspense fallback={<div className="flex h-screen items-center justify-center"><Loader2 className="animate-spin text-teal-700" /></div>}>

@@ -1,8 +1,11 @@
+"use client" // This might be needed if ProfileHeader or other components interact with client side logic, but usually page.tsx can remain server-side if it just passes data. If you get errors, add this back.
+
 import { Star, MapPin } from "lucide-react"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import ProfileHeader from "@/components/profile-header"
 import ReviewsList from "@/components/reviews-list"
-import WriteReviewDialog from "@/components/write-review-dialog"
+// Ensure this import uses curly braces as discussed before
+import { WriteReviewDialog } from "@/components/write-review-dialog" 
 import ShareProfileButton from "@/components/share-profile-button"
 
 // Mock data - replace with real data from database
@@ -78,7 +81,11 @@ export default function ProfilePage({ params }: { params: { id: string } }) {
                     {mockProvider.totalReviews} clients have reviewed this service
                   </p>
                 </div>
-                <WriteReviewDialog providerName={mockProvider.name} />
+                {/* FIX 1: Added providerId */}
+                <WriteReviewDialog 
+                  providerId={mockProvider.id} 
+                  providerName={mockProvider.name} 
+                />
               </div>
               <ReviewsList reviews={mockReviews} />
             </div>
@@ -109,7 +116,13 @@ export default function ProfilePage({ params }: { params: { id: string } }) {
                   </div>
                 </div>
                 <p className="text-sm text-foreground/60">Based on {mockProvider.totalReviews} reviews</p>
-                <WriteReviewDialog providerName={mockProvider.name} />
+                
+                {/* FIX 2: Added providerId here as well */}
+                <WriteReviewDialog 
+                   providerId={mockProvider.id} 
+                   providerName={mockProvider.name} 
+                />
+                
                 <ShareProfileButton provider={mockProvider} />
               </CardContent>
             </Card>
