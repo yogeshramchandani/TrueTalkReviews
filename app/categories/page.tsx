@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, Suspense } from "react" // 1. Import Suspense
 import Link from "next/link"
 import { useSearchParams } from "next/navigation" 
 import { supabase } from "@/lib/supabaseClient"
@@ -11,7 +11,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 
-// 1. SECTOR ICON MAP
+// SECTOR ICON MAP
 const sectorIcons: Record<string, any> = {
   "Technology": Code,
   "Freelancers & Tech": Code,
@@ -27,7 +27,8 @@ const sectorIcons: Record<string, any> = {
   "default": Briefcase
 }
 
-export default function CategoriesPage() {
+// 2. RENAME MAIN COMPONENT TO "CategoriesContent"
+function CategoriesContent() {
   const searchParams = useSearchParams()
   const [categories, setCategories] = useState<any[]>([])
   const [activeCategory, setActiveCategory] = useState<any>(null)
@@ -39,7 +40,7 @@ export default function CategoriesPage() {
   const [showSuggestions, setShowSuggestions] = useState(false)
   const wrapperRef = useRef<HTMLDivElement>(null)
 
-  // 1. Fetch Suggestions Logic
+  // Fetch Suggestions Logic
   useEffect(() => {
     async function fetchSuggestions() {
       if (searchTerm.length < 2) {
@@ -47,7 +48,6 @@ export default function CategoriesPage() {
         return
       }
 
-      // Search in Taxonomy for Autocomplete
       const { data } = await supabase
         .from('profession_taxonomy')
         .select('profession')
@@ -55,18 +55,15 @@ export default function CategoriesPage() {
         .limit(5)
 
       if (data) {
-        // Remove duplicates if any
         const unique = Array.from(new Set(data.map(d => d.profession)))
         setSuggestions(unique)
       }
     }
-
-    // Debounce: Wait 300ms after typing stops before querying DB
     const timer = setTimeout(fetchSuggestions, 300)
     return () => clearTimeout(timer)
   }, [searchTerm])
 
-  // 2. Click Outside to Close
+  // Click Outside to Close
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (wrapperRef.current && !wrapperRef.current.contains(event.target as Node)) {
@@ -77,7 +74,7 @@ export default function CategoriesPage() {
     return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [])
 
-  // 3. Fetch Main Data (Existing Logic)
+  // Fetch Main Data
   useEffect(() => {
     async function fetchData() {
       try {
@@ -183,7 +180,6 @@ export default function CategoriesPage() {
           <h1 className="text-3xl md:text-4xl font-bold mb-4">Browse by Category</h1>
           <p className="text-slate-500 mb-8">Discover top-rated experts across {categories.length} industries.</p>
           
-          {/* SEARCH BAR WITH SUGGESTIONS */}
           <div className="max-w-xl mx-auto relative flex gap-2" ref={wrapperRef}>
             <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
@@ -199,7 +195,6 @@ export default function CategoriesPage() {
                   onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
                 />
 
-                {/* --- SUGGESTIONS DROPDOWN --- */}
                 {showSuggestions && suggestions.length > 0 && (
                   <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-xl border border-slate-100 overflow-hidden z-50 text-left animate-in fade-in zoom-in-95 duration-200">
                     <div className="px-4 py-2 bg-slate-50 text-xs font-bold text-slate-400 uppercase tracking-wider">
@@ -211,7 +206,6 @@ export default function CategoriesPage() {
                         onClick={() => {
                           setSearchTerm(suggestion)
                           setShowSuggestions(false)
-                          // Navigate immediately on click
                           window.location.href = `/search?q=${encodeURIComponent(suggestion)}`
                         }}
                         className="px-4 py-3 hover:bg-teal-50 cursor-pointer text-sm text-slate-700 font-medium flex items-center gap-3 border-b border-slate-50 last:border-0 transition-colors"
@@ -228,7 +222,6 @@ export default function CategoriesPage() {
         </div>
       </div>
 
-      {/* Main Content (Unchanged) */}
       <div className="container mx-auto px-4 py-8 flex flex-col lg:flex-row gap-8">
          <aside className="w-full lg:w-72 flex-shrink-0">
             <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 px-2">Sectors</h3>
@@ -298,5 +291,14 @@ export default function CategoriesPage() {
          </main>
       </div>
     </div>
+  )
+}
+
+// 3. EXPORT WRAPPED COMPONENT
+export default function CategoriesPage() {
+  return (
+    <Suspense fallback={<div className="flex h-screen items-center justify-center"><Loader2 className="animate-spin text-teal-700" /></div>}>
+      <CategoriesContent />
+    </Suspense>
   )
 }
