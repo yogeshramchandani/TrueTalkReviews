@@ -1,10 +1,10 @@
-"use client" // This might be needed if ProfileHeader or other components interact with client side logic, but usually page.tsx can remain server-side if it just passes data. If you get errors, add this back.
+"use client"
 
 import { Star, MapPin } from "lucide-react"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import ProfileHeader from "@/components/profile-header"
 import ReviewsList from "@/components/reviews-list"
-// Ensure this import uses curly braces as discussed before
+// FIX: Add curly braces around WriteReviewDialog
 import { WriteReviewDialog } from "@/components/write-review-dialog" 
 import ShareProfileButton from "@/components/share-profile-button"
 
