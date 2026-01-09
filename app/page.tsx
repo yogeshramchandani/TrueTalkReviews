@@ -46,7 +46,7 @@ export default function LandingPage() {
               <span className="flex gap-1">
                 {[1,2,3].map(i => <Star key={i} className="w-3 h-3 md:w-4 md:h-4 text-orange-500 fill-orange-500" />)}
               </span>
-              <span>Over 10,000 verified reviews</span>
+              <span>100% Verified Professionals</span>
             </div>
 
             <h1 className="text-4xl sm:text-5xl md:text-7xl font-extrabold text-slate-900 tracking-tight mb-6 leading-tight">
