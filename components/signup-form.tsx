@@ -25,7 +25,7 @@ export function SignupForm() {
   const [step, setStep] = useState<'form' | 'otp'>('form')
   const [isLoading, setIsLoading] = useState(false)
   
-  // Upgrade State (New)
+  // Upgrade State
   const [isUpgrading, setIsUpgrading] = useState(false)
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
 
@@ -61,16 +61,15 @@ export function SignupForm() {
   const [selectedProfession, setSelectedProfession] = useState("")
   const [customProfession, setCustomProfession] = useState("")
 
-  // 1. Check if User is ALREADY Logged In (Upgrade Flow)
+  // 1. Check if User is ALREADY Logged In
   useEffect(() => {
     async function checkSession() {
       const { data: { session } } = await supabase.auth.getSession()
       if (session) {
         setIsUpgrading(true)
         setCurrentUserId(session.user.id)
-        setRole("professional") // Force role to professional
+        setRole("professional") 
         
-        // Pre-fill data from Auth Metadata
         const meta = session.user.user_metadata
         setEmail(session.user.email || "")
         setFullName(meta.full_name || "")
@@ -103,7 +102,6 @@ export function SignupForm() {
   }, [selectedSector, taxonomy])
 
   useEffect(() => {
-    // Only allow switching role via URL if NOT upgrading
     if (!isUpgrading) {
       const roleParam = searchParams.get("role")
       if (roleParam === "professional") setRole("professional")
@@ -148,13 +146,44 @@ export function SignupForm() {
        }
     }
 
-    // PATH A: UPGRADE EXISTING USER (Direct Insert)
+    // PATH A: UPGRADE EXISTING USER
     if (isUpgrading && currentUserId) {
         await createProfile(currentUserId)
         return
     }
 
-    // PATH B: NEW USER SIGNUP (Email + Password)
+    // --- PRE-CHECKS (Only for new users) ---
+    if (!isUpgrading) {
+      
+      // 1. Check Username
+      const { data: existingUser } = await supabase
+        .from('profiles')
+        .select('username')
+        .eq('username', username.toLowerCase().replace(/\s/g, ''))
+        .single()
+
+      if (existingUser) {
+        setIsLoading(false)
+        alert("This username is already taken. Please choose another.")
+        return 
+      }
+
+      // 2. Check Email (Checking public.profiles table)
+      const { data: existingEmail } = await supabase
+        .from('profiles')
+        .select('email')
+        .eq('email', email)
+        .single()
+
+      if (existingEmail) {
+        setIsLoading(false)
+        alert("User already exists, try to login.")
+        router.push("/auth/login")
+        return 
+      }
+    }
+
+    // PATH B: NEW USER SIGNUP
     const { error } = await supabase.auth.signUp({
       email,
       password,
@@ -165,7 +194,13 @@ export function SignupForm() {
 
     if (error) {
       setIsLoading(false)
-      alert(error.message)
+      // Fallback check if "User Enumeration" is OFF in Supabase
+      if (error.message.includes("already registered") || error.message.includes("User already exists") || error.message.includes("unique constraint")) {
+        alert("User already exists, try to login.")
+        router.push("/auth/login") 
+      } else {
+        alert(error.message)
+      }
       return
     }
 
@@ -173,7 +208,7 @@ export function SignupForm() {
     setStep('otp')
   }
 
-  // --- VERIFY OTP (Only for New Users) ---
+  // --- VERIFY OTP ---
   async function onVerifyOtp() {
     setIsLoading(true)
     const { data: { session }, error: verifyError } = await supabase.auth.verifyOtp({
@@ -188,7 +223,6 @@ export function SignupForm() {
       return
     }
 
-    // Create Profile after verification
     await createProfile(session.user.id)
   }
 
@@ -196,7 +230,6 @@ export function SignupForm() {
   async function createProfile(userId: string) {
     let finalProfession = selectedProfession === "Other" ? customProfession : selectedProfession
 
-    // 1. Upload Avatar
     let avatarUrl = null
     if (avatarFile) {
       try {
@@ -210,7 +243,7 @@ export function SignupForm() {
       }
     }
 
-    // 2. Update Taxonomy
+    // Update Taxonomy if needed (Professionals only)
     if (role === 'professional' && selectedProfession === "Other") {
       await supabase.from('profession_taxonomy').insert({
          sector: selectedSector,
@@ -218,38 +251,57 @@ export function SignupForm() {
       })
     }
 
-    // 3. Insert Profile
-    // Note: We use 'upsert' just in case a profile row partially exists, but usually 'insert' is fine.
-    if (role === 'professional') {
-      const { error: profileError } = await supabase.from('profiles').insert({
+    // --- PREPARE DATA ---
+    // This object works for BOTH Reviewers and Professionals
+    const profileData = {
         id: userId,
         username: username.toLowerCase().replace(/\s/g, ''),
         full_name: fullName,
-        role: 'professional', // Ensure they are now a professional
+        email: email, // <--- SAVING EMAIL TO PUBLIC PROFILE
+        role: role,
         created_at: new Date().toISOString(),
-        avatar_url: avatarUrl,
-        profession: finalProfession,
-        bio: bio,
-        city: city,
-        state: state, 
-        address: address,
-        phone_number: phoneNumber,
-        website_url: website,
-        instagram_url: insta,
-        linkedin_url: linkedin
-      })
+        avatar_url: avatarUrl
+    }
 
-      if (profileError) {
-        console.error("Profile creation error:", profileError)
-        alert("Error saving profile: " + profileError.message)
-        setIsLoading(false)
-        return
-      }
+    // Add Extra Fields ONLY for Professionals
+    if (role === 'professional') {
+       Object.assign(profileData, {
+          profession: finalProfession,
+          bio: bio,
+          city: city,
+          state: state,
+          address: address,
+          phone_number: phoneNumber,
+          website_url: website,
+          instagram_url: insta,
+          linkedin_url: linkedin
+       })
+    }
+
+    // --- INSERT PROFILE ---
+const { error: profileError } = await supabase
+    .from('profiles')
+    .upsert(profileData)
+
+    
+    if (profileError) {
+       console.error("Profile creation error:", profileError)
+       // If it's a duplicate key error, it might mean the Auth trigger already created a partial row.
+       // In that case, we should probably do an Update instead, but for now we alert.
+       if (!profileError.message.includes("duplicate key")) {
+           alert("Error saving profile: " + profileError.message)
+       }
     }
 
     setIsLoading(false)
     alert(isUpgrading ? "Business Listed Successfully!" : "Account Verified & Profile Created!")
-    router.push("/service-provider-dashboard")
+    
+    // Redirect based on Role
+    if (role === 'professional') {
+        router.push("/service-provider-dashboard")
+    } else {
+        router.push("/") 
+    }
   }
 
   return (
@@ -264,7 +316,7 @@ export function SignupForm() {
             <Link href="/" className="flex items-center justify-center gap-2 mb-6 hover:opacity-80 transition-opacity">
                <img src="/logo.png" alt="TrueTalk Logo" className="h-9 w-auto object-contain" />
                <span className="font-bold text-teal-900 text-xl tracking-tight sm:block">
-                 TrueTalk<span className="font-bold text-transparent text-xl bg-clip-text bg-linear-to-r from-teal-700 to-teal-500"> Reviews</span>
+                 TrueTalk<span className="font-bold text-transparent text-xl bg-clip-text bg-gradient-to-r from-teal-700 to-teal-500"> Reviews</span>
                </span>
             </Link>
             
@@ -272,7 +324,6 @@ export function SignupForm() {
               {isUpgrading ? "Complete Business Profile" : (step === 'form' ? "Create an account" : "Verify Email")}
             </h2>
             
-            {/* Context Message for Upgraders */}
             {isUpgrading && (
                <div className="mt-2 text-sm bg-blue-50 text-blue-700 p-3 rounded-lg border border-blue-100">
                   Welcome back, <b>{fullName}</b>! Fill in these details to list your business.
@@ -288,7 +339,6 @@ export function SignupForm() {
           {step === 'form' && (
             <form onSubmit={onSubmit} className="space-y-6 animate-in fade-in slide-in-from-left-4 pb-10">
               
-              {/* Role Tabs (Hidden if Upgrading - Forced to Professional) */}
               {!isUpgrading && (
                 <div className="bg-slate-50 p-1 rounded-xl">
                   <Tabs value={role} onValueChange={setRole} className="w-full">
@@ -315,7 +365,7 @@ export function SignupForm() {
                  </div>
               </div>
 
-              {/* Basic Inputs (Read-Only if Upgrading) */}
+              {/* Basic Inputs */}
               <div className="grid grid-cols-2 gap-4">
                 <div onClick={handleLockedFieldClick} className={isUpgrading ? "cursor-not-allowed opacity-80" : ""}>
                     <label className="text-xs font-bold text-slate-500 mb-1">Full Name {isUpgrading && <Lock className="inline w-3 h-3 ml-1"/>}</label>
@@ -333,7 +383,6 @@ export function SignupForm() {
                     <Input type="email" value={email} onChange={e=>setEmail(e.target.value)} required placeholder="name@example.com" readOnly={isUpgrading} className={isUpgrading ? "bg-slate-100 text-slate-500" : ""} />
                  </div>
                  
-                 {/* Password: Hide if upgrading */}
                  {!isUpgrading && (
                    <div>
                       <label className="text-xs font-bold text-slate-500 mb-1">Password <span className="text-red-500">*</span></label>
@@ -342,11 +391,9 @@ export function SignupForm() {
                  )}
               </div>
 
-              {/* Professional Fields - ONLY show if role is Professional */}
               {role === "professional" && (
                 <div className="space-y-4 bg-teal-50/50 p-4 rounded-xl border border-teal-100 animate-in fade-in">
                   
-                  {/* Profession Selection */}
                   <div className="grid grid-cols-1 gap-4">
                     <div>
                       <label className="text-xs font-bold text-slate-500 mb-1.5 block">Select Sector <span className="text-red-500">*</span></label>
@@ -372,7 +419,6 @@ export function SignupForm() {
 
                   <Textarea placeholder="Short Bio (Tell us about your services)" value={bio} onChange={e=>setBio(e.target.value)} className="bg-white text-xs" />
                   
-                  {/* LOCATION FIELDS */}
                   <div className="space-y-3 pt-2 border-t border-teal-200/50">
                     <p className="text-xs font-bold text-teal-800 uppercase tracking-wider flex items-center gap-1"><MapPin className="w-3 h-3"/> Location Details</p>
                     <div className="grid grid-cols-2 gap-3">
@@ -382,7 +428,6 @@ export function SignupForm() {
                     <div><label className="text-[10px] font-bold text-slate-400">Full Address </label><Input placeholder="Shop No. 4, Main Market..." value={address} onChange={e=>setAddress(e.target.value)} className="bg-white text-xs h-9" /></div>
                   </div>
 
-                  {/* CONTACT FIELDS */}
                   <div className="space-y-3 pt-2 border-t border-teal-200/50">
                      <p className="text-xs font-bold text-teal-800 uppercase tracking-wider flex items-center gap-1"><Phone className="w-3 h-3"/> Contact & Social (Optional)</p>
                      <Input placeholder="Phone Number (Public)" value={phoneNumber} onChange={e=>setPhoneNumber(e.target.value)} className="bg-white text-xs h-9" />
@@ -401,7 +446,6 @@ export function SignupForm() {
             </form>
           )}
 
-          {/* === STEP 2: OTP (Skipped if Upgrading) === */}
           {!isUpgrading && step === 'otp' && (
              <div className="space-y-6 animate-in fade-in slide-in-from-right-4">
                 <div className="bg-teal-50 border border-teal-100 p-6 rounded-2xl text-center">
@@ -414,7 +458,7 @@ export function SignupForm() {
 
                 <div>
                    <label className="text-xs font-bold text-slate-500 mb-1">Enter Confirmation Code</label>
-                   <Input value={otp} onChange={e => setOtp(e.target.value)} placeholder="12345678" className="text-center text-2xl tracking-widest h-14 font-bold" maxLength={8}/>
+                   <Input value={otp} onChange={e => setOtp(e.target.value)} placeholder="123456" className="text-center text-2xl tracking-widest h-14 font-bold" maxLength={8}/>
                 </div>
 
                 <Button onClick={onVerifyOtp} disabled={isLoading || otp.length < 6} className="w-full bg-teal-800 hover:bg-teal-900 text-white h-12 text-base">
@@ -443,7 +487,7 @@ export function SignupForm() {
 
       {/* RIGHT SIDE (Visual) */}
       <div className="hidden lg:flex relative bg-slate-900 h-full overflow-hidden flex-col justify-between p-16">
-         <div className="absolute inset-0 bg-linear-to-br from-teal-900 via-slate-900 to-black/80" />
+         <div className="absolute inset-0 bg-gradient-to-br from-teal-900 via-slate-900 to-black/80" />
          <div className="relative z-10 text-white mt-auto">
             <h1 className="text-4xl font-bold">Build your Trust.</h1>
             <p className="mt-4 text-slate-300 text-lg">Join thousands of professionals and clients building verified connections.</p>

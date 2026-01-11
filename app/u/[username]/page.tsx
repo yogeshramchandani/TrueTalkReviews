@@ -15,12 +15,15 @@ export default async function PublicProfilePage({ params }: { params: { username
   const { data: profile } = await supabase
     .from('profiles')
     .select('*')
-    .eq('username', username)
+    .eq('username', params.username)
+    .eq('role', 'professional')
     .single()
 
   if (!profile) {
-    return notFound()
+    return <div>User not found or is not a business account.</div>
   }
+
+  
 
   // 3. Fetch Reviews for this Profile
   const { data: reviews } = await supabase

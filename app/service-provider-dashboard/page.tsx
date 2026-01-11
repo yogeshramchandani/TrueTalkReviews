@@ -53,7 +53,27 @@ export default function DashboardPage() {
   useEffect(() => {
     loadDashboard()
   }, [loadDashboard])
+useEffect(() => {
+  async function checkAccess() {
+    const { data: { user } } = await supabase.auth.getUser()
+    
+    if (user) {
+      // 1. Fetch the profile to check the ROLE
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single()
 
+      // 2. The Gatekeeper Logic
+      if (profile?.role !== 'professional') {
+         // If they are a reviewer, kick them to home
+         router.push("/") 
+      }
+    }
+  }
+  checkAccess()
+}, [])
   // Calculate Stats
   const averageRating = reviews.length > 0 
     ? (reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length).toFixed(1) 
