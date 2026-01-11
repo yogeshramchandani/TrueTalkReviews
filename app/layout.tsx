@@ -2,8 +2,7 @@ import type { Metadata } from "next"
 import { Inter } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import "./globals.css"
-import { GoogleAnalytics } from '@next/third-parties/google'
-// Initialize the font
+import { GoogleAnalytics } from '@next/third-parties/google'// Initialize the font
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
@@ -51,7 +50,7 @@ export default function RootLayout({
       <body className={`${inter.className} font-sans antialiased`}>
         {children}
         <Analytics />
-        <GoogleAnalytics gaId="GTM-K5Z68C6V" />
+        <GoogleAnalytics gaId="G-Q8T32X0ER6" />
       </body>
     </html>
   )
