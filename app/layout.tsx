@@ -35,6 +35,10 @@ export const metadata: Metadata = {
     shortcut: "/logo.png",
     apple: "/logo.png", // Used for iPhone home screen shortcuts
   },
+
+  verification:{
+    google: "w7j0_4eU2EoKi6B-Bdk6Iccmj_3vpgF--8AD3t4saa4"
+  }
 }
 
 export default function RootLayout({
