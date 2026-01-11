@@ -50,7 +50,7 @@ export default function RootLayout({
       <body className={`${inter.className} font-sans antialiased`}>
         {children}
         <Analytics />
-        <GoogleAnalytics gaId="G-Q8T32X0ER6" />
+        <GoogleAnalytics gaId="G-7WPX0GQ29B" />
       </body>
     </html>
   )
