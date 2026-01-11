@@ -1,0 +1,26 @@
+import { MetadataRoute } from 'next'
+
+export default function sitemap(): MetadataRoute.Sitemap {
+  const baseUrl = 'https://true-talk-reviews.vercel.app'
+
+  // 1. Define your static routes
+  const routes = [
+    '',              // Home page
+    '/categories',
+    '/search',
+    '/help-center'
+    '/safety-guidelines'
+    '/community-guidelines'
+    '/contact'
+  ].map((route) => ({
+    url: `${baseUrl}${route}`,
+    lastModified: new Date(),
+    changeFrequency: 'weekly' as const,
+    priority: route === '' ? 1 : 0.8, // Home page is most important
+  }))
+
+  // 2. (Optional) In the future, you can fetch professionals from Supabase here
+  // and add them to this array so their profile pages get indexed too.
+
+  return [...routes]
+}
