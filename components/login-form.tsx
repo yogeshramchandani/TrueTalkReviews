@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Loader2, ArrowRight, Star, ShieldCheck } from "lucide-react"
 
-export function LoginForm() {
+export default function LoginForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   
@@ -32,12 +32,16 @@ export function LoginForm() {
       return
     }
 
+    // 1. Check for 'next' URL parameter (The Fix)
     const nextUrl = searchParams.get("next")
+    
     if (nextUrl) {
+      // If ?next=/u/username exists, go there immediately
       router.push(nextUrl)
       return
     }
 
+    // 2. Fallback Logic (if no next URL)
     const user = data.user
     const role = user?.user_metadata?.role
 

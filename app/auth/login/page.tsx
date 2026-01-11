@@ -1,4 +1,4 @@
-import { LoginForm } from "@/components/login-form"
+import LoginForm  from "@/components/login-form"
 import { Suspense } from "react"
 import { Loader2 } from "lucide-react"  
 export default function LoginPage() {

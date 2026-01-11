@@ -52,6 +52,7 @@ export function SignupForm() {
   const [website, setWebsite] = useState("")
   const [insta, setInsta] = useState("")
   const [linkedin, setLinkedin] = useState("")
+  const [reddit, setReddit] = useState("")
   
   // Taxonomy Data
   const [taxonomy, setTaxonomy] = useState<any[]>([]) 
@@ -274,7 +275,8 @@ export function SignupForm() {
           phone_number: phoneNumber,
           website_url: website,
           instagram_url: insta,
-          linkedin_url: linkedin
+          linkedin_url: linkedin,
+          reddit_url:reddit
        })
     }
 
@@ -436,6 +438,7 @@ const { error: profileError } = await supabase
                         <Input placeholder="Instagram URL" value={insta} onChange={e=>setInsta(e.target.value)} className="bg-white text-xs h-9" />
                      </div>
                      <Input placeholder="LinkedIn URL" value={linkedin} onChange={e=>setLinkedin(e.target.value)} className="bg-white text-xs h-9" />
+                    <Input placeholder="Reddit URL" value={reddit} onChange={e=>setReddit(e.target.value)} className="bg-white text-xs h-9" />
                   </div>
                 </div>
               )}
