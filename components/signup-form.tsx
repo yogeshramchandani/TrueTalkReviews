@@ -14,7 +14,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 // Icons
 import { 
   Loader2, User, Briefcase, Camera, 
-  ShieldCheck, Mail
+  MapPin, Phone, Mail, Lock
 } from "lucide-react"
 
 export function SignupForm() {
@@ -22,8 +22,12 @@ export function SignupForm() {
   const searchParams = useSearchParams()
   
   // --- STATE ---
-  const [step, setStep] = useState<'form' | 'otp'>('form') // Controls View
+  const [step, setStep] = useState<'form' | 'otp'>('form')
   const [isLoading, setIsLoading] = useState(false)
+  
+  // Upgrade State (New)
+  const [isUpgrading, setIsUpgrading] = useState(false)
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null)
 
   // Auth Data
   const [email, setEmail] = useState("")
@@ -37,6 +41,12 @@ export function SignupForm() {
   const [avatarFile, setAvatarFile] = useState<File | null>(null)
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null)
   
+  // Location & Contact Data
+  const [city, setCity] = useState("")
+  const [state, setState] = useState("")
+  const [address, setAddress] = useState("")
+  const [phoneNumber, setPhoneNumber] = useState("")
+
   // Professional Data
   const [bio, setBio] = useState("")
   const [website, setWebsite] = useState("")
@@ -51,7 +61,26 @@ export function SignupForm() {
   const [selectedProfession, setSelectedProfession] = useState("")
   const [customProfession, setCustomProfession] = useState("")
 
-  // Fetch Taxonomy
+  // 1. Check if User is ALREADY Logged In (Upgrade Flow)
+  useEffect(() => {
+    async function checkSession() {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (session) {
+        setIsUpgrading(true)
+        setCurrentUserId(session.user.id)
+        setRole("professional") // Force role to professional
+        
+        // Pre-fill data from Auth Metadata
+        const meta = session.user.user_metadata
+        setEmail(session.user.email || "")
+        setFullName(meta.full_name || "")
+        setUsername(meta.username || "")
+      }
+    }
+    checkSession()
+  }, [])
+
+  // 2. Load Taxonomy
   useEffect(() => {
     async function loadTaxonomy() {
       const { data } = await supabase.from('profession_taxonomy').select('*')
@@ -64,7 +93,7 @@ export function SignupForm() {
     loadTaxonomy()
   }, [])
 
-  // Update Roles
+  // 3. Update Roles based on Sector
   useEffect(() => {
     if (selectedSector) {
       const roles = taxonomy.filter((t: any) => t.sector === selectedSector).map((t: any) => t.profession)
@@ -74,45 +103,62 @@ export function SignupForm() {
   }, [selectedSector, taxonomy])
 
   useEffect(() => {
-    const roleParam = searchParams.get("role")
-    if (roleParam === "professional") setRole("professional")
-  }, [searchParams])
-
-  useEffect(() => {
-    if (avatarFile) {
-      const objectUrl = URL.createObjectURL(avatarFile)
-      setAvatarPreview(objectUrl)
-      return () => URL.revokeObjectURL(objectUrl)
+    // Only allow switching role via URL if NOT upgrading
+    if (!isUpgrading) {
+      const roleParam = searchParams.get("role")
+      if (roleParam === "professional") setRole("professional")
     }
-  }, [avatarFile])
+  }, [searchParams, isUpgrading])
 
-  // --- STEP 1: SEND EMAIL OTP ---
-  async function onSignup(e: React.FormEvent) {
+  // --- HANDLERS ---
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    if (file.size > 512000) {
+      alert("Image is too large! Please upload an image smaller than 500KB.")
+      e.target.value = "" 
+      return
+    }
+    setAvatarFile(file)
+    const objectUrl = URL.createObjectURL(file)
+    setAvatarPreview(objectUrl)
+  }
+
+  const handleLockedFieldClick = () => {
+    if (isUpgrading) {
+      alert("Don't worry! You can update this information from your Professional Dashboard after listing your business.")
+    }
+  }
+
+  // --- SUBMIT HANDLER ---
+  async function onSubmit(e: React.FormEvent) {
     e.preventDefault()
     setIsLoading(true)
 
     // Validation
-    let finalProfession = ""
     if (role === 'professional') {
-       if (selectedProfession === "Other") {
-         if (!customProfession) {
-            alert("Please type your specific profession.")
-            setIsLoading(false)
-            return
-         }
-       } else if (!selectedSector || !selectedProfession) {
-          alert("Please complete your professional details.")
-          setIsLoading(false)
-          return
+       if (selectedProfession === "Other" && !customProfession) {
+         alert("Please type your specific profession.")
+         setIsLoading(false)
+         return
+       } else if ((!selectedSector || !selectedProfession) && selectedProfession !== "Other") {
+         alert("Please select a sector and profession.")
+         setIsLoading(false)
+         return
        }
     }
 
-    // 1. Sign Up (Sends Email with Code)
+    // PATH A: UPGRADE EXISTING USER (Direct Insert)
+    if (isUpgrading && currentUserId) {
+        await createProfile(currentUserId)
+        return
+    }
+
+    // PATH B: NEW USER SIGNUP (Email + Password)
     const { error } = await supabase.auth.signUp({
       email,
       password,
       options: { 
-        // We still pass metadata just in case, but we won't use the trigger
         data: { full_name: fullName, username: username, role: role }
       },
     })
@@ -123,16 +169,13 @@ export function SignupForm() {
       return
     }
 
-    // Success -> Move to OTP Step
     setIsLoading(false)
     setStep('otp')
   }
 
-  // --- STEP 2: VERIFY OTP & CREATE PROFILE ---
+  // --- VERIFY OTP (Only for New Users) ---
   async function onVerifyOtp() {
     setIsLoading(true)
-
-    // 1. Verify Email OTP
     const { data: { session }, error: verifyError } = await supabase.auth.verifyOtp({
       email,
       token: otp,
@@ -145,11 +188,15 @@ export function SignupForm() {
       return
     }
 
-    // --- NOW WE CREATE THE PROFILE (Only after verification) ---
-    const userId = session.user.id
+    // Create Profile after verification
+    await createProfile(session.user.id)
+  }
+
+  // --- SHARED PROFILE CREATION LOGIC ---
+  async function createProfile(userId: string) {
     let finalProfession = selectedProfession === "Other" ? customProfession : selectedProfession
 
-    // 2. Upload Avatar
+    // 1. Upload Avatar
     let avatarUrl = null
     if (avatarFile) {
       try {
@@ -163,7 +210,7 @@ export function SignupForm() {
       }
     }
 
-    // 3. Update Taxonomy (If needed)
+    // 2. Update Taxonomy
     if (role === 'professional' && selectedProfession === "Other") {
       await supabase.from('profession_taxonomy').insert({
          sector: selectedSector,
@@ -171,17 +218,22 @@ export function SignupForm() {
       })
     }
 
-    // 4. Insert Profile (ONLY for Professionals)
+    // 3. Insert Profile
+    // Note: We use 'upsert' just in case a profile row partially exists, but usually 'insert' is fine.
     if (role === 'professional') {
       const { error: profileError } = await supabase.from('profiles').insert({
         id: userId,
         username: username.toLowerCase().replace(/\s/g, ''),
         full_name: fullName,
-        role: role,
+        role: 'professional', // Ensure they are now a professional
         created_at: new Date().toISOString(),
         avatar_url: avatarUrl,
         profession: finalProfession,
         bio: bio,
+        city: city,
+        state: state, 
+        address: address,
+        phone_number: phoneNumber,
         website_url: website,
         instagram_url: insta,
         linkedin_url: linkedin
@@ -189,115 +241,168 @@ export function SignupForm() {
 
       if (profileError) {
         console.error("Profile creation error:", profileError)
-        alert("Account verified, but profile setup had an issue. Please contact support.")
+        alert("Error saving profile: " + profileError.message)
+        setIsLoading(false)
+        return
       }
     }
 
     setIsLoading(false)
-    alert("Account Verified Successfully!")
-    router.push(role === 'professional' ? "/service-provider-dashboard" : "/")
+    alert(isUpgrading ? "Business Listed Successfully!" : "Account Verified & Profile Created!")
+    router.push("/service-provider-dashboard")
   }
 
   return (
-    <div className="fixed inset-0 z-[50] w-screen h-screen bg-white flex flex-col lg:grid lg:grid-cols-2 overflow-x-hidden">
+    <div className="fixed inset-0 z-50 w-screen h-screen bg-white flex flex-col lg:grid lg:grid-cols-2 overflow-x-hidden">
       
-      {/* LEFT SIDE */}
-      <div className="flex flex-1 flex-col items-center justify-center px-4 py-8 sm:px-6 lg:px-8 bg-white h-full w-full overflow-y-auto custom-scrollbar">
+      {/* LEFT SIDE - Form */}
+      <div className="flex flex-1 flex-col items-center px-4 py-10 sm:px-6 lg:px-8 bg-white h-full w-full overflow-y-auto custom-scrollbar">
         <div className="w-full max-w-md space-y-8 my-auto">
           
+          {/* Header */}
           <div className="text-center">
-            <Link href="/" className="inline-block mb-4">
-               <div className="flex items-center gap-2 justify-center">
-                 <div className="bg-teal-900 text-white p-2 rounded-lg font-bold text-xl">TR</div>
-                 <span className="text-teal-900 text-2xl font-bold tracking-tight">TrueTalk</span>
-               </div>
+            <Link href="/" className="flex items-center justify-center gap-2 mb-6 hover:opacity-80 transition-opacity">
+               <img src="/logo.png" alt="TrueTalk Logo" className="h-9 w-auto object-contain" />
+               <span className="font-bold text-teal-900 text-xl tracking-tight sm:block">
+                 TrueTalk<span className="font-bold text-transparent text-xl bg-clip-text bg-linear-to-r from-teal-700 to-teal-500"> Reviews</span>
+               </span>
             </Link>
+            
             <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight">
-              {step === 'form' ? "Create an account" : "Verify Email"}
+              {isUpgrading ? "Complete Business Profile" : (step === 'form' ? "Create an account" : "Verify Email")}
             </h2>
-            {step === 'otp' && (
+            
+            {/* Context Message for Upgraders */}
+            {isUpgrading && (
+               <div className="mt-2 text-sm bg-blue-50 text-blue-700 p-3 rounded-lg border border-blue-100">
+                  Welcome back, <b>{fullName}</b>! Fill in these details to list your business.
+               </div>
+            )}
+            
+            {!isUpgrading && step === 'otp' && (
                <p className="text-slate-500 mt-2">Enter the code sent to {email}</p>
             )}
           </div>
 
           {/* === STEP 1: FORM === */}
           {step === 'form' && (
-            <form onSubmit={onSignup} className="space-y-6 animate-in fade-in slide-in-from-left-4">
-              {/* Role Tabs */}
-              <div className="bg-slate-50 p-1 rounded-xl">
-                <Tabs value={role} onValueChange={setRole} className="w-full">
-                  <TabsList className="grid w-full grid-cols-2 bg-transparent h-11 p-0">
-                    <TabsTrigger value="reviewer" className="gap-2 rounded-lg"><User className="w-4 h-4"/> Reviewer</TabsTrigger>
-                    <TabsTrigger value="professional" className="gap-2 rounded-lg"><Briefcase className="w-4 h-4"/> Professional</TabsTrigger>
-                  </TabsList>
-                </Tabs>
-              </div>
+            <form onSubmit={onSubmit} className="space-y-6 animate-in fade-in slide-in-from-left-4 pb-10">
+              
+              {/* Role Tabs (Hidden if Upgrading - Forced to Professional) */}
+              {!isUpgrading && (
+                <div className="bg-slate-50 p-1 rounded-xl">
+                  <Tabs value={role} onValueChange={setRole} className="w-full">
+                    <TabsList className="grid w-full grid-cols-2 bg-transparent h-11 p-0">
+                      <TabsTrigger value="reviewer" className="gap-2 rounded-lg"><User className="w-4 h-4"/> Reviewer</TabsTrigger>
+                      <TabsTrigger value="professional" className="gap-2 rounded-lg"><Briefcase className="w-4 h-4"/> Professional</TabsTrigger>
+                    </TabsList>
+                  </Tabs>
+                </div>
+              )}
 
-              {/* Avatar */}
+              {/* Avatar Upload */}
               <div className="flex justify-center">
-                 <div className="relative group cursor-pointer">
-                    <div className="w-24 h-24 rounded-full bg-slate-100 border-2 border-dashed border-slate-300 flex items-center justify-center overflow-hidden hover:border-teal-500 transition-colors">
+                 <div className="relative group cursor-pointer text-center">
+                    <div className="w-24 h-24 mx-auto rounded-full bg-slate-100 border-2 border-dashed border-slate-300 flex items-center justify-center overflow-hidden hover:border-teal-500 transition-colors">
                       {avatarPreview ? (
                         <img src={avatarPreview} className="w-full h-full object-cover" />
                       ) : (
                         <Camera className="w-8 h-8 text-slate-400" />
                       )}
                     </div>
-                    <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" accept="image/*" onChange={(e) => setAvatarFile(e.target.files?.[0] || null)} />
+                    <p className="text-[10px] text-slate-400 mt-2">Max size: 500KB</p>
+                    <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" accept="image/*" onChange={handleImageChange} />
                  </div>
               </div>
 
-              {/* Inputs */}
+              {/* Basic Inputs (Read-Only if Upgrading) */}
               <div className="grid grid-cols-2 gap-4">
-                <div><label className="text-xs font-bold text-slate-500 mb-1">Full Name</label><Input value={fullName} onChange={e=>setFullName(e.target.value)} required placeholder="John Doe" /></div>
-                <div><label className="text-xs font-bold text-slate-500 mb-1">Username</label><Input value={username} onChange={e=>setUsername(e.target.value)} required placeholder="johndoe" /></div>
+                <div onClick={handleLockedFieldClick} className={isUpgrading ? "cursor-not-allowed opacity-80" : ""}>
+                    <label className="text-xs font-bold text-slate-500 mb-1">Full Name {isUpgrading && <Lock className="inline w-3 h-3 ml-1"/>}</label>
+                    <Input value={fullName} onChange={e=>setFullName(e.target.value)} required placeholder="John Doe" readOnly={isUpgrading} className={isUpgrading ? "bg-slate-100 text-slate-500" : ""} />
+                </div>
+                <div onClick={handleLockedFieldClick} className={isUpgrading ? "cursor-not-allowed opacity-80" : ""}>
+                    <label className="text-xs font-bold text-slate-500 mb-1">Username {isUpgrading && <Lock className="inline w-3 h-3 ml-1"/>}</label>
+                    <Input value={username} onChange={e=>setUsername(e.target.value)} required placeholder="johndoe" readOnly={isUpgrading} className={isUpgrading ? "bg-slate-100 text-slate-500" : ""} />
+                </div>
               </div>
 
               <div className="space-y-4">
-                 <div><label className="text-xs font-bold text-slate-500 mb-1">Email Address</label><Input type="email" value={email} onChange={e=>setEmail(e.target.value)} required placeholder="name@example.com" /></div>
-                 <div><label className="text-xs font-bold text-slate-500 mb-1">Password</label><Input type="password" value={password} onChange={e=>setPassword(e.target.value)} required placeholder="••••••••" /></div>
+                 <div onClick={handleLockedFieldClick} className={isUpgrading ? "cursor-not-allowed opacity-80" : ""}>
+                    <label className="text-xs font-bold text-slate-500 mb-1">Email Address {isUpgrading && <Lock className="inline w-3 h-3 ml-1"/>}</label>
+                    <Input type="email" value={email} onChange={e=>setEmail(e.target.value)} required placeholder="name@example.com" readOnly={isUpgrading} className={isUpgrading ? "bg-slate-100 text-slate-500" : ""} />
+                 </div>
+                 
+                 {/* Password: Hide if upgrading */}
+                 {!isUpgrading && (
+                   <div>
+                      <label className="text-xs font-bold text-slate-500 mb-1">Password <span className="text-red-500">*</span></label>
+                      <Input type="password" value={password} onChange={e=>setPassword(e.target.value)} required placeholder="••••••••" />
+                   </div>
+                 )}
               </div>
 
-              {/* Professional Fields */}
+              {/* Professional Fields - ONLY show if role is Professional */}
               {role === "professional" && (
                 <div className="space-y-4 bg-teal-50/50 p-4 rounded-xl border border-teal-100 animate-in fade-in">
-                  <div>
-                    <label className="text-xs font-bold text-slate-500 mb-1.5 block">Select Sector</label>
-                    <select className="w-full h-11 px-3 rounded-md border border-slate-200 bg-white text-sm" value={selectedSector} onChange={(e) => { setSelectedSector(e.target.value); setSelectedProfession(""); setCustomProfession("") }}>
-                      <option value="">-- Choose Sector --</option>
-                      {uniqueSectors.map(s => <option key={s} value={s}>{s}</option>)}
-                    </select>
-                  </div>
-                  {selectedSector && (
+                  
+                  {/* Profession Selection */}
+                  <div className="grid grid-cols-1 gap-4">
                     <div>
-                      <label className="text-xs font-bold text-slate-500 mb-1.5 block">Select Profession</label>
-                      <select className="w-full h-11 px-3 rounded-md border border-slate-200 bg-white text-sm" value={selectedProfession} onChange={(e) => setSelectedProfession(e.target.value)}>
-                        <option value="">-- Choose Profession --</option>
-                        {availableRoles.map(r => <option key={r} value={r}>{r}</option>)}
-                        <option value="Other" className="font-bold text-teal-700 bg-teal-50">+ Add New</option>
+                      <label className="text-xs font-bold text-slate-500 mb-1.5 block">Select Sector <span className="text-red-500">*</span></label>
+                      <select className="w-full h-11 px-3 rounded-md border border-slate-200 bg-white text-sm" value={selectedSector} onChange={(e) => { setSelectedSector(e.target.value); setSelectedProfession(""); setCustomProfession("") }}>
+                        <option value="">-- Choose Sector --</option>
+                        {uniqueSectors.map(s => <option key={s} value={s}>{s}</option>)}
                       </select>
                     </div>
-                  )}
-                  {selectedProfession === "Other" && (
-                    <Input placeholder="e.g. AI Prompt Engineer" value={customProfession} onChange={e => setCustomProfession(e.target.value)} required className="border-teal-500" />
-                  )}
-                  <Textarea placeholder="Short Bio" value={bio} onChange={e=>setBio(e.target.value)} className="bg-white text-xs" />
-                  <div className="grid grid-cols-2 gap-3">
-                     <Input placeholder="Website URL" value={website} onChange={e=>setWebsite(e.target.value)} className="bg-white text-xs h-9" />
-                     <Input placeholder="Instagram URL" value={insta} onChange={e=>setInsta(e.target.value)} className="bg-white text-xs h-9" />
-                     <Input placeholder="LinkedIn URL" value={linkedin} onChange={e=>setLinkedin(e.target.value)} className="bg-white text-xs h-9 col-span-2" />
+                    {selectedSector && (
+                      <div>
+                        <label className="text-xs font-bold text-slate-500 mb-1.5 block">Select Profession <span className="text-red-500">*</span></label>
+                        <select className="w-full h-11 px-3 rounded-md border border-slate-200 bg-white text-sm" value={selectedProfession} onChange={(e) => setSelectedProfession(e.target.value)}>
+                          <option value="">-- Choose Profession --</option>
+                          {availableRoles.map(r => <option key={r} value={r}>{r}</option>)}
+                          <option value="Other" className="font-bold text-teal-700 bg-teal-50">+ Add New</option>
+                        </select>
+                      </div>
+                    )}
+                    {selectedProfession === "Other" && (
+                      <Input placeholder="e.g. AI Prompt Engineer" value={customProfession} onChange={e => setCustomProfession(e.target.value)} required className="border-teal-500" />
+                    )}
+                  </div>
+
+                  <Textarea placeholder="Short Bio (Tell us about your services)" value={bio} onChange={e=>setBio(e.target.value)} className="bg-white text-xs" />
+                  
+                  {/* LOCATION FIELDS */}
+                  <div className="space-y-3 pt-2 border-t border-teal-200/50">
+                    <p className="text-xs font-bold text-teal-800 uppercase tracking-wider flex items-center gap-1"><MapPin className="w-3 h-3"/> Location Details</p>
+                    <div className="grid grid-cols-2 gap-3">
+                       <div><label className="text-[10px] font-bold text-slate-400">City <span className="text-red-500">*</span></label><Input placeholder="Mumbai" value={city} onChange={e=>setCity(e.target.value)} required className="bg-white text-xs h-9" /></div>
+                       <div><label className="text-[10px] font-bold text-slate-400">State <span className="text-red-500">*</span></label><Input placeholder="Maharashtra" value={state} onChange={e=>setState(e.target.value)} required className="bg-white text-xs h-9" /></div>
+                    </div>
+                    <div><label className="text-[10px] font-bold text-slate-400">Full Address </label><Input placeholder="Shop No. 4, Main Market..." value={address} onChange={e=>setAddress(e.target.value)} className="bg-white text-xs h-9" /></div>
+                  </div>
+
+                  {/* CONTACT FIELDS */}
+                  <div className="space-y-3 pt-2 border-t border-teal-200/50">
+                     <p className="text-xs font-bold text-teal-800 uppercase tracking-wider flex items-center gap-1"><Phone className="w-3 h-3"/> Contact & Social (Optional)</p>
+                     <Input placeholder="Phone Number (Public)" value={phoneNumber} onChange={e=>setPhoneNumber(e.target.value)} className="bg-white text-xs h-9" />
+                     <div className="grid grid-cols-2 gap-3">
+                        <Input placeholder="Website URL" value={website} onChange={e=>setWebsite(e.target.value)} className="bg-white text-xs h-9" />
+                        <Input placeholder="Instagram URL" value={insta} onChange={e=>setInsta(e.target.value)} className="bg-white text-xs h-9" />
+                     </div>
+                     <Input placeholder="LinkedIn URL" value={linkedin} onChange={e=>setLinkedin(e.target.value)} className="bg-white text-xs h-9" />
                   </div>
                 </div>
               )}
 
               <Button type="submit" disabled={isLoading} className="w-full bg-teal-800 hover:bg-teal-900 text-white h-12 text-base">
-                {isLoading ? <Loader2 className="animate-spin" /> : "Send Verification Code"}
+                {isLoading ? <Loader2 className="animate-spin" /> : (isUpgrading ? "List My Business" : "Send Verification Code")}
               </Button>
             </form>
           )}
 
-          {/* === STEP 2: OTP === */}
-          {step === 'otp' && (
+          {/* === STEP 2: OTP (Skipped if Upgrading) === */}
+          {!isUpgrading && step === 'otp' && (
              <div className="space-y-6 animate-in fade-in slide-in-from-right-4">
                 <div className="bg-teal-50 border border-teal-100 p-6 rounded-2xl text-center">
                    <div className="w-12 h-12 bg-teal-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -309,35 +414,36 @@ export function SignupForm() {
 
                 <div>
                    <label className="text-xs font-bold text-slate-500 mb-1">Enter Confirmation Code</label>
-                   <Input 
-                      value={otp} 
-                      onChange={e => setOtp(e.target.value)} 
-                      placeholder="123456" 
-                      className="text-center text-2xl tracking-widest h-14 font-bold"
-                      maxLength={6}
-                   />
+                   <Input value={otp} onChange={e => setOtp(e.target.value)} placeholder="12345678" className="text-center text-2xl tracking-widest h-14 font-bold" maxLength={8}/>
                 </div>
 
                 <Button onClick={onVerifyOtp} disabled={isLoading || otp.length < 6} className="w-full bg-teal-800 hover:bg-teal-900 text-white h-12 text-base">
                    {isLoading ? <Loader2 className="animate-spin" /> : "Verify & Create Profile"}
                 </Button>
 
-                <button onClick={() => setStep('form')} className="w-full text-center text-sm text-slate-400 hover:text-slate-600">
-                   Wrong email? Go back
-                </button>
+                <button onClick={() => setStep('form')} className="w-full text-center text-sm text-slate-400 hover:text-slate-600">Wrong email? Go back</button>
              </div>
           )}
 
           <div className="text-center text-sm">
-            <span className="text-slate-500">Already have an account? </span>
-            <Link href="/auth/login" className="text-teal-700 font-bold hover:underline">Log in</Link>
+            {!isUpgrading && (
+               <>
+                 <span className="text-slate-500">Already have an account? </span>
+                 <Link href="/auth/login" className="text-teal-700 font-bold hover:underline">Log in</Link>
+               </>
+            )}
+            {isUpgrading && (
+               <button onClick={() => { supabase.auth.signOut(); window.location.reload() }} className="text-slate-500 hover:text-red-600 underline text-xs">
+                 Not you? Log out
+               </button>
+            )}
           </div>
         </div>
       </div>
 
       {/* RIGHT SIDE (Visual) */}
       <div className="hidden lg:flex relative bg-slate-900 h-full overflow-hidden flex-col justify-between p-16">
-         <div className="absolute inset-0 bg-gradient-to-br from-teal-900 via-slate-900 to-black/80" />
+         <div className="absolute inset-0 bg-linear-to-br from-teal-900 via-slate-900 to-black/80" />
          <div className="relative z-10 text-white mt-auto">
             <h1 className="text-4xl font-bold">Build your Trust.</h1>
             <p className="mt-4 text-slate-300 text-lg">Join thousands of professionals and clients building verified connections.</p>
