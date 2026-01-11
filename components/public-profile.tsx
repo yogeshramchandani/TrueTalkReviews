@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { useRouter } from "next/navigation" // Needed to refresh page after review
+import { useRouter } from "next/navigation"
 import { useState, useEffect, useRef } from "react"
 import { supabase } from "@/lib/supabaseClient"
 
@@ -10,12 +10,12 @@ import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Card } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
-import { ReviewFormDialog } from "@/components/review-form-dialog" // <--- IMPORT YOUR DIALOG
+import { ReviewFormDialog } from "@/components/review-form-dialog"
 
 // Icons
 import { 
-  Star, MapPin, Globe, Linkedin, Instagram, 
-  ShieldCheck, Share2, MessageCircle, CheckCircle2, Pencil, Ban
+  Star, MapPin, Globe, Linkedin, Instagram, Twitter, Facebook,
+  ShieldCheck, Share2, MessageCircle, CheckCircle2, Pencil, Ban, Phone
 } from "lucide-react"
 
 // Helper to format dates
@@ -29,9 +29,10 @@ const formatDate = (dateString: string) => {
 export default function PublicProfile({ profile, reviews, currentUser }: { profile: any, reviews: any[], currentUser: any }) {
   const router = useRouter()
   const hasViewed = useRef(false)
+  
   // STATE
   const [viewer, setViewer] = useState(currentUser)
-  const [isReviewOpen, setIsReviewOpen] = useState(false) // <--- DIALOG STATE
+  const [isReviewOpen, setIsReviewOpen] = useState(false)
 
   // Client-side auth check
   useEffect(() => {
@@ -43,23 +44,18 @@ export default function PublicProfile({ profile, reviews, currentUser }: { profi
     }
     if (!currentUser) checkUser()
   }, [currentUser])
-useEffect(() => {
-  const trackView = async () => {
-    // 1. Check if we already ran this logic
-    if (hasViewed.current) return;
-    
-    // 2. Mark as run IMMEDIATELY so the second firing stops here
-    hasViewed.current = true;
 
-    // 3. Don't count if owner is viewing
-    if (currentUser?.id === profile.id) return;
+  // View Tracking
+  useEffect(() => {
+    const trackView = async () => {
+      if (hasViewed.current) return;
+      hasViewed.current = true;
+      if (currentUser?.id === profile.id) return;
+      await supabase.rpc('increment_view_count', { row_id: profile.id })
+    }
+    trackView()
+  }, [profile.id, currentUser?.id])
 
-    // 4. Call Supabase
-    await supabase.rpc('increment_view_count', { row_id: profile.id })
-  }
-
-  trackView()
-}, [profile.id, currentUser?.id]) // Run once on load
   // Logic
   const isOwnProfile = viewer?.id === profile.id
   const existingReview = reviews.find(r => r.reviewer_id === viewer?.id)
@@ -75,9 +71,45 @@ useEffect(() => {
     return { star, count, percentage }
   })
 
+  // --- SOCIAL MEDIA LOGIC ---
+  const socialLinks = [
+    { 
+      key: 'instagram', 
+      icon: Instagram, 
+      url: profile.instagram_url, 
+      color: 'text-pink-600 hover:text-pink-700', 
+      bg: 'hover:bg-pink-50' 
+    },
+    { 
+      key: 'linkedin', 
+      icon: Linkedin, 
+      url: profile.linkedin_url, 
+      color: 'text-blue-700 hover:text-blue-800', 
+      bg: 'hover:bg-blue-50' 
+    },
+    { 
+      key: 'twitter', 
+      icon: Twitter, 
+      url: profile.twitter_url, 
+      color: 'text-sky-500 hover:text-sky-600', 
+      bg: 'hover:bg-sky-50' 
+    },
+    { 
+      key: 'facebook', 
+      icon: Facebook, 
+      url: profile.facebook_url, 
+      color: 'text-blue-600 hover:text-blue-700', 
+      bg: 'hover:bg-blue-50' 
+    },
+  ].filter(link => link.url && link.url.trim() !== "")
+
+  // --- LOCATION LOGIC ---
+  // Combines Address + City + State
+  const locationParts = [profile.address, profile.city, profile.state].filter(Boolean)
+  const fullLocation = locationParts.join(", ")
+
   // --- SMART BUTTON COMPONENT ---
   const ReviewButton = () => {
-    // 1. Not Logged In -> Redirect to Login
     if (!viewer) {
       return (
         <Link href={`/auth/login?next=/u/${profile.username}`}>
@@ -88,7 +120,6 @@ useEffect(() => {
       )
     }
 
-    // 2. Own Profile -> Disabled
     if (isOwnProfile) {
       return (
         <Button variant="secondary" disabled className="px-6 opacity-70 cursor-not-allowed">
@@ -97,24 +128,22 @@ useEffect(() => {
       )
     }
 
-    // 3. Already Reviewed -> "Edit" (Opens Dialog)
     if (existingReview) {
       return (
         <Button 
           variant="outline" 
           className="border-teal-600 text-teal-700 hover:bg-teal-50 px-6"
-          onClick={() => setIsReviewOpen(true)} // <--- OPENS DIALOG
+          onClick={() => setIsReviewOpen(true)}
         >
           <Pencil className="w-4 h-4 mr-2" /> Edit Your Review
         </Button>
       )
     }
 
-    // 4. New Review -> "Write" (Opens Dialog)
     return (
       <Button 
         className="bg-teal-700 hover:bg-teal-800 text-white shadow-lg shadow-teal-900/10 px-6"
-        onClick={() => setIsReviewOpen(true)} // <--- OPENS DIALOG
+        onClick={() => setIsReviewOpen(true)}
       >
         Write a Review
       </Button>
@@ -124,14 +153,13 @@ useEffect(() => {
   return (
     <div className="min-h-screen bg-slate-50 font-sans text-slate-900">
       
-      {/* --- ADD THE DIALOG HERE --- */}
       <ReviewFormDialog 
         open={isReviewOpen} 
         onOpenChange={setIsReviewOpen}
         providerId={profile.id}
         onSuccess={() => {
           setIsReviewOpen(false)
-          router.refresh() // <--- Refreshes the page to show the new review instantly
+          router.refresh()
         }}
       />
 
@@ -161,6 +189,7 @@ useEffect(() => {
                     <span className="text-teal-700 bg-teal-50 px-2 py-0.5 rounded text-sm font-bold uppercase tracking-wide border border-teal-100">
                       {profile.profession || "Professional"}
                     </span>
+                    {/* Display City only in header, full address below */}
                     {profile.city && (
                       <span className="flex items-center gap-1 text-sm"><MapPin className="w-3.5 h-3.5" /> {profile.city}</span>
                     )}
@@ -224,21 +253,63 @@ useEffect(() => {
                 <ShieldCheck className="w-5 h-5 text-teal-600" /> Verified Details
               </h3>
               <div className="space-y-4">
+                
+                {/* 1. Phone Number */}
                 {profile.phone_number && (
                   <div className="flex items-center gap-3 text-sm text-slate-600">
-                     <div className="w-8 h-8 rounded-full bg-green-50 flex items-center justify-center shrink-0">
-                       <CheckCircle2 className="w-4 h-4 text-green-600" />
-                     </div>
-                     <span>Phone Verified</span>
+                    <div className="w-8 h-8 rounded-full bg-green-50 flex items-center justify-center shrink-0">
+                      <Phone className="w-4 h-4 text-green-600" />
+                    </div>
+                    <div>
+                      <p className="text-xs text-slate-400 font-bold uppercase">Phone</p>
+                      <p className="font-medium text-slate-900">{profile.phone_number}</p>
+                    </div>
                   </div>
                 )}
-                <div className="flex flex-col gap-3 mt-4">
-                  {profile.website_url && (
-                    <Link href={profile.website_url} target="_blank" className="flex items-center gap-3 text-sm font-medium text-slate-600 hover:text-teal-700 transition-colors p-2 hover:bg-slate-50 rounded-lg">
-                      <Globe className="w-4 h-4" /> Website
+
+                {/* 2. Full Location (Address, City, State) */}
+                {fullLocation && (
+                  <div className="flex items-center gap-3 text-sm text-slate-600">
+                    <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center shrink-0">
+                      <MapPin className="w-4 h-4 text-blue-600" />
+                    </div>
+                    <div>
+                      <p className="text-xs text-slate-400 font-bold uppercase">Location</p>
+                      <p className="font-medium text-slate-900">{fullLocation}</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* 3. Website */}
+                {profile.website_url && (
+                  <div className="pt-2">
+                    <Link href={profile.website_url} target="_blank" className="flex items-center gap-3 text-sm font-medium text-slate-600 hover:text-teal-700 transition-colors p-2 hover:bg-slate-50 rounded-lg border border-transparent hover:border-slate-100">
+                      <Globe className="w-4 h-4" /> Visit Website
                     </Link>
-                  )}
-                </div>
+                  </div>
+                )}
+
+                {/* 4. Social Icons */}
+                {socialLinks.length > 0 && (
+                  <div className="pt-4 mt-4 border-t border-slate-100">
+                    <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Connect</p>
+                    <div className="flex flex-wrap gap-2">
+                      {socialLinks.map((social) => (
+                        <a 
+                          key={social.key}
+                          href={social.url.startsWith('http') ? social.url : `https://${social.url}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={`p-2.5 rounded-full bg-slate-50 transition-all duration-200 ${social.color} ${social.bg}`}
+                          title={social.key}
+                        >
+                          <social.icon className="w-4 h-4" />
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
               </div>
             </Card>
           </div>
@@ -276,7 +347,6 @@ useEffect(() => {
                         ))}
                       </div>
                     </div>
-                    {/* Only show content if it exists */}
                     {review.content && (
                       <p className="text-slate-600 leading-relaxed text-sm md:text-base mt-2">
                         {review.content}

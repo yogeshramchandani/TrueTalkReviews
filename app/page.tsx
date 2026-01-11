@@ -50,8 +50,6 @@ export default function LandingPage() {
   useEffect(() => {
     async function fetchSectors() {
       try {
-        // Fetch unique sectors from the taxonomy table
-        // We use .select('sector') and then filter for uniqueness in JS for simplicity
         const { data, error } = await supabase
           .from('profession_taxonomy')
           .select('sector')
@@ -59,12 +57,16 @@ export default function LandingPage() {
         if (error) throw error
 
         if (data) {
-          // Get unique sectors
-          const uniqueSectors = Array.from(new Set(data.map(item => item.sector))).sort()
+          // 1. Get unique sectors
+          // 2. Custom Sort: Move "Other" to the bottom, sort rest alphabetically
+          const uniqueSectors = Array.from(new Set(data.map(item => item.sector))).sort((a, b) => {
+            if (a === "Other") return 1; // "Other" goes after
+            if (b === "Other") return -1; // "Other" goes after
+            return a.localeCompare(b);    // Everything else A-Z
+          })
           
           // Map to UI format
           const formattedSectors = uniqueSectors.map((sectorName, index) => {
-            // Cycle through colors
             const colorTheme = bgColors[index % bgColors.length]
             return {
               name: sectorName,
@@ -141,7 +143,7 @@ export default function LandingPage() {
                   <Link 
     href={`/categories?sector=${encodeURIComponent(cat.name)}`} 
     key={i} 
-    className="group min-w-[140px] md:min-w-[160px] flex-shrink-0"
+    className="group min-w-35 md:min-w-40 shrink-0"
   >
     <div className="flex flex-col items-center p-6 rounded-2xl bg-slate-50 border border-slate-100 hover:shadow-lg hover:border-teal-200 transition-all cursor-pointer h-full">
       <div className={`w-12 h-12 rounded-full ${cat.bg} ${cat.color} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>

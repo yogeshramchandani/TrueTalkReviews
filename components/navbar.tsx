@@ -30,12 +30,24 @@ export function Navbar() {
   const [showSuggestions, setShowSuggestions] = useState(false)
   const wrapperRef = useRef<HTMLFormElement>(null)
 
+  // Helper function to calculate initials
+  const calculateInitials = (name: string) => {
+    if (!name) return "U"
+    const nameParts = name.trim().split(' ')
+    return nameParts.length > 1 
+      ? `${nameParts[0][0]}${nameParts[1][0]}`.toUpperCase() 
+      : name.substring(0, 2).toUpperCase()
+  }
+
   // 1. Fetch User Data
   useEffect(() => {
     const getUser = async () => {
       const { data: { session } } = await supabase.auth.getSession()
+      
       if (session?.user) {
         setUser(session.user)
+        
+        // Try to fetch Professional Profile
         const { data } = await supabase
           .from('profiles')
           .select('*')
@@ -43,12 +55,17 @@ export function Navbar() {
           .single()
           
         if (data) {
+          // CASE A: It is a Professional
           setProfile(data)
           if (data.full_name) {
-             const nameParts = data.full_name.split(' ')
-             setInitials(nameParts.length > 1 
-               ? `${nameParts[0][0]}${nameParts[1][0]}`.toUpperCase() 
-               : data.full_name.substring(0, 2).toUpperCase())
+             setInitials(calculateInitials(data.full_name))
+          }
+        } else {
+          // CASE B: It is a Reviewer (No profile row)
+          // FIX: Get name from Auth Metadata
+          const metaName = session.user.user_metadata?.full_name
+          if (metaName) {
+            setInitials(calculateInitials(metaName))
           }
         }
       }
@@ -64,7 +81,6 @@ export function Navbar() {
         return
       }
 
-      // Query the Taxonomy Table
       const { data } = await supabase
         .from('profession_taxonomy')
         .select('profession')
@@ -72,13 +88,11 @@ export function Navbar() {
         .limit(5)
 
       if (data) {
-        // Remove duplicates
         const unique = Array.from(new Set(data.map(d => d.profession)))
         setSuggestions(unique)
       }
     }
 
-    // Debounce to prevent API spam
     const timer = setTimeout(fetchSuggestions, 300)
     return () => clearTimeout(timer)
   }, [searchQuery])
@@ -99,6 +113,9 @@ export function Navbar() {
     window.location.href = "/"
   }
 
+  // Determine Display Name logic
+  const displayName = profile?.full_name || user?.user_metadata?.full_name || "User"
+  
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
     if (searchQuery.trim()) {
@@ -107,7 +124,6 @@ export function Navbar() {
     }
   }
 
-  // Dashboard link only works for professionals
   const dashboardLink = '/service-provider-dashboard'
 
   return (
@@ -115,27 +131,23 @@ export function Navbar() {
       <div className="container mx-auto px-4 h-full flex items-center justify-between">
         
         {/* LOGO */}
+       {/* LOGO */}
         <Link href="/" className="flex items-center gap-2">
-
-          <img src="/logo.png" alt="TrueTalkReviews Logo" className="h-10 w-auto object-contain" />
-
+          {/* Replaced the "TR" div with your Image */}
+          <img 
+            src="/logo.png" 
+            alt="TrueTalk Logo" 
+            className="h-9 w-auto object-contain" 
+          />
+          
           <span className="font-bold text-teal-900 text-xl tracking-tight sm:block">
-
             TrueTalk<span className="font-bold text-transparent text-xl bg-clip-text bg-gradient-to-r from-teal-700 to-teal-500"> Reviews</span>
-
           </span>
-
         </Link>
-
-
 
         {/* DESKTOP SEARCH WITH SUGGESTIONS */}
         <div className="hidden md:flex flex-1 max-w-md mx-8 relative">
-           <form 
-             ref={wrapperRef} 
-             onSubmit={handleSearch} 
-             className="relative w-full"
-           >
+           <form ref={wrapperRef} onSubmit={handleSearch} className="relative w-full">
              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
              <Input 
                placeholder="Search for services..." 
@@ -160,7 +172,6 @@ export function Navbar() {
                       onClick={() => {
                         setSearchQuery(suggestion)
                         setShowSuggestions(false)
-                        // Navigate immediately
                         window.location.href = `/search?q=${encodeURIComponent(suggestion)}`
                       }}
                       className="px-4 py-3 hover:bg-teal-50 cursor-pointer text-sm text-slate-700 font-medium flex items-center gap-3 border-b border-slate-50 last:border-0 transition-colors"
@@ -180,7 +191,6 @@ export function Navbar() {
               Categories
             </Link>
 
-            {/* "For Business" Button - Visible if NOT a professional */}
             {profile?.role !== 'professional' && (
               <Link href="/auth/signup?role=professional">
                 <Button variant="outline" className="text-teal-700 border-teal-100 hover:bg-teal-50 hover:text-teal-900 font-medium text-sm h-9">
@@ -194,15 +204,15 @@ export function Navbar() {
                 <DropdownMenuTrigger className="outline-none ml-2">
                   <Avatar className="h-9 w-9 border border-slate-200 hover:ring-2 hover:ring-teal-100 transition-all cursor-pointer">
                     <AvatarImage src={profile?.avatar_url} className="object-cover" />
+                    {/* Shows Initials correctly now */}
                     <AvatarFallback className="bg-teal-900 text-white text-xs font-bold">{initials}</AvatarFallback>
                   </Avatar>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="w-56 mt-2 mr-2" align="end">
                   <DropdownMenuLabel>
                     <div className="flex flex-col space-y-1">
-                      <p className="text-sm font-medium leading-none">{profile?.full_name || "User"}</p>
+                      <p className="text-sm font-medium leading-none">{displayName}</p>
                       <p className="text-xs leading-none text-muted-foreground truncate">{user.email}</p>
-                      {/* Show Role Badge */}
                       <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider mt-1">
                         {profile?.role === 'professional' ? 'Professional Account' : 'Reviewer Account'}
                       </span>
@@ -210,7 +220,7 @@ export function Navbar() {
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   
-                  {/* --- PROFESSIONAL MENU ITEMS --- */}
+                  {/* PROFESSIONAL MENU */}
                   {profile?.role === 'professional' && (
                     <>
                       <DropdownMenuItem asChild>
@@ -228,7 +238,7 @@ export function Navbar() {
                     </>
                   )}
 
-                  {/* --- REVIEWER MENU ITEMS --- */}
+                  {/* REVIEWER MENU */}
                   {profile?.role !== 'professional' && (
                     <DropdownMenuItem asChild>
                       <Link href="/auth/signup?role=professional" className="cursor-pointer w-full flex items-center text-orange-600 font-medium bg-orange-50">
@@ -287,7 +297,8 @@ export function Navbar() {
                       <AvatarFallback className="bg-teal-900 text-white">{initials}</AvatarFallback>
                     </Avatar>
                     <div>
-                      <p className="font-bold text-sm text-slate-900">{profile?.full_name}</p>
+                      {/* FIXED: Uses displayName instead of profile.full_name to support reviewers */}
+                      <p className="font-bold text-sm text-slate-900">{displayName}</p>
                       <p className="text-xs text-slate-500">{user.email}</p>
                     </div>
                  </div>

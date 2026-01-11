@@ -5,11 +5,10 @@ import { supabase } from "@/lib/supabaseClient"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { Label } from "@/components/ui/label" // Make sure you have this component, or use standard <label>
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Loader2, Edit2, Save, X, Camera, User, Phone, Instagram, Linkedin, Globe } from "lucide-react"
+import { Loader2, Edit2, Save, X, Camera, User, Phone, Instagram, Linkedin, Globe, MapPin, Twitter, Facebook } from "lucide-react"
 
-// 1. UPDATE INTERFACE
+// 1. UPDATE INTERFACE to include Address and State
 interface ProfileData {
   id: string
   username: string
@@ -19,6 +18,9 @@ interface ProfileData {
   avatar_url: string | null
   // New Fields
   phone_number?: string | null
+  address?: string | null      // Added
+  city?: string | null
+  state?: string | null        // Added
   instagram_url?: string | null
   linkedin_url?: string | null
   website_url?: string | null
@@ -32,13 +34,18 @@ interface Props {
 export function EditableProfileCard({ profile, onUpdate }: Props) {
   const [isEditing, setIsEditing] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+
   if (!profile) {
     return <div className="p-6 text-center text-slate-500">Loading profile data...</div>
   }
-  // Initialize form data with new fields (handle nulls with empty strings)
+
+  // Initialize form data 
   const [formData, setFormData] = useState({
     ...profile,
     phone_number: profile.phone_number || '',
+    address: profile.address || '',
+    city: profile.city || '',
+    state: profile.state || '',
     instagram_url: profile.instagram_url || '',
     linkedin_url: profile.linkedin_url || '',
     website_url: profile.website_url || ''
@@ -46,7 +53,6 @@ export function EditableProfileCard({ profile, onUpdate }: Props) {
 
   const [newAvatarFile, setNewAvatarFile] = useState<File | null>(null)
   const [previewUrl, setPreviewUrl] = useState<string | null>(profile.avatar_url)
-
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const handleChange = (field: string, value: string) => {
@@ -85,7 +91,7 @@ export function EditableProfileCard({ profile, onUpdate }: Props) {
         finalAvatarUrl = publicUrl
       }
 
-      // Update Auth Metadata (Optional, usually just name/avatar)
+      // Update Auth Metadata 
       const { error: authError } = await supabase.auth.updateUser({
         data: {
           full_name: formData.full_name,
@@ -106,11 +112,18 @@ export function EditableProfileCard({ profile, onUpdate }: Props) {
           profession: formData.profession,
           bio: formData.bio,
           avatar_url: finalAvatarUrl,
-          // New Fields
+          
+          // Contact Info
           phone_number: formData.phone_number,
+          address: formData.address,
+          city: formData.city,
+          state: formData.state,
+          
+          // Social Links (using correct _url keys)
           instagram_url: formData.instagram_url,
           linkedin_url: formData.linkedin_url,
           website_url: formData.website_url,
+          
           updated_at: new Date().toISOString()
         })
 
@@ -224,6 +237,41 @@ export function EditableProfileCard({ profile, onUpdate }: Props) {
           </div>
         </div>
 
+        {/* LOCATION SECTION (Added) */}
+        <div className="border-t border-border pt-6">
+          <h3 className="text-sm font-bold mb-4 text-slate-700 flex items-center gap-2">
+             <MapPin className="w-4 h-4" /> Location Details
+          </h3>
+          <div className="space-y-4">
+            <div className="space-y-2">
+               <label className="text-xs font-medium text-muted-foreground">Street Address</label>
+               {isEditing ? (
+                  <Input placeholder="123 Main St" value={formData.address || ''} onChange={(e) => handleChange('address', e.target.value)} />
+               ) : (
+                  <p className="text-sm">{profile.address || "Not added"}</p>
+               )}
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+               <div className="space-y-2">
+                  <label className="text-xs font-medium text-muted-foreground">City</label>
+                  {isEditing ? (
+                     <Input placeholder="New York" value={formData.city || ''} onChange={(e) => handleChange('city', e.target.value)} />
+                  ) : (
+                     <p className="text-sm">{profile.city || "Not added"}</p>
+                  )}
+               </div>
+               <div className="space-y-2">
+                  <label className="text-xs font-medium text-muted-foreground">State</label>
+                  {isEditing ? (
+                     <Input placeholder="NY" value={formData.state || ''} onChange={(e) => handleChange('state', e.target.value)} />
+                  ) : (
+                     <p className="text-sm">{profile.state || "Not added"}</p>
+                  )}
+               </div>
+            </div>
+          </div>
+        </div>
+
         {/* SOCIAL LINKS SECTION */}
         <div className="border-t border-border pt-6">
           <h3 className="text-sm font-bold mb-4 text-slate-700">Contact & Social Links</h3>
@@ -233,11 +281,10 @@ export function EditableProfileCard({ profile, onUpdate }: Props) {
             <div className="space-y-2">
               <div className="flex items-center gap-2">
                 <Phone className="w-4 h-4 text-slate-400" />
-                <Label htmlFor="phone" className="text-xs text-muted-foreground">Phone Number</Label>
+                <label className="text-xs font-medium text-muted-foreground">Phone Number</label>
               </div>
               {isEditing ? (
                 <Input
-                  id="phone"
                   placeholder="+91 98765 43210"
                   value={formData.phone_number || ''}
                   onChange={(e) => handleChange('phone_number', e.target.value)}
@@ -251,11 +298,10 @@ export function EditableProfileCard({ profile, onUpdate }: Props) {
             <div className="space-y-2">
               <div className="flex items-center gap-2">
                 <Instagram className="w-4 h-4 text-pink-500" />
-                <Label htmlFor="instagram" className="text-xs text-muted-foreground">Instagram URL</Label>
+                <label className="text-xs font-medium text-muted-foreground">Instagram URL</label>
               </div>
               {isEditing ? (
                 <Input
-                  id="instagram"
                   placeholder="https://instagram.com/..."
                   value={formData.instagram_url || ''}
                   onChange={(e) => handleChange('instagram_url', e.target.value)}
@@ -269,11 +315,10 @@ export function EditableProfileCard({ profile, onUpdate }: Props) {
             <div className="space-y-2">
               <div className="flex items-center gap-2">
                 <Linkedin className="w-4 h-4 text-blue-600" />
-                <Label htmlFor="linkedin" className="text-xs text-muted-foreground">LinkedIn URL</Label>
+                <label className="text-xs font-medium text-muted-foreground">LinkedIn URL</label>
               </div>
               {isEditing ? (
                 <Input
-                  id="linkedin"
                   placeholder="https://linkedin.com/in/..."
                   value={formData.linkedin_url || ''}
                   onChange={(e) => handleChange('linkedin_url', e.target.value)}
@@ -283,15 +328,17 @@ export function EditableProfileCard({ profile, onUpdate }: Props) {
               )}
             </div>
 
+            
+             
+            
             {/* Website */}
             <div className="space-y-2">
               <div className="flex items-center gap-2">
                 <Globe className="w-4 h-4 text-teal-600" />
-                <Label htmlFor="website" className="text-xs text-muted-foreground">Website / Portfolio</Label>
+                <label className="text-xs font-medium text-muted-foreground">Website / Portfolio</label>
               </div>
               {isEditing ? (
                 <Input
-                  id="website"
                   placeholder="https://yourwebsite.com"
                   value={formData.website_url || ''}
                   onChange={(e) => handleChange('website_url', e.target.value)}
