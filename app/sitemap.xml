@@ -1,26 +1,42 @@
 import { MetadataRoute } from 'next'
+import { createClient } from '@supabase/supabase-js' // Or use your existing client import
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = 'https://true-talk-reviews.vercel.app'
 
-  // 1. Define your static routes
-  const routes = [
-    '',              // Home page
-    '/categories',
-    '/search',
-    '/help-center'
-    '/safety-guidelines'
-    '/community-guidelines'
-    '/contact'
+  // 1. Initialize Supabase (We need to fetch the list of users)
+  // We create a quick client here just for the sitemap generation
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  )
+
+  // 2. Fetch ALL Professional profiles
+  const { data: professionals } = await supabase
+    .from('profiles')
+    .select('username, updated_at')
+    .eq('role', 'professional') // Only index professionals
+    
+  // 3. Create the "Dynamic" routes for each user
+  const profileRoutes = professionals?.map((user) => ({
+    url: `${baseUrl}/u/${user.username}`,
+    lastModified: new Date(user.updated_at || new Date()),
+    changeFrequency: 'daily' as const, // Tell Google these change often (new reviews)
+    priority: 0.9, // High priority!
+  })) || []
+
+  // 4. Define your static routes (Hidden Auth pages)
+  const staticRoutes = [
+    '',              
+    '/categories',   
+    '/search',       
   ].map((route) => ({
     url: `${baseUrl}${route}`,
     lastModified: new Date(),
     changeFrequency: 'weekly' as const,
-    priority: route === '' ? 1 : 0.8, // Home page is most important
+    priority: route === '' ? 1 : 0.8,
   }))
 
-  // 2. (Optional) In the future, you can fetch professionals from Supabase here
-  // and add them to this array so their profile pages get indexed too.
-
-  return [...routes]
+  // 5. Combine them
+  return [...staticRoutes, ...profileRoutes]
 }
