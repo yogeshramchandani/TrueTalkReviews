@@ -131,15 +131,12 @@ export function Navbar() {
       <div className="container mx-auto px-4 h-full flex items-center justify-between">
         
         {/* LOGO */}
-       {/* LOGO */}
         <Link href="/" className="flex items-center gap-2">
-          {/* Replaced the "TR" div with your Image */}
           <img 
             src="/logo.png" 
             alt="TrueTalk Logo" 
             className="h-9 w-auto object-contain" 
           />
-          
           <span className="font-bold text-teal-900 text-xl tracking-tight sm:block">
             TrueTalk<span className="font-bold text-transparent text-xl bg-clip-text bg-gradient-to-r from-teal-700 to-teal-500"> Reviews</span>
           </span>
@@ -187,11 +184,16 @@ export function Navbar() {
 
         {/* DESKTOP ACTIONS */}
         <div className="hidden lg:flex items-center gap-4">
+            {/* 👇 ADDED ABOUT US LINK */}
+            <Link href="/about" className={`text-sm font-medium hover:text-teal-700 transition-colors ${pathname === '/about' ? 'text-teal-700' : 'text-slate-600'}`}>
+              About Us
+            </Link>
+
             <Link href="/categories" className={`text-sm font-medium hover:text-teal-700 transition-colors ${pathname === '/categories' ? 'text-teal-700' : 'text-slate-600'}`}>
               Categories
             </Link>
 
-            {profile?.role !== 'professional' && (
+            {profile?.role == 'reviewer' && (
               <Link href="/auth/signup?role=professional">
                 <Button variant="outline" className="text-teal-700 border-teal-100 hover:bg-teal-50 hover:text-teal-900 font-medium text-sm h-9">
                   For Business
@@ -204,7 +206,6 @@ export function Navbar() {
                 <DropdownMenuTrigger className="outline-none ml-2">
                   <Avatar className="h-9 w-9 border border-slate-200 hover:ring-2 hover:ring-teal-100 transition-all cursor-pointer">
                     <AvatarImage src={profile?.avatar_url} className="object-cover" />
-                    {/* Shows Initials correctly now */}
                     <AvatarFallback className="bg-teal-900 text-white text-xs font-bold">{initials}</AvatarFallback>
                   </Avatar>
                 </DropdownMenuTrigger>
@@ -283,6 +284,9 @@ export function Navbar() {
 
           <div className="flex flex-col gap-1">
               <Link href="/categories" className="block px-4 py-3 rounded-lg hover:bg-slate-50 text-slate-600 font-medium">Browse Categories</Link>
+              {/* 👇 ADDED MOBILE LINK */}
+              <Link href="/about" className="block px-4 py-3 rounded-lg hover:bg-slate-50 text-slate-600 font-medium">About Us</Link>
+              
               {profile?.role !== 'professional' && (
                 <Link href="/auth/signup?role=professional" className="block px-4 py-3 rounded-lg hover:bg-slate-50 text-slate-600 font-medium">For Business</Link>
               )}
@@ -297,7 +301,6 @@ export function Navbar() {
                       <AvatarFallback className="bg-teal-900 text-white">{initials}</AvatarFallback>
                     </Avatar>
                     <div>
-                      {/* FIXED: Uses displayName instead of profile.full_name to support reviewers */}
                       <p className="font-bold text-sm text-slate-900">{displayName}</p>
                       <p className="text-xs text-slate-500">{user.email}</p>
                     </div>
