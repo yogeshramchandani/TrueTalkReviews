@@ -1,5 +1,5 @@
 import { Suspense } from "react"
-import { SignupForm } from "@/components/signup-form"
+import SignupForm  from "@/components/signup-form"
 import { Loader2 } from "lucide-react"
 
 export default function SignupPage() {

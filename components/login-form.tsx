@@ -8,6 +8,8 @@ import { supabase } from "@/lib/supabaseClient"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Loader2, ArrowRight, Star, ShieldCheck } from "lucide-react"
+// 👇 1. Import the Google Button
+import GoogleAuthButton from "@/app/auth/google-button"
 
 export default function LoginForm() {
   const router = useRouter()
@@ -32,16 +34,12 @@ export default function LoginForm() {
       return
     }
 
-    // 1. Check for 'next' URL parameter (The Fix)
     const nextUrl = searchParams.get("next")
-    
     if (nextUrl) {
-      // If ?next=/u/username exists, go there immediately
       router.push(nextUrl)
       return
     }
 
-    // 2. Fallback Logic (if no next URL)
     const user = data.user
     const role = user?.user_metadata?.role
 
@@ -53,8 +51,6 @@ export default function LoginForm() {
   }
 
   return (
-    // 🔴 FIXED: Added 'fixed inset-0 z-[50]'
-    // This forces the component to cover the WHOLE screen, ignoring any parent layouts.
     <div className="fixed inset-0 z-[50] w-screen h-screen bg-white flex flex-col lg:grid lg:grid-cols-2 overflow-x-hidden">
       
       {/* 1. LEFT SIDE - THE FORM */}
@@ -77,53 +73,69 @@ export default function LoginForm() {
             </p>
           </div>
 
-          <form className="mt-8 space-y-6" onSubmit={onSubmit}>
-            <div className="space-y-4">
-              <div>
-                <label htmlFor="email" className="block text-sm font-medium text-slate-700 mb-1">
-                  Email address
-                </label>
-                <Input
-                  id="email"
-                  type="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="h-11 bg-slate-50 border-slate-200 focus:ring-teal-500 focus:border-teal-500 w-full"
-                  placeholder="name@company.com"
-                />
-              </div>
-
-              <div>
-                <div className="flex items-center justify-between mb-1">
-                  <label htmlFor="password" className="block text-sm font-medium text-slate-700">
-                    Password
-                  </label>
-                  <Link href="/auth/forgot-password" className="text-sm font-medium text-teal-600 hover:text-teal-500">
-                    Forgot password?
-                  </Link>
-                </div>
-                <Input
-                  id="password"
-                  type="password"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="h-11 bg-slate-50 border-slate-200 focus:ring-teal-500 focus:border-teal-500 w-full"
-                  placeholder="••••••••"
-                />
-              </div>
+          <div className="mt-8 space-y-6">
+            
+            {/* 👇 2. Google Button Added Here */}
+            <div>
+               <GoogleAuthButton />
+               <div className="relative flex items-center justify-center mt-6">
+                  <span className="absolute w-full h-px bg-slate-200"></span>
+                  <span className="relative bg-white px-3 text-xs text-slate-400 uppercase font-bold">Or continue with email</span>
+               </div>
             </div>
 
-            <Button
-              type="submit"
-              disabled={isLoading}
-              className="w-full h-11 bg-teal-800 hover:bg-teal-900 text-white font-bold rounded-lg shadow-sm transition-all"
-            >
-              {isLoading ? <Loader2 className="animate-spin h-5 w-5 mr-2" /> : "Sign in"}
-            </Button>
-            
-            {/* Divider */}
+            {/* Email Form */}
+            <form onSubmit={onSubmit} className="space-y-6">
+              <div className="space-y-4">
+                <div>
+                  <label htmlFor="email" className="block text-sm font-medium text-slate-700 mb-1">
+                    Email address
+                  </label>
+                  <Input
+                    id="email"
+                    type="email"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="h-11 bg-slate-50 border-slate-200 focus:ring-teal-500 focus:border-teal-500 w-full"
+                    placeholder="name@company.com"
+                  />
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label htmlFor="password" className="block text-sm font-medium text-slate-700">
+                      Password
+                    </label>
+                    <Link href="/auth/forgot-password" className="text-sm font-medium text-teal-600 hover:text-teal-500">
+                      Forgot password?
+                    </Link>
+                  </div>
+                  <Input
+                    id="password"
+                    type="password"
+                    required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="h-11 bg-slate-50 border-slate-200 focus:ring-teal-500 focus:border-teal-500 w-full"
+                    placeholder="••••••••"
+                  />
+                </div>
+              </div>
+
+              <Button
+                type="submit"
+                disabled={isLoading}
+                className="w-full h-11 bg-teal-800 hover:bg-teal-900 text-white font-bold rounded-lg shadow-sm transition-all"
+              >
+                {isLoading ? <Loader2 className="animate-spin h-5 w-5 mr-2" /> : "Sign in"}
+              </Button>
+            </form>
+
+          </div>
+
+          {/* Footer Link */}
+          <div className="text-center">
             <div className="relative my-6">
               <div className="absolute inset-0 flex items-center">
                 <div className="w-full border-t border-slate-200" />
@@ -132,13 +144,12 @@ export default function LoginForm() {
                 <span className="px-2 bg-white text-slate-500">New here?</span>
               </div>
             </div>
+            
+            <Link href="/auth/signup" className="text-teal-700 font-bold hover:underline inline-flex items-center gap-1">
+               Create an account <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
 
-            <div className="text-center">
-              <Link href="/auth/signup" className="text-teal-700 font-bold hover:underline inline-flex items-center gap-1">
-                Create an account <ArrowRight className="w-4 h-4" />
-              </Link>
-            </div>
-          </form>
         </div>
       </div>
 

@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import GoogleAuthButton from "@/app/auth/google-button"
 
 // Icons
 import { 
@@ -17,7 +18,7 @@ import {
   MapPin, Phone, Mail, Lock
 } from "lucide-react"
 
-export function SignupForm() {
+export default function SignupForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   
@@ -247,8 +248,8 @@ export function SignupForm() {
     // Update Taxonomy if needed (Professionals only)
     if (role === 'professional' && selectedProfession === "Other") {
       await supabase.from('profession_taxonomy').insert({
-         sector: selectedSector,
-         profession: customProfession
+          sector: selectedSector,
+          profession: customProfession
       })
     }
 
@@ -281,9 +282,9 @@ export function SignupForm() {
     }
 
     // --- INSERT PROFILE ---
-const { error: profileError } = await supabase
-    .from('profiles')
-    .upsert(profileData)
+    const { error: profileError } = await supabase
+       .from('profiles')
+       .upsert(profileData)
 
     
     if (profileError) {
@@ -342,14 +343,27 @@ const { error: profileError } = await supabase
             <form onSubmit={onSubmit} className="space-y-6 animate-in fade-in slide-in-from-left-4 pb-10">
               
               {!isUpgrading && (
-                <div className="bg-slate-50 p-1 rounded-xl">
-                  <Tabs value={role} onValueChange={setRole} className="w-full">
-                    <TabsList className="grid w-full grid-cols-2 bg-transparent h-11 p-0">
-                      <TabsTrigger value="reviewer" className="gap-2 rounded-lg"><User className="w-4 h-4"/> Reviewer</TabsTrigger>
-                      <TabsTrigger value="professional" className="gap-2 rounded-lg"><Briefcase className="w-4 h-4"/> Professional</TabsTrigger>
-                    </TabsList>
-                  </Tabs>
-                </div>
+                <>
+                  <div className="bg-slate-50 p-1 rounded-xl">
+                    <Tabs value={role} onValueChange={setRole} className="w-full">
+                      <TabsList className="grid w-full grid-cols-2 bg-transparent h-11 p-0">
+                        <TabsTrigger value="reviewer" className="gap-2 rounded-lg"><User className="w-4 h-4"/> Reviewer</TabsTrigger>
+                        <TabsTrigger value="professional" className="gap-2 rounded-lg"><Briefcase className="w-4 h-4"/> Professional</TabsTrigger>
+                      </TabsList>
+                    </Tabs>
+                  </div>
+                  
+                  {/* 👇 CONDITIONAL GOOGLE BUTTON: Only shows if role is 'reviewer' */}
+                  {role === 'reviewer' && (
+                    <div className="relative">
+                      <GoogleAuthButton />
+                      <div className="relative flex items-center justify-center mt-6">
+                        <span className="absolute w-full h-px bg-slate-200"></span>
+                        <span className="relative bg-white px-3 text-xs text-slate-400 uppercase font-bold">Or continue with email</span>
+                      </div>
+                    </div>
+                  )}
+                </>
               )}
 
               {/* Avatar Upload */}
@@ -431,14 +445,14 @@ const { error: profileError } = await supabase
                   </div>
 
                   <div className="space-y-3 pt-2 border-t border-teal-200/50">
-                     <p className="text-xs font-bold text-teal-800 uppercase tracking-wider flex items-center gap-1"><Phone className="w-3 h-3"/> Contact & Social (Optional)</p>
-                     <Input placeholder="Phone Number (Public)" value={phoneNumber} onChange={e=>setPhoneNumber(e.target.value)} className="bg-white text-xs h-9" />
-                     <div className="grid grid-cols-2 gap-3">
-                        <Input placeholder="Website URL" value={website} onChange={e=>setWebsite(e.target.value)} className="bg-white text-xs h-9" />
-                        <Input placeholder="Instagram URL" value={insta} onChange={e=>setInsta(e.target.value)} className="bg-white text-xs h-9" />
-                     </div>
-                     <Input placeholder="LinkedIn URL" value={linkedin} onChange={e=>setLinkedin(e.target.value)} className="bg-white text-xs h-9" />
-                    <Input placeholder="Reddit URL" value={reddit} onChange={e=>setReddit(e.target.value)} className="bg-white text-xs h-9" />
+                      <p className="text-xs font-bold text-teal-800 uppercase tracking-wider flex items-center gap-1"><Phone className="w-3 h-3"/> Contact & Social (Optional)</p>
+                      <Input placeholder="Phone Number (Public)" value={phoneNumber} onChange={e=>setPhoneNumber(e.target.value)} className="bg-white text-xs h-9" />
+                      <div className="grid grid-cols-2 gap-3">
+                         <Input placeholder="Website URL" value={website} onChange={e=>setWebsite(e.target.value)} className="bg-white text-xs h-9" />
+                         <Input placeholder="Instagram URL" value={insta} onChange={e=>setInsta(e.target.value)} className="bg-white text-xs h-9" />
+                      </div>
+                      <Input placeholder="LinkedIn URL" value={linkedin} onChange={e=>setLinkedin(e.target.value)} className="bg-white text-xs h-9" />
+                     <Input placeholder="Reddit URL" value={reddit} onChange={e=>setReddit(e.target.value)} className="bg-white text-xs h-9" />
                   </div>
                 </div>
               )}
