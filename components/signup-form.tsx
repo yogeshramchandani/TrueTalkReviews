@@ -63,28 +63,13 @@ export default function SignupForm() {
   const [selectedProfession, setSelectedProfession] = useState("")
   const [customProfession, setCustomProfession] = useState("")
 
-  // 1. Check if User is ALREADY Logged In
-  useEffect(() => {
-    async function checkSession() {
-      const { data: { session } } = await supabase.auth.getSession()
-      if (session) {
-        setIsUpgrading(true)
-        setCurrentUserId(session.user.id)
-        setRole("professional") 
-        
-        const meta = session.user.user_metadata
-        setEmail(session.user.email || "")
-        setFullName(meta.full_name || "")
-        setUsername(meta.username || "")
-      }
-    }
-    checkSession()
-  }, [])
-
-  // 2. Load Taxonomy
   useEffect(() => {
     async function loadTaxonomy() {
-      const { data } = await supabase.from('profession_taxonomy').select('*')
+      const { data, error } = await supabase.from('profession_taxonomy').select('*')
+      
+      // Add this line to debug
+      console.log("Taxonomy Data:", data, "Error:", error) 
+
       if (data) {
         setTaxonomy(data)
         const sectors = Array.from(new Set(data.map((item: any) => item.sector))) as string[]
@@ -92,6 +77,39 @@ export default function SignupForm() {
       }
     }
     loadTaxonomy()
+  }, [])
+
+  
+  useEffect(() => {
+    async function checkSession() {
+      const { data: { session } } = await supabase.auth.getSession()
+      
+      if (session) {
+        setIsUpgrading(true)
+        setCurrentUserId(session.user.id)
+        setRole("professional") 
+        setEmail(session.user.email || "")
+
+        // --- NEW: Fetch from Database to get the correct Username ---
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('username, full_name') // Fetch username from DB
+          .eq('id', session.user.id)
+          .single()
+
+        if (profile) {
+           // Success! We found the username created by the trigger
+           setUsername(profile.username || "") 
+           setFullName(profile.full_name || "")
+        } else {
+           // Fallback: If no DB profile yet, use Google Metadata
+           const meta = session.user.user_metadata
+           setFullName(meta.full_name || "")
+           setUsername(meta.username || "")
+        }
+      }
+    }
+    checkSession()
   }, [])
 
   // 3. Update Roles based on Sector

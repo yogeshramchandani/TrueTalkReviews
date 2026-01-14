@@ -190,11 +190,16 @@ const RedditIcon = ({ className }: { className?: string }) => (
               {/* Avatar */}
               <div className="relative">
                 <Avatar className="h-28 w-28 md:h-36 md:w-36 border-4 border-white shadow-lg bg-slate-100">
-                  <AvatarImage src={profile.avatar_url} className="object-cover" />
-                  <AvatarFallback className="text-4xl font-bold text-teal-800 bg-teal-50">
-                    {profile.full_name?.charAt(0).toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
+  {/* 👇 Use AvatarImage component, NOT <img> */}
+  <AvatarImage 
+    src={`${profile.avatar_url}?v=${new Date().getTime()}`} 
+    className="object-cover" // Ensures the image fits the circle perfectly
+  />
+  
+  <AvatarFallback className="text-4xl font-bold text-teal-800 bg-teal-50">
+    {profile.full_name?.charAt(0).toUpperCase()}
+  </AvatarFallback>
+</Avatar>
               </div>
 
               {/* Profile Info */}

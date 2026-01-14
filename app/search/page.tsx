@@ -210,8 +210,11 @@ function SearchResults() {
                   {/* Top Section */}
                   <div className="flex items-start gap-4">
                     <Avatar className="h-16 w-16 border-2 border-slate-100 group-hover:border-teal-100 transition-colors shadow-sm">
-                      <AvatarImage src={profile.avatar_url} className="object-cover" />
-                      <AvatarFallback className="bg-teal-50 text-teal-800 font-bold text-xl">
+<img 
+  // Adding ?v=... forces the browser to ignore the cache
+  src={`${profile.avatar_url}?v=${new Date().getTime()}`} 
+  alt="Profile" 
+/>                      <AvatarFallback className="bg-teal-50 text-teal-800 font-bold text-xl">
                         {profile.full_name?.charAt(0).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
