@@ -2,7 +2,7 @@ import { MetadataRoute } from 'next'
 import { createClient } from '@supabase/supabase-js'
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = 'https://true-talk-reviews.vercel.app'
+  const baseUrl = 'https://truvouch.vercel.app'
 
   // 1. Define Static Routes (These will ALWAYS work)
   const staticRoutes = [

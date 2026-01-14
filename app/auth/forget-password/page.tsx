@@ -43,7 +43,7 @@ export default function ForgotPassword() {
               <Link href="/" className="inline-block mb-6">
                  <div className="flex items-center gap-2 justify-center lg:justify-start">
                    <div className="bg-teal-900 text-white p-2 rounded-lg font-bold text-xl">TR</div>
-                   <span className="text-teal-900 text-2xl font-bold tracking-tight">TrueTalk</span>
+                   <span className="text-teal-900 text-2xl font-bold tracking-tight">TruVouch</span>
                  </div>
               </Link>
               <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight">

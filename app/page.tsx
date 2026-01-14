@@ -6,16 +6,15 @@ import { supabase } from "@/lib/supabaseClient"
 import { Button } from "@/components/ui/button"
 import { 
   ShieldCheck, Star, TrendingUp, Loader2,
-  Code, Stethoscope, Hammer, Laptop, Dumbbell, Home, Store, UserCircle,
+  Code, Stethoscope, Laptop, Home, 
   Briefcase, Gavel, PenTool, GraduationCap, Truck, Music, PawPrint
 } from "lucide-react"
 
 // Import our new modular components
 import { Navbar } from "@/components/navbar"
 import { Footer } from "@/components/footer"
-import { HeroButtons } from "@/components/hero-buttons"
 
-// SECTOR ICON MAP (Maps Database Sector Names to Icons)
+// SECTOR ICON MAP
 const sectorIcons: Record<string, any> = {
   "Technology": Code,
   "Freelancers & Tech": Laptop,
@@ -31,7 +30,7 @@ const sectorIcons: Record<string, any> = {
   "default": Briefcase
 }
 
-// Background Colors Map for variety
+// Background Colors Map
 const bgColors = [
   { text: "text-blue-600", bg: "bg-blue-50" },
   { text: "text-red-500", bg: "bg-red-50" },
@@ -57,15 +56,12 @@ export default function LandingPage() {
         if (error) throw error
 
         if (data) {
-          // 1. Get unique sectors
-          // 2. Custom Sort: Move "Other" to the bottom, sort rest alphabetically
           const uniqueSectors = Array.from(new Set(data.map(item => item.sector))).sort((a, b) => {
-            if (a === "Other") return 1; // "Other" goes after
-            if (b === "Other") return -1; // "Other" goes after
-            return a.localeCompare(b);    // Everything else A-Z
+            if (a === "Other") return 1;
+            if (b === "Other") return -1;
+            return a.localeCompare(b);
           })
           
-          // Map to UI format
           const formattedSectors = uniqueSectors.map((sectorName, index) => {
             const colorTheme = bgColors[index % bgColors.length]
             return {
@@ -89,7 +85,7 @@ export default function LandingPage() {
   }, [])
 
   return (
-    <div className="min-h-screen bg-white font-sans text-slate-900 flex flex-col">
+    <div className="min-h-screen bg-white font-sans text-slate-900 flex flex-col selection:bg-teal-100">
       
       {/* 1. GLOBAL NAVBAR */}
       <Navbar />
@@ -97,39 +93,106 @@ export default function LandingPage() {
       <main className="flex-1">
         
         {/* 2. HERO SECTION */}
-        <div className="relative bg-slate-50 pt-20 pb-28 overflow-hidden">
-          {/* Background blobs */}
-          <div className="absolute top-0 right-0 -mr-20 -mt-20 w-64 h-64 md:w-96 md:h-96 bg-teal-100 rounded-full blur-3xl opacity-50"></div>
-          <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-64 h-64 md:w-96 md:h-96 bg-orange-100 rounded-full blur-3xl opacity-50"></div>
+        {/* Added: px-4 sm:px-6 lg:px-8 for safe margins */}
+        <section className="relative px-4 sm:px-6 lg:px-8 py-12 lg:py-24 overflow-hidden">
+          <div className="container mx-auto">
+            <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+              
+              {/* LEFT COLUMN: Text Content */}
+              {/* Added: text-center lg:text-left so it looks good on mobile */}
+              <div className="space-y-8 max-w-2xl relative z-10 mx-auto lg:mx-0 text-center lg:text-left">
+                
+                {/* Responsive Heading Size */}
+                <h1 className="text-4xl sm:text-5xl lg:text-7xl font-extrabold text-slate-900 tracking-tight leading-[1.1]">
+                  Unleash Your <br />
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-800 to-teal-500">Reputation</span> with
+                  Verified Reviews
+                </h1>
+                
+                <p className="text-lg sm:text-xl text-slate-600 leading-relaxed max-w-lg mx-auto lg:mx-0">
+                  Elevate your professional trust to new heights. Join the platform designed to inspire confidence, verify excellence, and empower your career journey.
+                </p>
 
-          <div className="container mx-auto px-4 text-center relative z-10">
-            
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 md:px-4 md:py-2 rounded-full bg-white border border-slate-200 text-slate-600 text-xs md:text-sm font-medium mb-8 shadow-sm animate-fade-in-up">
-              <span className="flex gap-1">
-                {[1,2,3].map(i => <Star key={i} className="w-3 h-3 md:w-4 md:h-4 text-orange-500 fill-orange-500" />)}
-              </span>
-              <span>100% Verified Professionals</span>
+                {/* Stats Row */}
+                <div className="flex justify-center lg:justify-start items-center gap-8 sm:gap-12 pt-4">
+                  <div>
+                    <h3 className="text-2xl sm:text-3xl font-bold text-slate-900">500+</h3>
+                    <p className="text-xs sm:text-sm font-medium text-slate-500 mt-1">Active Pros</p>
+                  </div>
+                  <div className="w-px h-10 sm:h-12 bg-slate-200"></div>
+                  <div>
+                    <h3 className="text-2xl sm:text-3xl font-bold text-slate-900">10k+</h3>
+                    <p className="text-xs sm:text-sm font-medium text-slate-500 mt-1">Verified Reviews</p>
+                  </div>
+                </div>
+
+                {/* Buttons: Full width on mobile, auto on desktop */}
+                <div className="flex flex-col sm:flex-row gap-4 pt-4 justify-center lg:justify-start">
+                  <Link href="/auth/signup?role=professional" className="w-full sm:w-auto">
+                    <Button size="lg" className="h-14 px-8 text-lg bg-teal-900 hover:bg-teal-800 text-white font-bold rounded-none w-full">
+                      List My Business
+                    </Button>
+                  </Link>
+                  <Link href="/categories" className="w-full sm:w-auto">
+  <Button 
+    size="lg" 
+    variant="outline" 
+    className="h-14 px-8 text-lg border-2 border-slate-900 text-slate-900 hover:bg-slate-800 hover:text-white font-bold rounded-none w-full transition-all duration-300"
+  >
+    Explore Services
+  </Button>
+</Link>
+                </div>
+              </div>
+
+              {/* RIGHT COLUMN: CSS Geometric Art */}
+              {/* Hidden on mobile/tablet (lg:block) to prevent clutter on small screens */}
+              <div className="relative w-full aspect-square max-w-[500px] xl:max-w-[600px] mx-auto lg:ml-auto hidden lg:block">
+                <div className="grid grid-cols-2 gap-4 w-full h-full">
+                  
+                  {/* Column 1 */}
+                  <div className="flex flex-col gap-4">
+                    <div className="flex-1 bg-teal-900 rounded-tl-[100px]"></div>
+                    <div className="aspect-square border-[16px] border-slate-900 bg-transparent flex items-center justify-center">
+                      <div className="w-1/2 h-1/2 bg-white"></div>
+                    </div>
+                    <div className="flex-1 bg-slate-900 rounded-bl-[100px]"></div>
+                  </div>
+
+                  {/* Column 2 */}
+                  <div className="flex flex-col gap-4 relative">
+                    <div className="absolute top-0 right-0 w-full h-[66%] bg-orange-400 rounded-tr-[200px] rounded-br-[200px] z-10"></div>
+                    <div className="flex-1 grid grid-rows-2 gap-4">
+                      <div className="relative flex items-center justify-center">
+                        <div className="w-[70%] h-[70%] bg-teal-700 rotate-45 transform"></div>
+                      </div>
+                      <div className="bg-slate-700 rounded-full z-20 relative border-4 border-white"></div>
+                    </div>
+                    <div className="flex-1 bg-slate-100 rounded-br-[100px] relative overflow-hidden">
+                      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-0 h-0 
+                      border-l-[50px] border-l-transparent
+                      border-r-[50px] border-r-transparent
+                      border-b-[100px] border-b-slate-600">
+                      </div>
+                      <div className="absolute bottom-1 left-1/2 -translate-x-1/2 w-0 h-0 
+                      border-l-[30px] border-l-transparent
+                      border-r-[30px] border-r-transparent
+                      border-b-[60px] border-b-white">
+                      </div>
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+
             </div>
-
-            <h1 className="text-4xl sm:text-5xl md:text-7xl font-extrabold text-slate-900 tracking-tight mb-6 leading-tight">
-              Real Experiences. <br/>
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-700 to-teal-500">True Talk.</span>
-            </h1>
-            
-            <p className="text-lg md:text-xl text-slate-500 max-w-2xl mx-auto mb-10 leading-relaxed px-4">
-              Find trusted professionals based on honest feedback. 
-              No fake ratings, just transparent reviews from the community.
-            </p>
-
-            {/* ACTION BUTTONS (Dynamic based on login) */}
-            <HeroButtons />
-            
           </div>
-        </div>
+        </section>
 
-        {/* 3. "What are you looking for?" SECTION (DYNAMIC SECTORS) */}
+        {/* 3. SECTORS SECTION */}
         <section className="py-12 bg-white border-b border-slate-100">
-          <div className="container mx-auto px-4">
+          {/* Safe Margins */}
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             <h2 className="text-2xl font-bold text-slate-900 mb-8 text-center md:text-left">What are you looking for?</h2>
             
             {loading ? (
@@ -137,21 +200,21 @@ export default function LandingPage() {
             ) : sectors.length === 0 ? (
                <div className="text-center text-slate-400 py-10">No sectors found.</div>
             ) : (
-              /* Scrollable Container */
+              // Scrollbar hide utility for clean mobile scrolling
               <div className="flex flex-wrap md:flex-nowrap justify-center md:justify-start gap-4 md:gap-6 overflow-x-auto pb-4 scrollbar-hide">
                 {sectors.map((cat, i) => (
                   <Link 
-    href={`/categories?sector=${encodeURIComponent(cat.name)}`} 
-    key={i} 
-    className="group min-w-35 md:min-w-40 shrink-0"
-  >
-    <div className="flex flex-col items-center p-6 rounded-2xl bg-slate-50 border border-slate-100 hover:shadow-lg hover:border-teal-200 transition-all cursor-pointer h-full">
-      <div className={`w-12 h-12 rounded-full ${cat.bg} ${cat.color} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
-        <cat.icon className="w-6 h-6" />
-      </div>
-      <span className="font-semibold text-slate-700 group-hover:text-teal-700 text-center line-clamp-1">{cat.name}</span>
-    </div>
-  </Link>
+                    href={`/categories?sector=${encodeURIComponent(cat.name)}`} 
+                    key={i} 
+                    className="group min-w-[140px] md:min-w-[160px] shrink-0"
+                  >
+                    <div className="flex flex-col items-center p-6 rounded-2xl bg-slate-50 border border-slate-100 hover:shadow-lg hover:border-teal-200 transition-all cursor-pointer h-full">
+                      <div className={`w-12 h-12 rounded-full ${cat.bg} ${cat.color} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
+                        <cat.icon className="w-6 h-6" />
+                      </div>
+                      <span className="font-semibold text-slate-700 group-hover:text-teal-700 text-center line-clamp-1 text-sm md:text-base">{cat.name}</span>
+                    </div>
+                  </Link>
                 ))}
               </div>
             )}
@@ -160,14 +223,14 @@ export default function LandingPage() {
 
         {/* 4. VALUE PROPOSITION */}
         <section className="py-16 md:py-24 bg-white">
-          <div className="container mx-auto px-4">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center max-w-3xl mx-auto mb-12 md:mb-16">
-              <h2 className="text-3xl font-bold text-slate-900 mb-4">Why users trust <span className="text-teal-700">TrueTalk</span></h2>
+              <h2 className="text-3xl font-bold text-slate-900 mb-4">Why users trust <span className="text-teal-700">TruVouch</span></h2>
               <p className="text-slate-500 text-lg">We've built a platform where honesty is the only currency.</p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-              {/* Feature 1 */}
+              {/* Feature Cards */}
               <div className="p-8 rounded-2xl bg-teal-50 border border-teal-100 hover:shadow-lg transition-all">
                 <div className="w-12 h-12 bg-teal-100 rounded-xl flex items-center justify-center mb-6">
                   <ShieldCheck className="w-6 h-6 text-teal-700" />
@@ -178,7 +241,6 @@ export default function LandingPage() {
                 </p>
               </div>
 
-              {/* Feature 2 */}
               <div className="p-8 rounded-2xl bg-orange-50 border border-orange-100 hover:shadow-lg transition-all">
                 <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center mb-6">
                   <Star className="w-6 h-6 text-orange-600" />
@@ -189,7 +251,6 @@ export default function LandingPage() {
                 </p>
               </div>
 
-              {/* Feature 3 */}
               <div className="p-8 rounded-2xl bg-slate-50 border border-slate-100 hover:shadow-lg transition-all">
                 <div className="w-12 h-12 bg-white border border-slate-200 rounded-xl flex items-center justify-center mb-6">
                   <TrendingUp className="w-6 h-6 text-slate-700" />
@@ -205,20 +266,22 @@ export default function LandingPage() {
 
         {/* 5. POPULAR THIS WEEK */}
         <section className="py-16 md:py-24 bg-slate-50 border-b border-slate-200">
-          <div className="container mx-auto px-4">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             
-            <div className="flex flex-col sm:flex-row justify-between items-center md:items-end mb-12 max-w-6xl mx-auto gap-6 text-center md:text-left">
+            {/* Header: Stack on mobile, Row on desktop */}
+            <div className="flex flex-col md:flex-row justify-between items-center md:items-end mb-12 max-w-6xl mx-auto gap-6 text-center md:text-left">
               <div>
                 <h2 className="text-3xl font-bold text-slate-900">Popular this Week</h2>
                 <p className="text-slate-500 mt-2">Browse top-rated professionals in your city.</p>
               </div>
               <Link href="/categories" className="w-full md:w-auto">
-                <Button className="h-12 px-6 bg-orange-500 hover:bg-orange-600 text-white text-lg font-bold shadow-lg shadow-orange-500/20 w-full md:w-auto transition-transform hover:scale-105">
+                <Button className="h-12 px-6 bg-orange-500 hover:bg-orange-600 text-white text-lg font-bold shadow-lg shadow-orange-500/20 w-full md:w-auto transition-transform hover:scale-105 rounded-none">
                   View all Categories
                 </Button>
               </Link>
             </div>
 
+            {/* Grid: 1 col mobile, 2 col tablet, 4 col desktop */}
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 max-w-6xl mx-auto">
               {[
                 { title: "Home Services", img: "https://cdn.pixabay.com/photo/2025/06/16/12/52/cleaning-services-9663247_1280.jpg" },

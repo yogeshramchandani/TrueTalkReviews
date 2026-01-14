@@ -317,9 +317,9 @@ export default function SignupForm() {
           {/* Header */}
           <div className="text-center">
             <Link href="/" className="flex items-center justify-center gap-2 mb-6 hover:opacity-80 transition-opacity">
-               <img src="/logo.png" alt="TrueTalk Logo" className="h-9 w-auto object-contain" />
+               <img src="/logo.png" alt="TruVouch Logo" className="h-9 w-auto object-contain" />
                <span className="font-bold text-teal-900 text-xl tracking-tight sm:block">
-                 TrueTalk<span className="font-bold text-transparent text-xl bg-clip-text bg-gradient-to-r from-teal-700 to-teal-500"> Reviews</span>
+                 TruVouch
                </span>
             </Link>
             

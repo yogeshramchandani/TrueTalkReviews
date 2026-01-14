@@ -7,16 +7,16 @@ const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
   // 1. Browser Tab Title
-  title: "TrueTalk Reviews - Build Trust with Real Reviews",
+  title: "TruVouch - Build Trust with Real Reviews",
   
   // 2. Search Engine Description
   description: "Create a public profile and let real clients vouch for your services. Grow your business with authentic reviews.",
   
   // 3. WhatsApp / Facebook / LinkedIn Preview Card
   openGraph: {
-    title: "TrueTalk Reviews - Build Trust with Real Reviews",
+    title: "TruVouch - Build Trust with Real Reviews",
     description: "Create a public profile and let real clients vouch for your services. Grow your business with authentic reviews.",
-    siteName: "TrueTalk Reviews",
+    siteName: "TruVouch",
     images: [
       {
         url: "/logo.png", // This uses your logo for the link preview image

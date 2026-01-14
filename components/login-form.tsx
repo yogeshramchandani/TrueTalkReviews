@@ -61,8 +61,8 @@ export default function LoginForm() {
           <div className="text-center lg:text-left">
             <Link href="/" className="inline-block mb-6">
                <div className="flex items-center gap-2 justify-center lg:justify-start">
-                 <div className="bg-teal-900 text-white p-2 rounded-lg font-bold text-xl">TR</div>
-                 <span className="text-teal-900 text-2xl font-bold tracking-tight">TrueTalk</span>
+                 <div className="bg-teal-900 text-white p-2 rounded-lg font-bold text-xl">TV</div>
+                 <span className="text-teal-900 text-2xl font-bold tracking-tight">TruVouch</span>
                </div>
             </Link>
             <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight">
@@ -169,7 +169,7 @@ export default function LoginForm() {
              {[1,2,3,4,5].map(i => <Star key={i} className="w-5 h-5 fill-orange-400 text-orange-400" />)}
           </div>
           <blockquote className="text-3xl font-medium leading-tight mb-8">
-            "Since joining TrueTalk, my freelance business has grown by 300%. The verified reviews give clients total confidence."
+            "Since joining TruVouch, my freelance business has grown by 300%. The verified reviews give clients total confidence."
           </blockquote>
           <div className="flex items-center gap-4">
              <div className="h-12 w-12 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center font-bold text-lg border border-white/30">

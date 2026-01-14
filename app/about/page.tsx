@@ -5,11 +5,11 @@ import type { Metadata } from "next"
 
 // 👇 1. SEO METADATA (Crucial for Google)
 export const metadata: Metadata = {
-  title: "About Us | TrueTalk Reviews",
-  description: "TrueTalk is the verified trust layer for the internet. We help Astrologers, Consultants, and Professionals showcase real, verified client reviews.",
+  title: "About Us | TruVouch",
+  description: "TruVouch is the verified trust layer for the internet. We help Astrologers, Consultants, and Professionals showcase real, verified client reviews.",
   openGraph: {
     title: "About Us - Building Trust for Professionals",
-    description: "No more fake screenshots. TrueTalk provides a dedicated dashboard for verified reviews.",
+    description: "No more fake screenshots. TruVouch provides a dedicated dashboard for verified reviews.",
     type: "website",
   }
 }
@@ -35,7 +35,7 @@ export default function AboutPage() {
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-teal-200">Verified Trust Layer.</span>
           </h1>
           <p className="text-lg md:text-xl text-slate-400 max-w-2xl mx-auto leading-relaxed">
-            TrueTalk is the dedicated platform for professionals to showcase real, verified reviews and for clients to find services they can actually trust.
+            TruVouch is the dedicated platform for professionals to showcase real, verified reviews and for clients to find services they can actually trust.
           </p>
         </div>
       </section>
@@ -59,7 +59,7 @@ export default function AboutPage() {
             </div>
             
             <div className="space-y-6">
-              <h2 className="text-3xl font-bold text-slate-900">Why we built TrueTalk</h2>
+              <h2 className="text-3xl font-bold text-slate-900">Why we built TruVouch</h2>
               <p className="text-lg text-slate-600 leading-relaxed">
                 We noticed a huge gap in the service industry—especially for freelancers, consultants, and niche experts (like Astrologers, Coaches, and Tutors). 
               </p>

@@ -195,7 +195,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <div className="h-8 w-8 bg-teal-800 rounded-lg flex items-center justify-center text-white font-bold text-lg">
               T
             </div>
-            <span className="text-xl font-bold text-slate-800 tracking-tight">TrueTalk<span className="text-teal-600">.</span></span>
+            <span className="text-xl font-bold text-slate-800 tracking-tight">TruVouch<span className="text-teal-600">.</span></span>
         </div>
 
         <nav className="flex-1 space-y-1">

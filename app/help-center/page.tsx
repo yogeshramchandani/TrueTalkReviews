@@ -32,7 +32,7 @@ export default function HelpCenterPage() {
            <div className="space-y-4">
               {[
                 "How do I edit my review?",
-                "Is TrueTalkReviews free to use?",
+                "Is TruVouch free to use?",
                 "How do you verify professionals?",
                 "Can I delete my account?"
               ].map((q, i) => (

@@ -45,8 +45,8 @@ export function Footer() {
           {/* Brand Column */}
           <div className="space-y-4">
             <div className="flex items-center gap-2 mb-4">
-              <img src="/logo.png" alt="TrueTalkReviews Logo" className="h-8 w-auto object-contain brightness-0 invert" />
-              <span className="font-bold text-white text-xl tracking-tight">TrueTalkReviews</span>
+              <img src="/logo.png" alt="TruVouch Logo" className="h-8 w-auto object-contain brightness-0 invert" />
+              <span className="font-bold text-white text-xl tracking-tight">TruVouch</span>
             </div>
             <p className="text-slate-400 text-sm leading-relaxed">
               Connecting you with the most trusted professionals in your area. Real reviews, real people.
@@ -108,7 +108,7 @@ export function Footer() {
         {/* Bottom Bar */}
         <div className="pt-8 border-t border-slate-800 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-slate-500">
           <div>
-            &copy; 2026 TrueTalkReviews. All rights reserved.
+            &copy; 2026 TruVouch. All rights reserved.
           </div>
           <div className="flex gap-6">
             <Link href="/safety-guidelines" className="hover:text-white transition-colors">Privacy Policy</Link>

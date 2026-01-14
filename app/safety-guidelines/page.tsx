@@ -7,7 +7,7 @@ export default function SafetyPage() {
 
         <div className="prose prose-slate max-w-none">
            <p className="lead text-xl text-slate-700 mb-8">
-             TrueTalkReviews is committed to being a safe platform for honest feedback. Our guidelines help ensure a trusted environment for everyone.
+             TruVouch is committed to being a safe platform for honest feedback. Our guidelines help ensure a trusted environment for everyone.
            </p>
 
            <section className="mb-10">
