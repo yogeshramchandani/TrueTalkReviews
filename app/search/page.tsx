@@ -6,9 +6,9 @@ import { supabase } from "@/lib/supabaseClient"
 import Link from "next/link"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input" // Added Input
+import { Input } from "@/components/ui/input" 
 import { Card } from "@/components/ui/card"
-import { MapPin, Star, ShieldCheck, Loader2, ArrowLeft, Frown, Search } from "lucide-react" // Added Search
+import { MapPin, Star, ShieldCheck, Loader2, ArrowLeft, Frown, Search } from "lucide-react"
 
 function SearchResults() {
   const searchParams = useSearchParams()
@@ -176,7 +176,7 @@ function SearchResults() {
                       </div>
                     ))}
                   </div>
-                )}
+               )}
              </div>
            </div>
         </div>
@@ -210,11 +210,11 @@ function SearchResults() {
                   {/* Top Section */}
                   <div className="flex items-start gap-4">
                     <Avatar className="h-16 w-16 border-2 border-slate-100 group-hover:border-teal-100 transition-colors shadow-sm">
-<img 
-  // Adding ?v=... forces the browser to ignore the cache
-  src={`${profile.avatar_url}?v=${new Date().getTime()}`} 
-  alt="Profile" 
-/>                      <AvatarFallback className="bg-teal-50 text-teal-800 font-bold text-xl">
+                      <AvatarImage 
+                        src={profile.avatar_url ? `${profile.avatar_url}?v=${new Date().getTime()}` : undefined} 
+                        className="object-cover"
+                      />
+                      <AvatarFallback className="bg-teal-50 text-teal-800 font-bold text-xl">
                         {profile.full_name?.charAt(0).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>

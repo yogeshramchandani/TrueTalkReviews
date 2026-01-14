@@ -4,6 +4,7 @@ import Link from "next/link"
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabaseClient"
 import { Button } from "@/components/ui/button"
+import Image from "next/image"
 import { 
   ShieldCheck, Star, TrendingUp, Loader2,
   Code, Stethoscope, Laptop, Home, 
@@ -13,7 +14,8 @@ import {
 // Import our new modular components
 import { Navbar } from "@/components/navbar"
 import { Footer } from "@/components/footer"
-
+// Add this near your other useState hooks
+  
 // SECTOR ICON MAP
 const sectorIcons: Record<string, any> = {
   "Technology": Code,
@@ -45,7 +47,35 @@ const bgColors = [
 export default function LandingPage() {
   const [sectors, setSectors] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+// Inside LandingPage component
+  const [activeId, setActiveId] = useState(0)
 
+  const featuredCategories = [
+    { 
+      id: 0,
+      title: "Home Services", 
+      desc: "Cleaning, Moving & Repairs", 
+      img: "https://cdn.pixabay.com/photo/2025/06/16/12/52/cleaning-services-9663247_1280.jpg",
+    },
+    { 
+      id: 1,
+      title: "Technology", 
+      desc: "Development & IT Support", 
+      img: "https://images.unsplash.com/photo-1573164713988-8665fc963095?auto=format&fit=crop&w=600&q=80",
+    },
+    { 
+      id: 2,
+      title: "Professional Services", 
+      desc: "Design, Photo & Music", 
+      img: "https://cdn.pixabay.com/photo/2017/05/04/16/37/meeting-2284501_1280.jpg",
+    },
+    { 
+      id: 3,
+      title: "Health & Fitness", 
+      desc: "Trainers & Nutritionists", 
+      img: "https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?auto=format&fit=crop&w=600&q=80",
+    },
+  ]
   useEffect(() => {
     async function fetchSectors() {
       try {
@@ -264,45 +294,88 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* 5. POPULAR THIS WEEK */}
-        <section className="py-16 md:py-24 bg-slate-50 border-b border-slate-200">
+       {/* 5. POPULAR THIS WEEK (Interactive Split Layout) */}
+        {/* 5. POPULAR THIS WEEK (Elastic Accordion) */}
+        <section className="py-16 md:py-24 bg-white border-b border-slate-100">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             
-            {/* Header: Stack on mobile, Row on desktop */}
-            <div className="flex flex-col md:flex-row justify-between items-center md:items-end mb-12 max-w-6xl mx-auto gap-6 text-center md:text-left">
-              <div>
-                <h2 className="text-3xl font-bold text-slate-900">Popular this Week</h2>
-                <p className="text-slate-500 mt-2">Browse top-rated professionals in your city.</p>
-              </div>
-              <Link href="/categories" className="w-full md:w-auto">
-                <Button className="h-12 px-6 bg-orange-500 hover:bg-orange-600 text-white text-lg font-bold shadow-lg shadow-orange-500/20 w-full md:w-auto transition-transform hover:scale-105 rounded-none">
-                  View all Categories
-                </Button>
-              </Link>
+            <div className="text-center mb-10 md:mb-16">
+              <h2 className="text-3xl md:text-4xl font-extrabold text-slate-900">Trending Now</h2>
+              <p className="text-slate-500 mt-2">Tap to explore the most booked services.</p>
             </div>
 
-            {/* Grid: 1 col mobile, 2 col tablet, 4 col desktop */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 max-w-6xl mx-auto">
-              {[
-                { title: "Home Services", img: "https://cdn.pixabay.com/photo/2025/06/16/12/52/cleaning-services-9663247_1280.jpg" },
-                { title: "Tech Experts", img: "https://images.unsplash.com/photo-1573164713988-8665fc963095?auto=format&fit=crop&w=600&q=80" },
-                { title: "Creative", img: "https://cdn.pixabay.com/photo/2023/08/20/17/00/crochet-8202792_1280.jpg" },
-                { title: "Health & Fitness", img: "https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?auto=format&fit=crop&w=600&q=80" },
-              ].map((cat, i) => (
-                <div key={i} className="group relative overflow-hidden rounded-2xl aspect-[4/5] cursor-pointer shadow-md hover:shadow-xl transition-all duration-300">
-                  <div className="absolute inset-0 bg-slate-900/20 group-hover:bg-teal-900/40 transition-colors z-10" />
-                  <img 
+            {/* THE ELASTIC GRID */}
+            {/* Flex-col on mobile (vertical), Flex-row on desktop (horizontal) */}
+            <div className="flex flex-col md:flex-row gap-4 h-[600px] md:h-[500px] w-full max-w-7xl mx-auto">
+              
+              {featuredCategories.map((cat) => (
+                <div 
+                  key={cat.id}
+                  onClick={() => setActiveId(cat.id)} // Click/Tap to expand
+                  onMouseEnter={() => setActiveId(cat.id)} // Hover to expand (Desktop)
+                  className={`
+                    relative rounded-3xl overflow-hidden cursor-pointer transition-all duration-500 ease-in-out shadow-md
+                    ${activeId === cat.id 
+                      ? "flex-3 md:flex-3" // Grow big when active
+                      : "flex-1 md:flex-1" // Shrink when inactive
+                    }
+                  `}
+                >
+                  {/* Background Image */}
+                  <Image 
                     src={cat.img} 
-                    alt={cat.title} 
-                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                    alt={cat.title}
+                    fill
+                    priority={cat.id === 0}
+                    sizes="(max-width: 768px) 100vw, 33vw"
+                    className={`object-cover transition-transform duration-700 ${activeId === cat.id ? "scale-100" : "scale-125 opacity-80"}`}
                   />
-                  <div className="absolute bottom-0 left-0 p-6 z-20 w-full bg-gradient-to-t from-slate-900 via-slate-900/80 to-transparent">
-                    <h3 className="text-white font-bold text-xl translate-y-2 group-hover:translate-y-0 transition-transform duration-300">{cat.title}</h3>
-                    <div className="h-1 w-12 bg-orange-500 mt-3 group-hover:w-full transition-all duration-500 opacity-0 group-hover:opacity-100"></div>
+                  
+                  {/* Dark Gradient Overlay */}
+                  <div className={`absolute inset-0 bg-black/30 transition-colors duration-500 ${activeId === cat.id ? "bg-black/20" : "bg-black/60"}`} />
+
+                  {/* Content Position */}
+                  {/* We rotate text on desktop when inactive to save space */}
+                  <div className={`
+                    absolute bottom-0 left-0 w-full p-6 md:p-8 flex flex-col justify-end h-full
+                    ${activeId !== cat.id ? "items-center md:items-start" : "items-start"}
+                  `}>
+                    
+                    {/* The Badge (Only visible when active) */}
+                    <div className={`
+                      mb-auto ml-auto bg-white/20 backdrop-blur-md border border-white/30 text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider
+                      transition-all duration-500 delay-100
+                      ${activeId === cat.id ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-4 hidden md:block"}
+                    `}>
+                      Popular
+                    </div>
+
+                    {/* Title & Desc */}
+                    <div className={`transition-all duration-500 ${activeId !== cat.id && "md:-rotate-90 md:mb-25 md:whitespace-nowrap"}`}>
+                      <h3 className={`font-bold text-white leading-tight ${activeId === cat.id ? "text-2xl md:text-3xl mb-9" : "text-xl md:text-2xl"}`}>
+                        {cat.title}
+                      </h3>
+                      
+                      <div className={`
+                        overflow-hidden transition-all duration-500 ease-in-out
+                        ${activeId === cat.id ? "max-h-20 opacity-100 mt-2" : "max-h-0 opacity-0"}
+                      `}>
+                        <p className="text-slate-100 text-sm md:text-base font-medium">
+                          {cat.desc}
+                        </p>
+                        <Link href={`/categories?sector=${encodeURIComponent(cat.title)}`}>
+                          <Button size="sm" className="mt-4 bg-white text-slate-900 hover:bg-teal-50 border-none font-bold">
+                            View Pros
+                          </Button>
+                        </Link>
+                      </div>
+                    </div>
+
                   </div>
                 </div>
               ))}
             </div>
+
           </div>
         </section>
       </main>
