@@ -3,7 +3,7 @@ import { Inter } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import "./globals.css"
 import { GoogleAnalytics } from '@next/third-parties/google'// Initialize the font
-const inter = Inter({ subsets: ["latin"] })
+const inter = Inter({ subsets: ["latin"], display: 'swap', })
 
 export const metadata: Metadata = {
   // 1. Browser Tab Title
