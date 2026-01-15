@@ -38,7 +38,7 @@ export function Footer() {
   }
 
   return (
-    <footer className="bg-slate-900 text-slate-300 border-t border-slate-800">
+    <footer className="bg-slate-900 text-slate-200 border-t border-slate-800">
       <div className="container mx-auto px-4 py-16">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-12">
           
@@ -78,7 +78,7 @@ export function Footer() {
           {/* Newsletter Logic */}
           <div>
             <h4 className="text-white font-bold mb-6">Stay Updated</h4>
-            <p className="text-xs text-slate-500 mb-4">Get the latest updates and offers.</p>
+            <p className="text-xs text-slate-400 mb-4">Get the latest updates and offers.</p>
             
             {isSubscribed ? (
                <div className="bg-teal-900/50 border border-teal-800 rounded-lg p-3 flex items-center gap-2 text-teal-400 text-sm">
@@ -96,7 +96,7 @@ export function Footer() {
                 <button 
                   onClick={handleSubscribe}
                   disabled={isLoading}
-                  className="bg-teal-600 hover:bg-teal-700 disabled:opacity-50 text-white px-4 py-2 rounded-lg font-bold transition-colors flex items-center justify-center min-w-[44px]"
+                  className="bg-teal-600 hover:bg-teal-700 disabled:opacity-50 text-white px-4 py-2 rounded-lg font-bold transition-colors flex items-center justify-center min-w-[44px]" aria-label="Subscribe to Newsletter"
                 >
                   {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />}
                 </button>

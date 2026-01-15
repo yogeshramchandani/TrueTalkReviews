@@ -269,7 +269,7 @@ export function Navbar() {
         </div>
 
         {/* MOBILE MENU TOGGLE */}
-        <button className="lg:hidden p-2 text-slate-600" onClick={() => setIsMenuOpen(!isMenuOpen)}>
+        <button className="lg:hidden p-2 text-slate-600" onClick={() => setIsMenuOpen(!isMenuOpen)} aria-label="Open Main Menu">
           {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
         </button>
       </div>
