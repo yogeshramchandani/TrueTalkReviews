@@ -221,11 +221,18 @@ const RedditIcon = ({ className }: { className?: string }) => (
                   </div>
 
                   {/* DESKTOP ACTIONS */}
-                  <div className="hidden md:flex gap-3">
-                    <Button variant="outline" className="gap-2">
+                  <div className="flex gap-3 w-full sm:w-auto">
+                    <Button variant="outline" className="gap-2 flex-1 sm:flex-none">
                       <Share2 className="w-4 h-4" /> Share
                     </Button>
-                    <ReviewButton />
+                    
+                    {/* Wrap ReviewButton in a div to make it stretch on mobile */}
+                    <div className="flex-1 sm:flex-none flex">
+                       {/* We need to ensure the button inside fills this width */}
+                       <div className="w-full [&>button]:w-full [&>a>button]:w-full">
+                          <ReviewButton />
+                       </div>
+                    </div>
                   </div>
                 </div>
 
