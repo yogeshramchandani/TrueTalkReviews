@@ -8,6 +8,11 @@ export async function GET(request: Request) {
   // 1. Check for errors sent back from Supabase
   const error = searchParams.get('error')
   const error_description = searchParams.get('error_description')
+  
+  // [NEW]: Capture the 'next' param (Where the user wanted to go)
+  // If no 'next' is found, default to '/service-provider-dashboard'
+  const next = searchParams.get('next') ?? '/service-provider-dashboard'
+
   if (error) {
     console.error("Supabase Auth Error:", error, error_description)
     // Redirect to error page but include the specific message so we know WHY
@@ -34,8 +39,9 @@ export async function GET(request: Request) {
     const { error: sessionError } = await supabase.auth.exchangeCodeForSession(code)
     
     if (!sessionError) {
-      // SUCCESS: Redirect to dashboard
-      return NextResponse.redirect(`${origin}/service-provider-dashboard`)
+      // SUCCESS: Redirect to the dynamic 'next' URL instead of hardcoded dashboard
+      // If they came from a profile review button, this sends them back there.
+      return NextResponse.redirect(`${origin}${next}`)
     } else {
       console.error("Session Exchange Error:", sessionError)
     }

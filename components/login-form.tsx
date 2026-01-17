@@ -8,13 +8,15 @@ import { supabase } from "@/lib/supabaseClient"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Loader2, ArrowRight, Star, ShieldCheck } from "lucide-react"
-// 👇 1. Import the Google Button
 import GoogleAuthButton from "@/app/auth/google-button"
 
 export default function LoginForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   
+  // 1. CAPTURE THE NEXT URL (Default to dashboard if missing)
+  const next = searchParams.get("next") || "/dashboard"
+
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [isLoading, setIsLoading] = useState(false)
@@ -34,12 +36,14 @@ export default function LoginForm() {
       return
     }
 
-    const nextUrl = searchParams.get("next")
-    if (nextUrl) {
-      router.push(nextUrl)
+    // 2. REDIRECT LOGIC FOR EMAIL LOGIN
+    // If 'next' param exists (and isn't the default dashboard), go there
+    if (next && next !== "/dashboard") {
+      router.push(next)
       return
     }
 
+    // Otherwise, handle based on role
     const user = data.user
     const role = user?.user_metadata?.role
 
@@ -75,8 +79,9 @@ export default function LoginForm() {
 
           <div className="mt-8 space-y-6">
             
-            {/* 👇 2. Google Button Added Here */}
+            {/* Google Button */}
             <div>
+               {/* Note: Make sure GoogleAuthButton inside captures 'next' too! */}
                <GoogleAuthButton />
                <div className="relative flex items-center justify-center mt-6">
                   <span className="absolute w-full h-px bg-slate-200"></span>
@@ -145,7 +150,11 @@ export default function LoginForm() {
               </div>
             </div>
             
-            <Link href="/auth/signup" className="text-teal-700 font-bold hover:underline inline-flex items-center gap-1">
+            {/* 👇 3. FIXED: This link now carries the 'next' param to the Signup page */}
+            <Link 
+              href={`/auth/signup?next=${encodeURIComponent(next)}`} 
+              className="text-teal-700 font-bold hover:underline inline-flex items-center gap-1"
+            >
                Create an account <ArrowRight className="w-4 h-4" />
             </Link>
           </div>

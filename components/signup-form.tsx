@@ -22,6 +22,9 @@ export default function SignupForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   
+  // [CHANGE 1]: Capture the 'next' parameter (Where they want to go after signup)
+  const next = searchParams.get("next")
+
   // --- STATE ---
   const [step, setStep] = useState<'form' | 'otp'>('form')
   const [isLoading, setIsLoading] = useState(false)
@@ -66,10 +69,6 @@ export default function SignupForm() {
   useEffect(() => {
     async function loadTaxonomy() {
       const { data, error } = await supabase.from('profession_taxonomy').select('*')
-      
-      // Add this line to debug
-      console.log("Taxonomy Data:", data, "Error:", error) 
-
       if (data) {
         setTaxonomy(data)
         const sectors = Array.from(new Set(data.map((item: any) => item.sector))) as string[]
@@ -90,19 +89,17 @@ export default function SignupForm() {
         setRole("professional") 
         setEmail(session.user.email || "")
 
-        // --- NEW: Fetch from Database to get the correct Username ---
+        // --- Fetch from Database to get the correct Username ---
         const { data: profile } = await supabase
           .from('profiles')
-          .select('username, full_name') // Fetch username from DB
+          .select('username, full_name') 
           .eq('id', session.user.id)
           .single()
 
         if (profile) {
-           // Success! We found the username created by the trigger
            setUsername(profile.username || "") 
            setFullName(profile.full_name || "")
         } else {
-           // Fallback: If no DB profile yet, use Google Metadata
            const meta = session.user.user_metadata
            setFullName(meta.full_name || "")
            setUsername(meta.username || "")
@@ -198,7 +195,8 @@ export default function SignupForm() {
       if (existingEmail) {
         setIsLoading(false)
         alert("User already exists, try to login.")
-        router.push("/auth/login")
+        // Redirect to Login WITH the next param
+        router.push(`/auth/login?next=${encodeURIComponent(next || "")}`)
         return 
       }
     }
@@ -214,10 +212,9 @@ export default function SignupForm() {
 
     if (error) {
       setIsLoading(false)
-      // Fallback check if "User Enumeration" is OFF in Supabase
       if (error.message.includes("already registered") || error.message.includes("User already exists") || error.message.includes("unique constraint")) {
         alert("User already exists, try to login.")
-        router.push("/auth/login") 
+        router.push(`/auth/login?next=${encodeURIComponent(next || "")}`) 
       } else {
         alert(error.message)
       }
@@ -272,12 +269,11 @@ export default function SignupForm() {
     }
 
     // --- PREPARE DATA ---
-    // This object works for BOTH Reviewers and Professionals
     const profileData = {
         id: userId,
         username: username.toLowerCase().replace(/\s/g, ''),
         full_name: fullName,
-        email: email, // <--- SAVING EMAIL TO PUBLIC PROFILE
+        email: email,
         role: role,
         created_at: new Date().toISOString(),
         avatar_url: avatarUrl
@@ -286,16 +282,16 @@ export default function SignupForm() {
     // Add Extra Fields ONLY for Professionals
     if (role === 'professional') {
        Object.assign(profileData, {
-          profession: finalProfession,
-          bio: bio,
-          city: city,
-          state: state,
-          address: address,
-          phone_number: phoneNumber,
-          website_url: website,
-          instagram_url: insta,
-          linkedin_url: linkedin,
-          reddit_url:reddit
+         profession: finalProfession,
+         bio: bio,
+         city: city,
+         state: state,
+         address: address,
+         phone_number: phoneNumber,
+         website_url: website,
+         instagram_url: insta,
+         linkedin_url: linkedin,
+         reddit_url:reddit
        })
     }
 
@@ -307,8 +303,6 @@ export default function SignupForm() {
     
     if (profileError) {
        console.error("Profile creation error:", profileError)
-       // If it's a duplicate key error, it might mean the Auth trigger already created a partial row.
-       // In that case, we should probably do an Update instead, but for now we alert.
        if (!profileError.message.includes("duplicate key")) {
            alert("Error saving profile: " + profileError.message)
        }
@@ -317,11 +311,16 @@ export default function SignupForm() {
     setIsLoading(false)
     alert(isUpgrading ? "Business Listed Successfully!" : "Account Verified & Profile Created!")
     
-    // Redirect based on Role
-    if (role === 'professional') {
-        router.push("/service-provider-dashboard")
+    // [CHANGE 2]: REDIRECT LOGIC
+    // If 'next' exists, go there. Otherwise, go to dashboard.
+    if (next && next !== "/dashboard") {
+       router.push(next)
     } else {
-        router.push("/") 
+       if (role === 'professional') {
+         router.push("/service-provider-dashboard")
+       } else {
+         router.push("/") 
+       }
     }
   }
 
@@ -335,7 +334,7 @@ export default function SignupForm() {
           {/* Header */}
           <div className="text-center">
             <Link href="/" className="flex items-center justify-center gap-2 mb-6 hover:opacity-80 transition-opacity">
-               <img src="/logo.png" alt="TruVouch Logo" className="h-9 w-auto object-contain" />
+               <div className="bg-teal-900 text-white p-2 rounded-lg font-bold text-xl">TV</div>
                <span className="font-bold text-teal-900 text-xl tracking-tight sm:block">
                  TruVouch
                </span>
@@ -371,9 +370,10 @@ export default function SignupForm() {
                     </Tabs>
                   </div>
                   
-                  {/* 👇 CONDITIONAL GOOGLE BUTTON: Only shows if role is 'reviewer' */}
+                  {/* Google Button */}
                   {role === 'reviewer' && (
                     <div className="relative">
+                      {/* Ensure GoogleAuthButton inside captures 'next' url too via useSearchParams */}
                       <GoogleAuthButton />
                       <div className="relative flex items-center justify-center mt-6">
                         <span className="absolute w-full h-px bg-slate-200"></span>
@@ -386,17 +386,17 @@ export default function SignupForm() {
 
               {/* Avatar Upload */}
               <div className="flex justify-center">
-                 <div className="relative group cursor-pointer text-center">
-                    <div className="w-24 h-24 mx-auto rounded-full bg-slate-100 border-2 border-dashed border-slate-300 flex items-center justify-center overflow-hidden hover:border-teal-500 transition-colors">
-                      {avatarPreview ? (
-                        <img src={avatarPreview} className="w-full h-full object-cover" />
-                      ) : (
-                        <Camera className="w-8 h-8 text-slate-400" />
-                      )}
-                    </div>
-                    <p className="text-[10px] text-slate-400 mt-2">Max size: 500KB</p>
-                    <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" accept="image/*" onChange={handleImageChange} />
-                 </div>
+                  <div className="relative group cursor-pointer text-center">
+                     <div className="w-24 h-24 mx-auto rounded-full bg-slate-100 border-2 border-dashed border-slate-300 flex items-center justify-center overflow-hidden hover:border-teal-500 transition-colors">
+                       {avatarPreview ? (
+                         <img src={avatarPreview} className="w-full h-full object-cover" />
+                       ) : (
+                         <Camera className="w-8 h-8 text-slate-400" />
+                       )}
+                     </div>
+                     <p className="text-[10px] text-slate-400 mt-2">Max size: 500KB</p>
+                     <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" accept="image/*" onChange={handleImageChange} />
+                  </div>
               </div>
 
               {/* Basic Inputs */}
@@ -412,17 +412,17 @@ export default function SignupForm() {
               </div>
 
               <div className="space-y-4">
-                 <div onClick={handleLockedFieldClick} className={isUpgrading ? "cursor-not-allowed opacity-80" : ""}>
-                    <label className="text-xs font-bold text-slate-500 mb-1">Email Address {isUpgrading && <Lock className="inline w-3 h-3 ml-1"/>}</label>
-                    <Input type="email" value={email} onChange={e=>setEmail(e.target.value)} required placeholder="name@example.com" readOnly={isUpgrading} className={isUpgrading ? "bg-slate-100 text-slate-500" : ""} />
-                 </div>
-                 
-                 {!isUpgrading && (
-                   <div>
-                      <label className="text-xs font-bold text-slate-500 mb-1">Password <span className="text-red-500">*</span></label>
-                      <Input type="password" value={password} onChange={e=>setPassword(e.target.value)} required placeholder="••••••••" />
-                   </div>
-                 )}
+                  <div onClick={handleLockedFieldClick} className={isUpgrading ? "cursor-not-allowed opacity-80" : ""}>
+                     <label className="text-xs font-bold text-slate-500 mb-1">Email Address {isUpgrading && <Lock className="inline w-3 h-3 ml-1"/>}</label>
+                     <Input type="email" value={email} onChange={e=>setEmail(e.target.value)} required placeholder="name@example.com" readOnly={isUpgrading} className={isUpgrading ? "bg-slate-100 text-slate-500" : ""} />
+                  </div>
+                  
+                  {!isUpgrading && (
+                    <div>
+                       <label className="text-xs font-bold text-slate-500 mb-1">Password <span className="text-red-500">*</span></label>
+                       <Input type="password" value={password} onChange={e=>setPassword(e.target.value)} required placeholder="••••••••" />
+                    </div>
+                  )}
               </div>
 
               {role === "professional" && (
@@ -466,8 +466,8 @@ export default function SignupForm() {
                       <p className="text-xs font-bold text-teal-800 uppercase tracking-wider flex items-center gap-1"><Phone className="w-3 h-3"/> Contact & Social (Optional)</p>
                       <Input placeholder="Phone Number (Public)" value={phoneNumber} onChange={e=>setPhoneNumber(e.target.value)} className="bg-white text-xs h-9" />
                       <div className="grid grid-cols-2 gap-3">
-                         <Input placeholder="Website URL" value={website} onChange={e=>setWebsite(e.target.value)} className="bg-white text-xs h-9" />
-                         <Input placeholder="Instagram URL" value={insta} onChange={e=>setInsta(e.target.value)} className="bg-white text-xs h-9" />
+                          <Input placeholder="Website URL" value={website} onChange={e=>setWebsite(e.target.value)} className="bg-white text-xs h-9" />
+                          <Input placeholder="Instagram URL" value={insta} onChange={e=>setInsta(e.target.value)} className="bg-white text-xs h-9" />
                       </div>
                       <Input placeholder="LinkedIn URL" value={linkedin} onChange={e=>setLinkedin(e.target.value)} className="bg-white text-xs h-9" />
                      <Input placeholder="Reddit URL" value={reddit} onChange={e=>setReddit(e.target.value)} className="bg-white text-xs h-9" />
@@ -508,7 +508,8 @@ export default function SignupForm() {
             {!isUpgrading && (
                <>
                  <span className="text-slate-500">Already have an account? </span>
-                 <Link href="/auth/login" className="text-teal-700 font-bold hover:underline">Log in</Link>
+                 {/* [CHANGE 3]: This link now carries the 'next' param to the Login page */}
+                 <Link href={`/auth/login?next=${encodeURIComponent(next || "")}`} className="text-teal-700 font-bold hover:underline">Log in</Link>
                </>
             )}
             {isUpgrading && (

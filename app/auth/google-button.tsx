@@ -4,18 +4,31 @@ import { useState } from "react"
 import { supabase } from "@/lib/supabaseClient"
 import { Button } from "@/components/ui/button"
 import { Loader2 } from "lucide-react"
+// 1. Import useSearchParams to read the URL
+import { useSearchParams } from "next/navigation"
 
 export default function GoogleAuthButton() {
   const [isLoading, setIsLoading] = useState(false)
+  const searchParams = useSearchParams()
 
-const handleGoogleLogin = async () => {
+  const handleGoogleLogin = async () => {
     setIsLoading(true)
+    
+    // 2. Capture the 'next' parameter (e.g. /u/yogesh)
+    // If it doesn't exist, we just pass an empty string (the callback will handle the default)
+    const next = searchParams.get("next") || ""
+
+    // 3. Construct the Redirect URL with the 'next' param
+    const redirectUrl = `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`
+
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
-        // We REMOVED the queryParams manually forcing 'code'. 
-        // The new client handles this automatically.
+        redirectTo: redirectUrl,
+        queryParams: {
+          access_type: "offline",
+          prompt: "consent",
+        },
       },
     })
 
@@ -30,7 +43,6 @@ const handleGoogleLogin = async () => {
       variant="outline" 
       onClick={handleGoogleLogin} 
       disabled={isLoading} 
-      // 👇 ADDED 'hover:text-slate-900' to force dark text on hover
       className="w-full h-11 bg-white border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-slate-900 font-medium relative"
     >
       {isLoading ? (
