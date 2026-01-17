@@ -18,6 +18,13 @@ export async function generateMetadata(
   const supabase = createClient()
   const { username } = params
 
+  // [FIX ADDED]: Stop the crash if username is missing or null
+  if (!username || username === 'null' || username === 'undefined') {
+    return {
+      title: 'Professional Profile | TruVouch',
+    }
+  }
+
   // Fetch just the basic info needed for SEO tags
   const { data: profile } = await supabase
     .from('profiles')
@@ -55,6 +62,11 @@ export default async function PublicProfilePage({ params }: Props) {
   const supabase = createClient()
   const { username } = params
 
+  // [FIX ADDED]: Safety check for the main page too
+  if (!username || username === 'null') {
+    return notFound()
+  }
+
   // A. Get the Current Logged In User (The Viewer)
   const { data: { user } } = await supabase.auth.getUser()
 
@@ -62,7 +74,7 @@ export default async function PublicProfilePage({ params }: Props) {
   const { data: profile } = await supabase
     .from('profiles')
     .select('*')
-    .eq('username', params.username)
+    .eq('username', username)
     .eq('role', 'professional')
     .single()
 
