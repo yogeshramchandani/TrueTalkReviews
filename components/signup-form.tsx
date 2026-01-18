@@ -334,10 +334,16 @@ export default function SignupForm() {
           {/* Header */}
           <div className="text-center">
             <Link href="/" className="flex items-center justify-center gap-2 mb-6 hover:opacity-80 transition-opacity">
-               <div className="bg-teal-900 text-white p-2 rounded-lg font-bold text-xl">TV</div>
-               <span className="font-bold text-teal-900 text-xl tracking-tight sm:block">
-                 TruVouch
-               </span>
+              
+          <img 
+            src="/logo.png" 
+            alt="TrueTalk Logo" 
+            className="h-9 w-auto object-contain" 
+          />
+          <span className="font-bold text-teal-900 text-xl tracking-tight sm:block">
+            TruVouch
+          </span>
+        
             </Link>
             
             <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight">
@@ -402,18 +408,18 @@ export default function SignupForm() {
               {/* Basic Inputs */}
               <div className="grid grid-cols-2 gap-4">
                 <div onClick={handleLockedFieldClick} className={isUpgrading ? "cursor-not-allowed opacity-80" : ""}>
-                    <label className="text-xs font-bold text-slate-500 mb-1">Full Name {isUpgrading && <Lock className="inline w-3 h-3 ml-1"/>}</label>
+                    <label className="text-xs font-bold text-slate-500 mb-1">Full Name {isUpgrading && <Lock className="inline w-3 h-3 ml-1"/>} <span className="text-red-500">*</span></label>
                     <Input value={fullName} onChange={e=>setFullName(e.target.value)} required placeholder="John Doe" readOnly={isUpgrading} className={isUpgrading ? "bg-slate-100 text-slate-500" : ""} />
                 </div>
                 <div onClick={handleLockedFieldClick} className={isUpgrading ? "cursor-not-allowed opacity-80" : ""}>
-                    <label className="text-xs font-bold text-slate-500 mb-1">Username {isUpgrading && <Lock className="inline w-3 h-3 ml-1"/>}</label>
+                    <label className="text-xs font-bold text-slate-500 mb-1">Username {isUpgrading && <Lock className="inline w-3 h-3 ml-1"/>} <span className="text-red-500">*</span></label>
                     <Input value={username} onChange={e=>setUsername(e.target.value)} required placeholder="johndoe" readOnly={isUpgrading} className={isUpgrading ? "bg-slate-100 text-slate-500" : ""} />
                 </div>
               </div>
 
               <div className="space-y-4">
                   <div onClick={handleLockedFieldClick} className={isUpgrading ? "cursor-not-allowed opacity-80" : ""}>
-                     <label className="text-xs font-bold text-slate-500 mb-1">Email Address {isUpgrading && <Lock className="inline w-3 h-3 ml-1"/>}</label>
+                     <label className="text-xs font-bold text-slate-500 mb-1">Email Address {isUpgrading && <Lock className="inline w-3 h-3 ml-1"/>}<span className="text-red-500">*</span></label>
                      <Input type="email" value={email} onChange={e=>setEmail(e.target.value)} required placeholder="name@example.com" readOnly={isUpgrading} className={isUpgrading ? "bg-slate-100 text-slate-500" : ""} />
                   </div>
                   

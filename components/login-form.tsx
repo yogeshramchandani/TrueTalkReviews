@@ -62,18 +62,24 @@ export default function LoginForm() {
         <div className="w-full max-w-sm space-y-8">
           
           {/* Header */}
-          <div className="text-center lg:text-left">
-            <Link href="/" className="inline-block mb-6">
-               <div className="flex items-center gap-2 justify-center lg:justify-start">
-                 <div className="bg-teal-900 text-white p-2 rounded-lg font-bold text-xl">TV</div>
-                 <span className="text-teal-900 text-2xl font-bold tracking-tight">TruVouch</span>
-               </div>
-            </Link>
+          <div className="text-center ">
+            
+               <Link href="/" className="flex items-center gap-2 justify-center">
+          <img 
+            src="/logo.png" 
+            alt="TrueTalk Logo" 
+            className="h-9 w-auto object-contain" 
+          />
+          <span className="font-bold text-teal-900 text-xl tracking-tight sm:block">
+            TruVouch
+          </span>
+        </Link>
+
             <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight">
               Welcome back
             </h2>
             <p className="mt-2 text-sm text-slate-500">
-              Please sign in to access your dashboard.
+              Please sign in to access your Profile.
             </p>
           </div>
 

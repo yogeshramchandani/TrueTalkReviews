@@ -115,7 +115,7 @@ export default function LandingPage() {
   }, [])
 
   return (
-    <div className="min-h-screen bg-white font-sans text-slate-900 flex flex-col selection:bg-teal-100">
+    <div className="min-h-screen bg-white font-sans text-slate-900 flex flex-col selection:bg-teal-100 ">
       
       {/* 1. GLOBAL NAVBAR */}
       <Navbar />
@@ -123,101 +123,100 @@ export default function LandingPage() {
       <main className="flex-1">
         
         {/* 2. HERO SECTION */}
-        {/* Added: px-4 sm:px-6 lg:px-8 for safe margins */}
-        <section className="relative px-4 sm:px-6 lg:px-8 py-12 lg:py-24 overflow-hidden">
-          <div className="container mx-auto">
-            <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-              
-              {/* LEFT COLUMN: Text Content */}
-              {/* Added: text-center lg:text-left so it looks good on mobile */}
-              <div className="space-y-8 max-w-2xl relative z-10 mx-auto lg:mx-0 text-center lg:text-left">
-                
-                {/* Responsive Heading Size */}
-                <h1 className="text-4xl sm:text-5xl lg:text-7xl font-extrabold text-slate-900 tracking-tight leading-[1.1]">
-                  Unleash Your <br />
-                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-800 to-teal-500">Reputation</span> with
-                  Verified Reviews
-                </h1>
-                
-                <p className="text-lg sm:text-xl text-slate-600 leading-relaxed max-w-lg mx-auto lg:mx-0">
-                  Elevate your professional trust to new heights. Join the platform designed to inspire confidence, verify excellence, and empower your career journey.
-                </p>
+<section className="relative px-4 sm:px-6 lg:px-8 pt-6 pb-12 lg:pt-10 lg:pb-24 overflow-hidden">
+      {/* Container centered with mx-auto, no extra side margins */}
+      <div className="container mx-auto">
+        
+        {/* Grid aligned to top (items-start) so art doesn't drop down */}
+        <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-start">
+          
+          {/* LEFT COLUMN: Text Content */}
+          <div className="space-y-6 max-w-2xl relative z-10 mx-auto lg:mx-0 text-center lg:text-left">
+            
+            <h1 className="text-4xl sm:text-5xl lg:text-[clamp(3rem,5.5vw,4.5rem)] font-extrabold text-slate-900 tracking-tight leading-[1.1]">
+              Unleash Your <br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-800 to-teal-500">Reputation</span> with
+              Verified Reviews
+            </h1>
+            
+            <p className="text-lg sm:text-xl lg:text-[clamp(1.1rem,1.5vw,1.25rem)] text-slate-600 leading-relaxed max-w-lg mx-auto lg:mx-0">
+              Elevate your professional trust to new heights. Join the platform designed to inspire confidence, verify excellence, and empower your career journey.
+            </p>
 
-                {/* Stats Row */}
-                <div className="flex justify-center lg:justify-start items-center gap-8 sm:gap-12 pt-4">
-                  <div>
-                    <h3 className="text-2xl sm:text-3xl font-bold text-slate-900">500+</h3>
-                    <p className="text-xs sm:text-sm font-medium text-slate-500 mt-1">Active Pros</p>
-                  </div>
-                  <div className="w-px h-10 sm:h-12 bg-slate-200"></div>
-                  <div>
-                    <h3 className="text-2xl sm:text-3xl font-bold text-slate-900">10k+</h3>
-                    <p className="text-xs sm:text-sm font-medium text-slate-500 mt-1">Verified Reviews</p>
-                  </div>
-                </div>
-
-                {/* Buttons: Full width on mobile, auto on desktop */}
-                <div className="flex flex-col sm:flex-row gap-4 pt-4 justify-center lg:justify-start">
-                  <Link href="/auth/signup?role=professional" className="w-full sm:w-auto">
-                    <Button size="lg" className="h-14 px-8 text-lg bg-teal-900 hover:bg-teal-800 text-white font-bold rounded-none w-full">
-                      List My Business
-                    </Button>
-                  </Link>
-                  <Link href="/categories" className="w-full sm:w-auto">
-  <Button 
-    size="lg" 
-    variant="outline" 
-    className="h-14 px-8 text-lg border-2 border-slate-900 text-slate-900 hover:bg-slate-800 hover:text-white font-bold rounded-none w-full transition-all duration-300"
-  >
-    Explore Services
-  </Button>
-</Link>
-                </div>
+            {/* Stats Row */}
+            <div className="flex justify-center lg:justify-start items-center gap-8 sm:gap-12 pt-4">
+              <div>
+                <h3 className="text-2xl sm:text-3xl lg:text-[clamp(1.5rem,2.5vw,1.875rem)] font-bold text-slate-900">500+</h3>
+                <p className="text-xs sm:text-sm font-medium text-slate-500 mt-1">Active Pros</p>
               </div>
-
-              {/* RIGHT COLUMN: CSS Geometric Art */}
-              {/* Hidden on mobile/tablet (lg:block) to prevent clutter on small screens */}
-              <div className="relative w-full aspect-square max-w-[500px] xl:max-w-[600px] mx-auto lg:ml-auto hidden lg:block">
-                <div className="grid grid-cols-2 gap-4 w-full h-full">
-                  
-                  {/* Column 1 */}
-                  <div className="flex flex-col gap-4">
-                    <div className="flex-1 bg-teal-900 rounded-tl-[100px]"></div>
-                    <div className="aspect-square border-[16px] border-slate-900 bg-transparent flex items-center justify-center">
-                      <div className="w-1/2 h-1/2 bg-white"></div>
-                    </div>
-                    <div className="flex-1 bg-slate-900 rounded-bl-[100px]"></div>
-                  </div>
-
-                  {/* Column 2 */}
-                  <div className="flex flex-col gap-4 relative">
-                    <div className="absolute top-0 right-0 w-full h-[66%] bg-orange-400 rounded-tr-[200px] rounded-br-[200px] z-10"></div>
-                    <div className="flex-1 grid grid-rows-2 gap-4">
-                      <div className="relative flex items-center justify-center">
-                        <div className="w-[70%] h-[70%] bg-teal-700 rotate-45 transform"></div>
-                      </div>
-                      <div className="bg-slate-700 rounded-full z-20 relative border-4 border-white"></div>
-                    </div>
-                    <div className="flex-1 bg-slate-100 rounded-br-[100px] relative overflow-hidden">
-                      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-0 h-0 
-                      border-l-[50px] border-l-transparent
-                      border-r-[50px] border-r-transparent
-                      border-b-[100px] border-b-slate-600">
-                      </div>
-                      <div className="absolute bottom-1 left-1/2 -translate-x-1/2 w-0 h-0 
-                      border-l-[30px] border-l-transparent
-                      border-r-[30px] border-r-transparent
-                      border-b-[60px] border-b-white">
-                      </div>
-                    </div>
-                  </div>
-
-                </div>
+              <div className="w-px h-10 sm:h-12 bg-slate-200"></div>
+              <div>
+                <h3 className="text-2xl sm:text-3xl lg:text-[clamp(1.5rem,2.5vw,1.875rem)] font-bold text-slate-900">10k+</h3>
+                <p className="text-xs sm:text-sm font-medium text-slate-500 mt-1">Verified Reviews</p>
               </div>
+            </div>
 
+            {/* Buttons */}
+            <div className="flex flex-col sm:flex-row gap-4 pt-4 justify-center lg:justify-start">
+              <Link href="/auth/signup?role=professional" className="w-full sm:w-auto">
+                <Button size="lg" className="h-14 px-8 text-lg bg-teal-900 hover:bg-teal-800 text-white font-bold rounded-none w-full">
+                  List My Business
+                </Button>
+              </Link>
+              <Link href="/categories" className="w-full sm:w-auto">
+                <Button 
+                  size="lg" 
+                  variant="outline" 
+                  className="h-14 px-8 text-lg border-2 border-slate-900 text-slate-900 hover:bg-slate-800 hover:text-white font-bold rounded-none w-full transition-all duration-300"
+                >
+                  Explore Services
+                </Button>
+              </Link>
             </div>
           </div>
-        </section>
+
+          {/* RIGHT COLUMN: CSS Geometric Art */}
+          {/* UPDATED SIZE: 
+              - scale(clamp(1.15, ...)) -> Starts at 115% size (Very Big)
+              - Max size 1.6 (160%)
+          */}
+          <div className="relative hidden lg:flex items-start justify-center origin-top transform lg:scale-[1.15] xl:scale-[1.2] 2xl:scale-[1.3]">
+  
+  {/* Main Flex Container (No Gaps) */}
+  <div className="flex flex-row">
+
+    {/* --- COLUMN 1 --- */}
+    <div className="flex flex-col">
+      <div className="w-[150px] h-[150px] bg-[#1a5353] rounded-tl-[50px] rounded-bl-[50px]"></div>
+      <div className="w-[150px] h-[150px] bg-transparent border-[15px] border-[#111625] box-border"></div>
+      <div className="w-[150px] h-[150px] bg-[#111625] rounded-tl-[50px] rounded-bl-[50px] rounded-tr-[50px]"></div>
+    </div>
+
+    {/* --- COLUMN 2 --- */}
+    <div className="flex flex-col">
+      <div className="w-[150px] h-[150px] flex items-center justify-center">
+        <div className="w-[106px] h-[106px] bg-[#1a5353] rotate-45"></div>
+      </div>
+      <div className="w-[150px] h-[150px] bg-[#334155] rounded-full"></div>
+      <div className="w-[150px] h-[150px] relative">
+        <div className="absolute inset-0 bg-[#334155] [clip-path:polygon(50%_0%,0%_100%,100%_100%)]"></div>
+        <div className="absolute top-[20%] left-[17%] w-[66%] h-[70%] bg-white [clip-path:polygon(50%_0%,0%_100%,100%_100%)]"></div>
+      </div>
+    </div>
+
+    {/* --- COLUMN 3 --- */}
+    <div className="flex flex-col">
+      <div className="w-[150px] h-[300px] bg-[#FB923C] rounded-tr-[120px] rounded-br-[120px]"></div>
+      <div className="w-[150px] h-[150px] bg-[#F8FAFC] rounded-tr-[150px]"></div>
+    </div>
+
+  </div>
+</div>
+
+        </div>
+      </div>
+    </section>
+
 
         {/* 3. SECTORS SECTION */}
         <section className="py-12 bg-white border-b border-slate-100">
