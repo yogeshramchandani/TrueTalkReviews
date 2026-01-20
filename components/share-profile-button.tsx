@@ -12,9 +12,15 @@ interface Provider {
   city: string
 }
 
-export default function ShareProfileButton({ provider }: { provider: Provider }) {
+// 👇 1. UPDATE INTERFACE to accept optional 'customTrigger'
+interface ShareProfileButtonProps {
+  provider: Provider
+  customTrigger?: React.ReactNode 
+}
+
+export default function ShareProfileButton({ provider, customTrigger }: ShareProfileButtonProps) {
   const inputRef = useRef<HTMLInputElement>(null)
-  const [copied, setCopied] = useState(false) // State for visual feedback
+  const [copied, setCopied] = useState(false)
 
   const profileUrl = typeof window !== "undefined" ? window.location.href : ""
 
@@ -22,11 +28,9 @@ export default function ShareProfileButton({ provider }: { provider: Provider })
     if (!profileUrl) return
 
     try {
-      // 1. Try the modern Clipboard API first
       await navigator.clipboard.writeText(profileUrl)
       setCopied(true)
     } catch (err) {
-      // 2. Fallback: Select text and use execCommand (better compatibility)
       if (inputRef.current) {
         inputRef.current.select()
         document.execCommand('copy')
@@ -34,7 +38,6 @@ export default function ShareProfileButton({ provider }: { provider: Provider })
       }
     }
 
-    // Reset the "Copied" status after 2 seconds
     setTimeout(() => setCopied(false), 2000)
   }
 
@@ -59,11 +62,17 @@ export default function ShareProfileButton({ provider }: { provider: Provider })
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="w-full md:w-auto gap-2 bg-transparent">
-          <Share2 className="w-4 h-4" />
-          Share
-        </Button>
+        {/* 👇 2. LOGIC: If customTrigger exists, use it. Otherwise use default button. */}
+        {customTrigger ? (
+          customTrigger
+        ) : (
+          <Button variant="outline" size="sm" className="w-full md:w-auto gap-2 bg-transparent border-slate-300">
+            <Share2 className="w-4 h-4" />
+            Share
+          </Button>
+        )}
       </DialogTrigger>
+      
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Share {provider.name}'s Profile</DialogTitle>
@@ -74,7 +83,6 @@ export default function ShareProfileButton({ provider }: { provider: Provider })
             Share this profile with your network and help others discover great work.
           </p>
 
-          {/* Copy Link Section */}
           <div className="space-y-2">
             <label className="text-sm font-medium">Profile Link</label>
             <div className="flex gap-2">
@@ -88,7 +96,7 @@ export default function ShareProfileButton({ provider }: { provider: Provider })
                 onClick={handleCopyLink} 
                 variant="outline" 
                 size="sm"
-                className="min-w-[80px]" // Fixed width prevents jumping when text changes
+                className="min-w-[80px]"
               >
                 {copied ? (
                   <>
@@ -105,7 +113,6 @@ export default function ShareProfileButton({ provider }: { provider: Provider })
             </div>
           </div>
 
-          {/* Native Share Button (Mobile) */}
           {canShare && (
             <Button onClick={handleShare} className="w-full bg-teal-700 hover:bg-teal-800 text-white">
               Share on Social Media
