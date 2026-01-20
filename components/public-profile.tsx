@@ -13,6 +13,7 @@ import { Progress } from "@/components/ui/progress"
 import { ReviewFormDialog } from "@/components/review-form-dialog"
 import ShareProfileButton from "@/components/share-profile-button"
 import { Input } from "@/components/ui/input" 
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import {
   Dialog,
   DialogContent,
@@ -24,7 +25,7 @@ import {
 // Icons
 import { 
   Star, MapPin, Globe, Linkedin, Instagram, Twitter, Facebook,
-  Ban, Pencil, Filter, Share2, Search, X, Check, Mail
+  Ban, Pencil, Filter, Share2, Search, X, Check, Mail, ShieldCheck, LogOut, User
 } from "lucide-react"
 
 // --- 1. HELPER COMPONENTS & FUNCTIONS ---
@@ -43,6 +44,76 @@ const RedditIcon = ({ className }: { className?: string }) => (
     <path fillRule="evenodd" clipRule="evenodd" d="M20.0193 8.90951C20.0066 8.98984 20 9.07226 20 9.15626C20 10.0043 20.6716 10.6918 21.5 10.6918C22.3284 10.6918 23 10.0043 23 9.15626C23 8.30819 22.3284 7.6207 21.5 7.6207C21.1309 7.6207 20.7929 7.7572 20.5315 7.98359L16.6362 7L15.2283 12.7651C13.3554 12.8913 11.671 13.4719 10.4003 14.3485C10.0395 13.9863 9.54524 13.7629 9 13.7629C7.89543 13.7629 7 14.6796 7 15.8103C7 16.5973 7.43366 17.2805 8.06967 17.6232C8.02372 17.8674 8 18.1166 8 18.3696C8 21.4792 11.5817 24 16 24C20.4183 24 24 21.4792 24 18.3696C24 18.1166 23.9763 17.8674 23.9303 17.6232C24.5663 17.2805 25 16.5973 25 15.8103C25 14.6796 24.1046 13.7629 23 13.7629C22.4548 13.7629 21.9605 13.9863 21.5997 14.3485C20.2153 13.3935 18.3399 12.7897 16.2647 12.7423L17.3638 8.24143L20.0193 8.90951ZM12.5 18.8815C13.3284 18.8815 14 18.194 14 17.3459C14 16.4978 13.3284 15.8103 12.5 15.8103C11.6716 15.8103 11 16.4978 11 17.3459C11 18.194 11.6716 18.8815 12.5 18.8815ZM19.5 18.8815C20.3284 18.8815 21 18.194 21 17.3459C21 16.4978 20.3284 15.8103 19.5 15.8103C18.6716 15.8103 18 16.4978 18 17.3459C18 18.194 18.6716 18.8815 19.5 18.8815ZM12.7773 20.503C12.5476 20.3462 12.2372 20.4097 12.084 20.6449C11.9308 20.8802 11.9929 21.198 12.2226 21.3548C13.3107 22.0973 14.6554 22.4686 16 22.4686C17.3446 22.4686 18.6893 22.0973 19.7773 21.3548C20.0071 21.198 20.0692 20.8802 19.916 20.6449C19.7628 20.4097 19.4524 20.3462 19.2226 20.503C18.3025 21.1309 17.1513 21.4449 16 21.4449C15.3173 21.4449 14.6345 21.3345 14 21.1137C13.5646 20.9621 13.1518 20.7585 12.7773 20.503Z" fill="white"/>
   </svg>
 )
+
+// --- 2. NAVBAR COMPONENT ---
+const Navbar = ({ viewer }: { viewer: any }) => {
+  return (
+    <nav className="sticky top-0 z-50 w-full bg-white border-b border-slate-200 shadow-sm h-16">
+       <div className="container mx-auto px-4 h-full flex items-center justify-between">
+          
+          {/* Left: Logo */}
+          <Link href="/" className="flex items-center gap-2">
+          <img 
+            src="/logo.png" 
+            alt="TrueTalk Logo" 
+            className="h-9 w-auto object-contain" 
+          />
+          <span className="font-bold text-teal-900 text-xl tracking-tight sm:block">
+            TruVouch
+          </span>
+        </Link>
+
+          {/* Center: Search Bar (Desktop only) */}
+          <div className="hidden md:flex relative w-1/3 max-w-md">
+             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+             <Input 
+                placeholder="Find professionals, services..." 
+                className="pl-9 bg-slate-50 border-slate-200 focus:bg-white rounded-full h-10"
+             />
+          </div>
+
+          {/* Right: Actions */}
+          <div className="flex items-center gap-2 md:gap-4">
+             <Link href="/for-business" className="hidden md:block text-sm font-medium text-slate-600 hover:text-slate-900">
+               For Business
+             </Link>
+             
+             {viewer ? (
+               <DropdownMenu>
+                 <DropdownMenuTrigger asChild>
+                   <Button variant="ghost" className="relative h-9 w-9 rounded-full p-0 overflow-hidden border border-slate-200">
+                     <Avatar className="h-full w-full">
+                       <AvatarImage src={viewer.user_metadata?.avatar_url} />
+                       <AvatarFallback className="bg-teal-50 text-teal-700 text-xs font-bold">
+                         {viewer.email?.charAt(0).toUpperCase()}
+                       </AvatarFallback>
+                     </Avatar>
+                   </Button>
+                 </DropdownMenuTrigger>
+                 <DropdownMenuContent align="end" className="w-56">
+                   <DropdownMenuItem className="cursor-pointer">
+                      <User className="mr-2 h-4 w-4" /> My Profile
+                   </DropdownMenuItem>
+                   <DropdownMenuItem className="cursor-pointer text-red-600 focus:text-red-600">
+                      <LogOut className="mr-2 h-4 w-4" /> Log out
+                   </DropdownMenuItem>
+                 </DropdownMenuContent>
+               </DropdownMenu>
+             ) : (
+               <div className="flex items-center gap-2">
+                 <Link href="/auth/login">
+                    <Button variant="ghost" className="text-slate-600 font-semibold hover:text-slate-900">Log in</Button>
+                 </Link>
+                 <Link href="/auth/signup">
+                    <Button className="bg-teal-700 hover:bg-teal-800 text-white font-semibold rounded-full">Join Now</Button>
+                 </Link>
+               </div>
+             )}
+          </div>
+       </div>
+    </nav>
+  )
+}
 
 export default function PublicProfile({ profile, reviews, currentUser }: { profile: any, reviews: any[], currentUser: any }) {
   const router = useRouter()
@@ -212,7 +283,7 @@ export default function PublicProfile({ profile, reviews, currentUser }: { profi
               {/* Option A: Continue with Google */}
               <Button 
                 variant="outline" 
-                className="w-full h-12 relative flex items-center justify-center gap-3 text-slate-700 border-slate-300 hover:bg-slate-50 font-semibold"
+                className="w-full h-12 relative flex items-center justify-center gap-3 border-slate-600 text-slate-600 hover:bg-slate-50 hover:text-slate-900 hover:border-slate-900 font-semibold"
                 onClick={handleGoogleLogin}
                 disabled={isLoading}
               >
@@ -283,6 +354,9 @@ export default function PublicProfile({ profile, reviews, currentUser }: { profi
   return (
     <div className="min-h-screen bg-[#F4F2EE] font-sans text-slate-900">
       
+      {/* 🟢 NAVBAR INTEGRATED HERE 🟢 */}
+      <Navbar viewer={viewer} />
+      
       <ReviewFormDialog 
         open={isReviewOpen} 
         onOpenChange={setIsReviewOpen}
@@ -333,7 +407,7 @@ export default function PublicProfile({ profile, reviews, currentUser }: { profi
                 </div>
               </div>
 
-              
+              {/* Recommended Section (Hidden in simplified version but logic exists) */}
 
               {/* Date Posted Section */}
               <div className="space-y-3">
@@ -556,20 +630,20 @@ export default function PublicProfile({ profile, reviews, currentUser }: { profi
                     ))}
                   </div>
                 </Card>
-               <div className="space-y-1">
-  <ReviewButton fullWidth />
-  <ShareProfileButton 
-    provider={{ name: profile.full_name, profession: profile.profession, city: profile.city }} 
-    customTrigger={
-      <Button 
-        variant="outline" 
-        className="w-full rounded-full border-slate-600 text-slate-600 hover:bg-slate-50 hover:text-slate-900 hover:border-slate-900 font-semibold mt-4"
-      >
-        <Share2 className="w-4 h-4 mr-2" /> Share Profile
-      </Button>
-    }
-  />
-</div>
+                <div className="space-y-1">
+                  <ReviewButton fullWidth />
+                  <ShareProfileButton 
+                    provider={{ name: profile.full_name, profession: profile.profession, city: profile.city }} 
+                    customTrigger={
+                      <Button 
+                        variant="outline" 
+                        className="w-full rounded-full border-slate-600 text-slate-600 hover:bg-slate-50 hover:text-slate-900 hover:border-slate-900 font-semibold mt-4"
+                      >
+                        <Share2 className="w-4 h-4 mr-2" /> Share Profile
+                      </Button>
+                    }
+                  />
+                </div>
                 <div className="bg-white rounded-xl border border-slate-300 p-5 shadow-sm">
                    <h3 className="text-sm font-bold text-slate-900 mb-3">Connect</h3>
                    <div className="flex flex-wrap gap-3">
