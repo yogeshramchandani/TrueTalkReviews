@@ -25,7 +25,7 @@ import {
 // Icons
 import { 
   Star, MapPin, Globe, Linkedin, Instagram, Twitter, Facebook,
-  Ban, Pencil, Filter, Share2, Search, X, Check, Mail, ShieldCheck, LogOut, User
+  Ban, Pencil, Filter, Share2, Search, X, Check, Mail, ShieldCheck, LogOut, User, CornerDownRight
 } from "lucide-react"
 
 // --- 1. HELPER COMPONENTS & FUNCTIONS ---
@@ -562,6 +562,24 @@ export default function PublicProfile({ profile, reviews, currentUser }: { profi
                                   <span className="ml-auto text-[10px] text-slate-400">{formatDate(review.created_at)}</span>
                                </div>
                                <p className="text-slate-600 text-sm leading-relaxed line-clamp-6">{review.content}</p>
+                               {review.provider_reply && (
+  <div className="mt-3 ml-2 pl-3 border-l-2 border-slate-200">
+    <div className="flex items-center gap-2 mb-1">
+      <CornerDownRight className="w-3 h-3 text-slate-400" />
+      <span className="text-xs font-bold text-slate-700">
+        Reply from {profile.full_name?.split(' ')[0] || "Provider"}
+      </span>
+      {review.provider_reply_at && (
+        <span className="text-[10px] text-slate-400">
+          • {formatDate(review.provider_reply_at)}
+        </span>
+      )}
+    </div>
+    <p className="text-sm text-slate-600 bg-slate-50 p-2 rounded-lg">
+      {review.provider_reply}
+    </p>
+  </div>
+)}
                             </div>
                        ))
                    ) : (
@@ -700,6 +718,26 @@ export default function PublicProfile({ profile, reviews, currentUser }: { profi
                              </div>
                           </div>
                           <p className="text-slate-700 text-sm leading-relaxed">{review.content}</p>
+                          {review.provider_reply && (
+  <div className="mt-4 bg-slate-50 rounded-lg p-3 border border-slate-100">
+    <div className="flex items-center gap-2 mb-2">
+      <div className="bg-teal-100 p-1 rounded-full">
+        <CornerDownRight className="w-3 h-3 text-teal-700" />
+      </div>
+      <span className="text-xs font-bold text-slate-800">
+        Response from {profile.full_name || "Provider"}
+      </span>
+      {review.provider_reply_at && (
+        <span className="text-[10px] text-slate-400">
+          • {formatDate(review.provider_reply_at)}
+        </span>
+      )}
+    </div>
+    <p className="text-sm text-slate-600 pl-1">
+      {review.provider_reply}
+    </p>
+  </div>
+)}
                        </div>
                     ))}
                  </div>

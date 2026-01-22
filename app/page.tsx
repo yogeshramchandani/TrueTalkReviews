@@ -49,7 +49,7 @@ export default function LandingPage() {
   const [loading, setLoading] = useState(true)
 // Inside LandingPage component
   const [activeId, setActiveId] = useState(0)
-
+const [isProfessional, setIsProfessional] = useState(false)
   const featuredCategories = [
     { 
       id: 0,
@@ -76,7 +76,32 @@ export default function LandingPage() {
       img: "https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?auto=format&fit=crop&w=600&q=80",
     },
   ]
+
+
   useEffect(() => {
+    // 2. NEW FUNCTION: Check User Status from 'profiles' table
+    async function checkUserStatus() {
+      // A. Check if a user session exists
+      const { data: { user } } = await supabase.auth.getUser()
+      
+      if (user) {
+        // B. If user exists, query the 'profiles' table
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', user.id) // Assuming 'id' in profiles matches auth.uid()
+          .single()
+        
+        // C. Only switch to Dashboard if the role is explicitly 'professional'
+        // If role is 'reviewer' or if there is an error, it stays false (List My Business)
+        if (!error && data && data.role === 'professional') {
+          setIsProfessional(true)
+        }
+      }
+    }
+    
+    checkUserStatus()
+
     async function fetchSectors() {
       try {
         const { data, error } = await supabase
@@ -115,7 +140,7 @@ export default function LandingPage() {
   }, [])
 
   return (
-    <div className="min-h-screen bg-white font-sans text-slate-900 flex flex-col selection:bg-teal-100 ">
+    <div className="min-h-screen bg-white font-sans text-slate-900 flex flex-col ">
       
       {/* 1. GLOBAL NAVBAR */}
       <Navbar />
@@ -123,7 +148,7 @@ export default function LandingPage() {
       <main className="flex-1">
         
         {/* 2. HERO SECTION */}
-<section className="relative px-4 sm:px-6 lg:px-8 pt-6 pb-12 lg:pt-10 lg:pb-24 overflow-hidden">
+<section className="relative px-4 sm:px-6 lg:px-20 pt-6 pb-12 lg:pt-12 lg:pb-10 overflow-hidden">
       {/* Container centered with mx-auto, no extra side margins */}
       <div className="container mx-auto">
         
@@ -156,61 +181,54 @@ export default function LandingPage() {
               </div>
             </div>
 
-            {/* Buttons */}
-            <div className="flex flex-col sm:flex-row gap-4 pt-4 justify-center lg:justify-start">
-              <Link href="/auth/signup?role=professional" className="w-full sm:w-auto">
-                <Button size="lg" className="h-14 px-8 text-lg bg-teal-900 hover:bg-teal-800 text-white font-bold rounded-none w-full">
-                  List My Business
-                </Button>
-              </Link>
-              <Link href="/categories" className="w-full sm:w-auto">
-                <Button 
-                  size="lg" 
-                  variant="outline" 
-                  className="h-14 px-8 text-lg border-2 border-slate-900 text-slate-900 hover:bg-slate-800 hover:text-white font-bold rounded-none w-full transition-all duration-300"
-                >
-                  Explore Services
-                </Button>
-              </Link>
-            </div>
-          </div>
+            {/* 3. UPDATED BUTTONS LOGIC */}
+                <div className="flex flex-col sm:flex-row gap-4 pt-4 justify-center lg:justify-start">
+                  
+                  {/* CONDITIONAL RENDERING FOR PROFESSIONAL BUTTON */}
+                  {isProfessional ? (
+                    // IF LOGGED IN AS PROFESSIONAL -> SHOW DASHBOARD
+                    <Link href="/service-provider-dashboard" className="w-full sm:w-auto">
+                      <Button size="lg" className="h-14 px-8 text-lg bg-teal-900 hover:bg-teal-800 text-white font-bold rounded-none w-full">
+                        Go to Dashboard
+                      </Button>
+                    </Link>
+                  ) : (
+                    // IF NOT LOGGED IN (OR REGULAR USER) -> SHOW LIST MY BUSINESS
+                    <Link href="/auth/signup?role=professional" className="w-full sm:w-auto">
+                      <Button size="lg" className="h-14 px-8 text-lg bg-teal-900 hover:bg-teal-800 text-white font-bold rounded-none w-full">
+                        List My Business
+                      </Button>
+                    </Link>
+                  )}
+
+                  <Link href="/categories" className="w-full sm:w-auto">
+                    <Button 
+                      size="lg" 
+                      variant="outline" 
+                      className="h-14 px-8 text-lg border-2 border-slate-900 text-slate-900 hover:bg-slate-800 hover:text-white font-bold rounded-none w-full transition-all duration-300"
+                    >
+                      Explore Services
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+              
 
           {/* RIGHT COLUMN: CSS Geometric Art */}
           {/* UPDATED SIZE: 
               - scale(clamp(1.15, ...)) -> Starts at 115% size (Very Big)
               - Max size 1.6 (160%)
           */}
-          <div className="relative hidden lg:flex items-start justify-center origin-top transform lg:scale-[1.15] xl:scale-[1.2] 2xl:scale-[1.3]">
-  
-  {/* Main Flex Container (No Gaps) */}
-  <div className="flex flex-row">
+<div className="w-fit mx-auto relative hidden lg:flex items-start justify-center origin-top transform lg:scale-[1.15] xl:scale-[1.2] 2xl:scale-[1.3]">  
+  {/* Reference the file path directly from the public root */}
+  <img 
+    src="/art.svg" 
+    alt="Geometric Pattern" 
+    width={420} 
+    height={400}
+    className="block" 
+  />
 
-    {/* --- COLUMN 1 --- */}
-    <div className="flex flex-col">
-      <div className="w-[150px] h-[150px] bg-[#1a5353] rounded-tl-[50px] rounded-bl-[50px]"></div>
-      <div className="w-[150px] h-[150px] bg-transparent border-[15px] border-[#111625] box-border"></div>
-      <div className="w-[150px] h-[150px] bg-[#111625] rounded-tl-[50px] rounded-bl-[50px] rounded-tr-[50px]"></div>
-    </div>
-
-    {/* --- COLUMN 2 --- */}
-    <div className="flex flex-col">
-      <div className="w-[150px] h-[150px] flex items-center justify-center">
-        <div className="w-[106px] h-[106px] bg-[#1a5353] rotate-45"></div>
-      </div>
-      <div className="w-[150px] h-[150px] bg-[#334155] rounded-full"></div>
-      <div className="w-[150px] h-[150px] relative">
-        <div className="absolute inset-0 bg-[#334155] [clip-path:polygon(50%_0%,0%_100%,100%_100%)]"></div>
-        <div className="absolute top-[20%] left-[17%] w-[66%] h-[70%] bg-white [clip-path:polygon(50%_0%,0%_100%,100%_100%)]"></div>
-      </div>
-    </div>
-
-    {/* --- COLUMN 3 --- */}
-    <div className="flex flex-col">
-      <div className="w-[150px] h-[300px] bg-[#FB923C] rounded-tr-[120px] rounded-br-[120px]"></div>
-      <div className="w-[150px] h-[150px] bg-[#F8FAFC] rounded-tr-[150px]"></div>
-    </div>
-
-  </div>
 </div>
 
         </div>

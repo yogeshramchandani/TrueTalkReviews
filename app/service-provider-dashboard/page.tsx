@@ -4,6 +4,8 @@ import { useEffect, useState, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabaseClient"
 import { EditableProfileCard } from "@/components/dashboard/editable-profile-card"
+// 1. IMPORT THE RECENT REVIEWS COMPONENT
+import { RecentReviews } from "@/components/dashboard/recent-reviews" 
 import { Loader2, Star, Users, TrendingUp, LogOut, ExternalLink, Share2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
@@ -24,8 +26,7 @@ export default function DashboardPage() {
       return
     }
 
-    // A. FETCH PROFILE FROM DB (Not Metadata)
-    // This ensures we get the latest phone number, social links, etc.
+    // A. FETCH PROFILE FROM DB
     const { data: profileData, error } = await supabase
       .from("profiles")
       .select("*")
@@ -33,14 +34,17 @@ export default function DashboardPage() {
       .single()
 
     if (error || !profileData) {
-      // Fallback if profile doesn't exist yet
       console.error("Profile fetch error:", error)
     }
 
-    // B. FETCH REVIEWS
+    // B. FETCH REVIEWS (Explicitly selecting provider_reply to be safe)
     const { data: reviewsData } = await supabase
       .from("reviews")
-      .select("*")
+      .select(`
+        *,
+        provider_reply,
+        provider_reply_at
+      `)
       .eq("provider_id", session.user.id)
       .order("created_at", { ascending: false })
 
@@ -53,27 +57,26 @@ export default function DashboardPage() {
   useEffect(() => {
     loadDashboard()
   }, [loadDashboard])
-useEffect(() => {
-  async function checkAccess() {
-    const { data: { user } } = await supabase.auth.getUser()
-    
-    if (user) {
-      // 1. Fetch the profile to check the ROLE
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', user.id)
-        .single()
 
-      // 2. The Gatekeeper Logic
-      if (profile?.role !== 'professional') {
-         // If they are a reviewer, kick them to home
-         router.push("/") 
+  // Gatekeeper Logic
+  useEffect(() => {
+    async function checkAccess() {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', user.id)
+          .single()
+
+        if (profile?.role !== 'professional') {
+           router.push("/") 
+        }
       }
     }
-  }
-  checkAccess()
-}, [])
+    checkAccess()
+  }, [])
+
   // Calculate Stats
   const averageRating = reviews.length > 0 
     ? (reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length).toFixed(1) 
@@ -96,7 +99,6 @@ useEffect(() => {
       <header className="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
-             {/* Use your logo here */}
              <img src="/logo.png" alt="Logo" className="h-8 w-auto object-contain" />
              <span className="font-bold text-teal-900 text-lg hidden md:block">Provider<span className="text-teal-600">Dashboard</span></span>
           </div>
@@ -152,19 +154,18 @@ useEffect(() => {
               </div>
             </Card>
 
-            {/* Profile Views (Mock for now) */}
+            {/* Profile Views */}
             <Card className="p-6 border-slate-200 shadow-sm flex items-center gap-4">
-   <div className="p-3 bg-blue-100 text-blue-600 rounded-lg">
-    <TrendingUp className="w-6 h-6" />
-  </div>
-  <div>
-    <p className="text-sm text-slate-500 font-medium">Profile Views</p>
-    {/* CHANGE THIS LINE */}
-    <h3 className="text-2xl font-bold text-slate-900">
-      {profile?.views || 0}
-    </h3>
-  </div>
-</Card>
+               <div className="p-3 bg-blue-100 text-blue-600 rounded-lg">
+                <TrendingUp className="w-6 h-6" />
+              </div>
+              <div>
+                <p className="text-sm text-slate-500 font-medium">Profile Views</p>
+                <h3 className="text-2xl font-bold text-slate-900">
+                  {profile?.views || 0}
+                </h3>
+              </div>
+            </Card>
           </div>
         </div>
 
@@ -174,39 +175,15 @@ useEffect(() => {
           {/* LEFT COLUMN: Profile Editor (Takes up 2 columns) */}
           <div className="lg:col-span-2 space-y-6">
             <h2 className="text-xl font-bold text-slate-900">Manage Profile</h2>
-            {/* Pass profile and reload function */}
             <EditableProfileCard 
               profile={profile} 
               onUpdate={loadDashboard} 
             />
 
-            {/* RECENT REVIEWS LIST */}
+            {/* 4. RECENT REVIEWS SECTION - REPLACED MANUAL LOOP WITH COMPONENT */}
             <div className="pt-8">
-               <h2 className="text-xl font-bold text-slate-900 mb-4">Recent Reviews</h2>
-               {reviews.length === 0 ? (
-                 <div className="text-center py-10 bg-white rounded-xl border border-dashed border-slate-200">
-                   <p className="text-slate-400">No reviews yet.</p>
-                 </div>
-               ) : (
-                 <div className="space-y-4">
-                   {reviews.map((review) => (
-                     <Card key={review.id} className="p-5 border-slate-200">
-                       <div className="flex justify-between items-start mb-2">
-                         <div className="flex gap-1">
-                           {[...Array(5)].map((_, i) => (
-                             <Star key={i} className={`w-4 h-4 ${i < review.rating ? "fill-orange-400 text-orange-400" : "text-slate-200"}`} />
-                           ))}
-                         </div>
-                         <span className="text-xs text-slate-400">
-                           {new Date(review.created_at).toLocaleDateString()}
-                         </span>
-                       </div>
-                       <p className="text-slate-700 text-sm mb-2">{review.content}</p>
-                       <p className="text-xs text-slate-500 font-medium">— {review.reviewer_name || "Anonymous"}</p>
-                     </Card>
-                   ))}
-                 </div>
-               )}
+               {/* Note: RecentReviews component handles its own "No reviews" state and title */}
+               <RecentReviews reviews={reviews} profile={profile}/>
             </div>
           </div>
 

@@ -1,0 +1,24 @@
+<svg width="450" height="450" viewBox="0 0 450 450" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <g id="column-1">
+    <path d="M50 0 H150 V150 H50 A50 50 0 0 1 0 100 V50 A50 50 0 0 1 50 0 Z" fill="#1a5353"/>
+    
+    <rect x="7.5" y="157.5" width="135" height="135" stroke="#111625" stroke-width="15"/>
+    
+    <path d="M50 300 H100 A50 50 0 0 1 150 350 V450 H50 A50 50 0 0 1 0 400 V350 A50 50 0 0 1 50 300 Z" fill="#111625"/>
+  </g>
+
+  <g id="column-2">
+    <rect x="172" y="22" width="106" height="106" fill="#1a5353" transform="rotate(45 225 75)"/>
+    
+    <circle cx="225" cy="225" r="75" fill="#334155"/>
+    
+    <polygon points="225,300 150,450 300,450" fill="#334155"/>
+    <polygon points="225,330 175.5,435 274.5,435" fill="white"/>
+  </g>
+
+  <g id="column-3">
+    <path d="M300 0 H330 A120 120 0 0 1 450 120 V180 A120 120 0 0 1 330 300 H300 V0 Z" fill="#FB923C"/>
+    
+    <path d="M300 300 A150 150 0 0 1 450 450 H300 V300 Z" fill="#F8FAFC"/>
+  </g>
+</svg>
