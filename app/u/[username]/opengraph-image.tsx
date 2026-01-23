@@ -1,22 +1,16 @@
 import { ImageResponse } from 'next/og'
 
-// 1. Use Edge Runtime (Critical for speed and preventing 500 errors)
-export const runtime = 'edge'
+// 1. Use Node.js runtime (Reliable because it has built-in fonts)
+export const runtime = 'nodejs'
 
 export const alt = 'TruVouch Profile'
 export const size = { width: 1200, height: 630 }
 export const contentType = 'image/png'
 
 export default async function Image({ params }: { params: { username: string } }) {
-  // 2. Safe params handling
+  // 2. Resolve params
   const resolvedParams = await Promise.resolve(params)
   const username = resolvedParams.username || 'Professional'
-
-  // 3. FETCH FONT (Critical for Edge Runtime)
-  // We use jsDelivr (fast CDN) instead of GitHub Raw to prevent timeouts.
-  const fontData = await fetch(
-    'https://cdn.jsdelivr.net/npm/@fontsource/inter@5.0.15/files/inter-latin-700-normal.woff'
-  ).then((res) => res.arrayBuffer())
 
   return new ImageResponse(
     (
@@ -28,14 +22,15 @@ export default async function Image({ params }: { params: { username: string } }
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          // Solid colors + Simple Gradient (Performance Optimized)
-          backgroundImage: 'linear-gradient(to bottom right, #0f172a, #1e293b)',
+          // 3. FLAT COLOR (No Gradient = No Crash)
+          backgroundColor: '#0f172a', // Slate 900
           color: 'white',
-          fontFamily: '"Inter", sans-serif',
+          fontFamily: 'sans-serif',
         }}
       >
-        {/* Logo Section */}
-        <div style={{ display: 'flex', alignItems: 'center', marginBottom: 40 }}>
+        {/* Top Branding */}
+        <div style={{ display: 'flex', alignItems: 'center', marginBottom: 50 }}>
+           {/* Simple Square Logo */}
            <div style={{
              display: 'flex',
              alignItems: 'center',
@@ -43,35 +38,36 @@ export default async function Image({ params }: { params: { username: string } }
              width: 60,
              height: 60,
              backgroundColor: '#14b8a6', // Teal
-             borderRadius: 12,
+             borderRadius: 10,
              marginRight: 20,
              color: 'white',
              fontSize: 40,
-             fontWeight: 700,
+             fontWeight: 900,
            }}>T</div>
            <div style={{ fontSize: 50, fontWeight: 700 }}>TruVouch</div>
         </div>
 
-        {/* Main Card */}
+        {/* Main Info Box */}
         <div style={{
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          backgroundColor: '#1e293b', 
-          padding: '50px 90px',
+          // Simple border instead of shadows
+          border: '2px solid #334155', 
           borderRadius: 30,
-          border: '1px solid #334155',
-          boxShadow: '0 20px 50px rgba(0,0,0,0.5)',
+          padding: '40px 80px',
+          backgroundColor: '#1e293b', // Slate 800
         }}>
+          
           {/* Badge */}
           <div style={{
-            backgroundColor: 'rgba(20, 184, 166, 0.1)',
-            color: '#2dd4bf',
+            backgroundColor: '#115e59', // Darker Teal
+            color: '#5eead4', // Light Teal
             padding: '10px 30px',
             borderRadius: 50,
-            fontSize: 22,
-            marginBottom: 25,
-            border: '1px solid rgba(20, 184, 166, 0.2)',
+            fontSize: 24,
+            marginBottom: 30,
+            fontWeight: 600,
           }}>
             ✓ Identity Verified
           </div>
@@ -79,43 +75,30 @@ export default async function Image({ params }: { params: { username: string } }
           {/* Name */}
           <div style={{ 
             fontSize: 70, 
-            fontWeight: 700, 
-            marginBottom: 15,
+            fontWeight: 900, 
+            marginBottom: 10,
             textAlign: 'center',
-            lineHeight: 1.1,
             color: 'white',
           }}>
             {username}
           </div>
 
-          {/* Rating */}
-          <div style={{ display: 'flex', alignItems: 'center', marginTop: 10 }}>
-            <div style={{ display: 'flex', color: '#fbbf24', fontSize: 40, marginRight: 15 }}>
-              ★★★★★
-            </div>
-            <div style={{ fontSize: 30, color: '#e2e8f0' }}>
-              <span style={{ fontWeight: 700, color: 'white' }}>5.0</span> Rating
-            </div>
+          {/* Rating (Text Only) */}
+          <div style={{ fontSize: 32, color: '#cbd5e1', marginTop: 10 }}>
+            <span style={{ color: '#fbbf24', fontSize: 40, marginRight: 15 }}>★★★★★</span>
+            <span style={{ fontWeight: 700, color: 'white' }}>5.0</span> Rating
           </div>
         </div>
-        
+
         {/* Footer */}
-        <div style={{ position: 'absolute', bottom: 40, color: '#64748b', fontSize: 22, fontWeight: 700 }}>
+        <div style={{ position: 'absolute', bottom: 40, color: '#64748b', fontSize: 24, fontWeight: 600 }}>
           truvouch.app
         </div>
       </div>
     ),
     {
       ...size,
-      // 4. Load the fetched font
-      fonts: [
-        {
-          name: 'Inter',
-          data: fontData,
-          style: 'normal',
-          weight: 700,
-        },
-      ],
+      // No 'fonts' array needed for Node.js
     }
   )
 }
