@@ -224,6 +224,7 @@ export default function PublicProfile({ profile, reviews, currentUser }: { profi
     { key: 'twitter', icon: Twitter, url: profile.twitter_url },
     { key: 'facebook', icon: Facebook, url: profile.facebook_url },
     { key: 'reddit', icon: RedditIcon, url: profile.reddit_url },
+    {key: 'website', icon: Globe, url:profile.website_url}
   ].filter(link => link.url && link.url.trim() !== "")
 
   // Check if any filter is active for the dot indicator
