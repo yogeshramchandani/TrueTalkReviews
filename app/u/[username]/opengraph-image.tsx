@@ -1,6 +1,6 @@
 import { ImageResponse } from 'next/og'
 
-// 1. Force Edge Runtime
+// 1. Use Edge Runtime (Standard for OG images)
 export const runtime = 'edge'
 
 export const alt = 'TruVouch Profile'
@@ -8,14 +8,15 @@ export const size = { width: 1200, height: 630 }
 export const contentType = 'image/png'
 
 export default async function Image({ params }: { params: { username: string } }) {
-  // 2. Fix for Next.js 15: Await the params object
-  const resolvedParams = await params
+  // 2. Safe params handling (Works for Next.js 14 & 15)
+  // We treat it as a potential promise just in case, but handle it if it's an object
+  const resolvedParams = await Promise.resolve(params)
   const username = resolvedParams.username || 'Professional'
 
-  // 3. NUCLEAR FIX: Manually fetch a font to prevent default font crashes
-  // We fetch a standard font from a reliable CDN
+  // 3. THE FIX: Fetch the font using a plain string. 
+  // We removed "new URL()" so Webpack doesn't try to bundle this file.
   const fontData = await fetch(
-    new URL('https://github.com/google/fonts/raw/main/apache/roboto/Roboto-Bold.ttf', import.meta.url)
+    'https://github.com/google/fonts/raw/main/apache/roboto/Roboto-Bold.ttf'
   ).then((res) => res.arrayBuffer())
 
   return new ImageResponse(
@@ -28,7 +29,7 @@ export default async function Image({ params }: { params: { username: string } }
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          background: 'linear-gradient(to bottom right, #0f172a, #334155)', // Nice gradient
+          background: 'linear-gradient(to bottom right, #0f172a, #334155)', // Nice Slate Gradient
           color: 'white',
           fontFamily: '"Roboto"',
         }}
@@ -59,7 +60,9 @@ export default async function Image({ params }: { params: { username: string } }
           padding: '40px 80px',
           borderRadius: 30,
           border: '1px solid rgba(255,255,255,0.1)',
+          boxShadow: '0 20px 50px rgba(0,0,0,0.3)',
         }}>
+          {/* Badge */}
           <div style={{
             backgroundColor: 'rgba(20, 184, 166, 0.2)',
             color: '#2dd4bf',
@@ -71,6 +74,7 @@ export default async function Image({ params }: { params: { username: string } }
             ✓ Identity Verified
           </div>
 
+          {/* Name */}
           <div style={{ 
             fontSize: 80, 
             marginBottom: 10,
@@ -81,6 +85,7 @@ export default async function Image({ params }: { params: { username: string } }
             {username}
           </div>
 
+          {/* Rating */}
           <div style={{ fontSize: 32, color: '#e2e8f0', marginTop: 10 }}>
             ★★★★★ 5.0 Verified Rating
           </div>
