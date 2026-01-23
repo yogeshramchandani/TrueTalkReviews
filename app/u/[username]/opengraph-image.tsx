@@ -1,18 +1,19 @@
 import { ImageResponse } from 'next/og'
 
-// 1. Use Edge Runtime (It's faster for this)
-export const runtime = 'edge'
+// 1. CRITICAL FIX: Use 'nodejs' runtime. 
+// The Edge runtime fails because it has no default fonts installed.
+// Node.js includes default fonts, so it won't crash.
+export const runtime = 'nodejs'
 
 export const alt = 'TruVouch Profile'
 export const size = { width: 1200, height: 630 }
 export const contentType = 'image/png'
 
 export default async function Image({ params }: { params: { username: string } }) {
-  // 2. Resolve params safely
+  // 2. Safe params handling for Next.js 15
   const resolvedParams = await Promise.resolve(params)
   const username = resolvedParams.username || 'Professional'
 
-  // 3. RETURN IMAGE DIRECTLY (No fetching, no external calls)
   return new ImageResponse(
     (
       <div
@@ -23,39 +24,32 @@ export default async function Image({ params }: { params: { username: string } }
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          // Premium Gradient Background
-          background: 'linear-gradient(to bottom right, #0f172a, #334155)', 
+          // Premium Dark Gradient
+          background: 'linear-gradient(to bottom right, #0f172a, #1e293b)',
           color: 'white',
-          fontFamily: 'sans-serif', // Use safe system font
+          fontFamily: 'sans-serif',
         }}
       >
-        {/* Background Pattern (Subtle Circles) */}
-        <div style={{
-          position: 'absolute',
-          top: -100,
-          left: -100,
-          width: 500,
-          height: 500,
-          borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(20, 184, 166, 0.15), transparent 70%)',
-        }} />
-
         {/* Logo Section */}
-        <div style={{ display: 'flex', alignItems: 'center', marginBottom: 40, zIndex: 10 }}>
+        <div style={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          marginBottom: 40 
+        }}>
            <div style={{
              display: 'flex',
              alignItems: 'center',
              justifyContent: 'center',
              width: 60,
              height: 60,
-             backgroundColor: '#14b8a6', // Teal Brand Color
+             backgroundColor: '#14b8a6', // Teal
              borderRadius: 12,
              marginRight: 20,
              color: 'white',
              fontSize: 40,
-             fontWeight: 'bold',
+             fontWeight: 900,
            }}>T</div>
-           <div style={{ fontSize: 50, fontWeight: 'bold' }}>TruVouch</div>
+           <div style={{ fontSize: 50, fontWeight: 700 }}>TruVouch</div>
         </div>
 
         {/* Main Card */}
@@ -63,12 +57,11 @@ export default async function Image({ params }: { params: { username: string } }
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          backgroundColor: 'rgba(255,255,255,0.05)', // Glassmorphism
+          backgroundColor: '#1e293b', // Slate 800 (Safer than glassmorphism for Node runtime)
           padding: '50px 90px',
           borderRadius: 30,
-          border: '1px solid rgba(255,255,255,0.1)',
+          border: '2px solid #334155',
           boxShadow: '0 20px 60px rgba(0,0,0,0.4)',
-          zIndex: 10,
         }}>
           {/* Badge */}
           <div style={{
@@ -86,12 +79,11 @@ export default async function Image({ params }: { params: { username: string } }
           {/* Name */}
           <div style={{ 
             fontSize: 70, 
-            fontWeight: 'bold', 
+            fontWeight: 900, 
             marginBottom: 15,
             textAlign: 'center',
             lineHeight: 1.1,
             color: '#f8fafc',
-            textShadow: '0 4px 10px rgba(0,0,0,0.5)'
           }}>
             {username}
           </div>
@@ -107,7 +99,7 @@ export default async function Image({ params }: { params: { username: string } }
           </div>
         </div>
         
-        {/* Footer URL */}
+        {/* Footer */}
         <div style={{ 
           position: 'absolute', 
           bottom: 40, 
@@ -121,8 +113,6 @@ export default async function Image({ params }: { params: { username: string } }
     ),
     {
       ...size,
-      // 4. IMPORTANT: Do not include 'fonts: []' array. 
-      // Vercel will use the default system font which is 100% reliable.
     }
   )
 }
