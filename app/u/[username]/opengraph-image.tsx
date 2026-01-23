@@ -1,6 +1,6 @@
 import { ImageResponse } from 'next/og'
 
-// 1. Use Node.js runtime (Reliable because it has built-in fonts)
+// 1. Node.js runtime (Has fonts built-in, no white screen)
 export const runtime = 'nodejs'
 
 export const alt = 'TruVouch Profile'
@@ -8,7 +8,7 @@ export const size = { width: 1200, height: 630 }
 export const contentType = 'image/png'
 
 export default async function Image({ params }: { params: { username: string } }) {
-  // 2. Resolve params
+  // 2. Safe params handling
   const resolvedParams = await Promise.resolve(params)
   const username = resolvedParams.username || 'Professional'
 
@@ -22,15 +22,14 @@ export default async function Image({ params }: { params: { username: string } }
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          // 3. FLAT COLOR (No Gradient = No Crash)
+          // 3. ULTRA-SAFE CSS: No Gradients, No Shadows. Just Solid Colors.
           backgroundColor: '#0f172a', // Slate 900
           color: 'white',
           fontFamily: 'sans-serif',
         }}
       >
-        {/* Top Branding */}
-        <div style={{ display: 'flex', alignItems: 'center', marginBottom: 50 }}>
-           {/* Simple Square Logo */}
+        {/* Logo Section */}
+        <div style={{ display: 'flex', alignItems: 'center', marginBottom: 40 }}>
            <div style={{
              display: 'flex',
              alignItems: 'center',
@@ -38,7 +37,7 @@ export default async function Image({ params }: { params: { username: string } }
              width: 60,
              height: 60,
              backgroundColor: '#14b8a6', // Teal
-             borderRadius: 10,
+             borderRadius: 12,
              marginRight: 20,
              color: 'white',
              fontSize: 40,
@@ -47,22 +46,20 @@ export default async function Image({ params }: { params: { username: string } }
            <div style={{ fontSize: 50, fontWeight: 700 }}>TruVouch</div>
         </div>
 
-        {/* Main Info Box */}
+        {/* Main Card - Simplified */}
         <div style={{
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          // Simple border instead of shadows
-          border: '2px solid #334155', 
-          borderRadius: 30,
-          padding: '40px 80px',
           backgroundColor: '#1e293b', // Slate 800
+          padding: '40px 80px',
+          borderRadius: 20,
+          border: '2px solid #334155', // Simple solid border
         }}>
-          
           {/* Badge */}
           <div style={{
-            backgroundColor: '#115e59', // Darker Teal
-            color: '#5eead4', // Light Teal
+            backgroundColor: '#115e59',
+            color: '#5eead4',
             padding: '10px 30px',
             borderRadius: 50,
             fontSize: 24,
@@ -83,22 +80,21 @@ export default async function Image({ params }: { params: { username: string } }
             {username}
           </div>
 
-          {/* Rating (Text Only) */}
-          <div style={{ fontSize: 32, color: '#cbd5e1', marginTop: 10 }}>
+          {/* Rating */}
+          <div style={{ fontSize: 32, color: '#94a3b8', marginTop: 10 }}>
             <span style={{ color: '#fbbf24', fontSize: 40, marginRight: 15 }}>★★★★★</span>
             <span style={{ fontWeight: 700, color: 'white' }}>5.0</span> Rating
           </div>
         </div>
-
+        
         {/* Footer */}
-        <div style={{ position: 'absolute', bottom: 40, color: '#64748b', fontSize: 24, fontWeight: 600 }}>
+        <div style={{ position: 'absolute', bottom: 40, color: '#64748b', fontSize: 24 }}>
           truvouch.app
         </div>
       </div>
     ),
     {
       ...size,
-      // No 'fonts' array needed for Node.js
     }
   )
 }
