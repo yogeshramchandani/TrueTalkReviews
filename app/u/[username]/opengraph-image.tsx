@@ -1,16 +1,21 @@
 import { ImageResponse } from 'next/og'
 
-// 1. Node.js runtime (Has fonts built-in, no white screen)
-export const runtime = 'nodejs'
+// 1. Use Edge Runtime (Fast, No Memory Crash)
+export const runtime = 'edge'
 
 export const alt = 'TruVouch Profile'
 export const size = { width: 1200, height: 630 }
 export const contentType = 'image/png'
 
 export default async function Image({ params }: { params: { username: string } }) {
-  // 2. Safe params handling
   const resolvedParams = await Promise.resolve(params)
   const username = resolvedParams.username || 'Professional'
+
+  // 2. LOAD LOCAL FONT (Guaranteed to work)
+  // This looks for 'font.ttf' in the same folder as this file.
+  const fontData = await fetch(
+    new URL('./font.ttf', import.meta.url)
+  ).then((res) => res.arrayBuffer())
 
   return new ImageResponse(
     (
@@ -22,10 +27,9 @@ export default async function Image({ params }: { params: { username: string } }
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          // 3. ULTRA-SAFE CSS: No Gradients, No Shadows. Just Solid Colors.
           backgroundColor: '#0f172a', // Slate 900
           color: 'white',
-          fontFamily: 'sans-serif',
+          fontFamily: '"CustomFont"', // Matches the font name below
         }}
       >
         {/* Logo Section */}
@@ -41,12 +45,11 @@ export default async function Image({ params }: { params: { username: string } }
              marginRight: 20,
              color: 'white',
              fontSize: 40,
-             fontWeight: 900,
            }}>T</div>
-           <div style={{ fontSize: 50, fontWeight: 700 }}>TruVouch</div>
+           <div style={{ fontSize: 50 }}>TruVouch</div>
         </div>
 
-        {/* Main Card - Simplified */}
+        {/* Main Card */}
         <div style={{
           display: 'flex',
           flexDirection: 'column',
@@ -54,7 +57,7 @@ export default async function Image({ params }: { params: { username: string } }
           backgroundColor: '#1e293b', // Slate 800
           padding: '40px 80px',
           borderRadius: 20,
-          border: '2px solid #334155', // Simple solid border
+          border: '2px solid #334155',
         }}>
           {/* Badge */}
           <div style={{
@@ -64,7 +67,6 @@ export default async function Image({ params }: { params: { username: string } }
             borderRadius: 50,
             fontSize: 24,
             marginBottom: 30,
-            fontWeight: 600,
           }}>
             ✓ Identity Verified
           </div>
@@ -72,7 +74,6 @@ export default async function Image({ params }: { params: { username: string } }
           {/* Name */}
           <div style={{ 
             fontSize: 70, 
-            fontWeight: 900, 
             marginBottom: 10,
             textAlign: 'center',
             color: 'white',
@@ -83,7 +84,7 @@ export default async function Image({ params }: { params: { username: string } }
           {/* Rating */}
           <div style={{ fontSize: 32, color: '#94a3b8', marginTop: 10 }}>
             <span style={{ color: '#fbbf24', fontSize: 40, marginRight: 15 }}>★★★★★</span>
-            <span style={{ fontWeight: 700, color: 'white' }}>5.0</span> Rating
+            <span style={{ color: 'white' }}>5.0</span> Rating
           </div>
         </div>
         
@@ -95,6 +96,15 @@ export default async function Image({ params }: { params: { username: string } }
     ),
     {
       ...size,
+      // 3. Register the local font
+      fonts: [
+        {
+          name: 'CustomFont',
+          data: fontData,
+          style: 'normal',
+          weight: 700,
+        },
+      ],
     }
   )
 }
