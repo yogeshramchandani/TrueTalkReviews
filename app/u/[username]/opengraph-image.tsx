@@ -1,14 +1,21 @@
 import { ImageResponse } from 'next/og'
 
-// 1. Force Node.js runtime (more stable for free tier)
-export const runtime = 'nodejs' 
+// 1. Use Edge runtime (Standard for OG images)
+export const runtime = 'edge'
 
 export const alt = 'TruVouch Profile'
 export const size = { width: 1200, height: 630 }
 export const contentType = 'image/png'
 
-export default async function Image({ params }: { params: { username: string } }) {
-  const username = params.username || 'Professional'
+// 2. Define props to handle both Next.js 14 (object) and 15 (Promise)
+type Props = {
+  params: Promise<{ username: string }> | { username: string }
+}
+
+export default async function Image({ params }: Props) {
+  // 3. AWAIT params to fix the Next.js 15 crash
+  const resolvedParams = await params
+  const username = resolvedParams.username || 'Professional'
 
   return new ImageResponse(
     (
@@ -20,23 +27,27 @@ export default async function Image({ params }: { params: { username: string } }
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          backgroundColor: '#0f172a', // Solid dark blue (no gradients to save memory)
+          backgroundColor: '#0f172a', // Slate 900
           color: 'white',
+          fontFamily: 'sans-serif',
         }}
       >
         {/* Logo Mark */}
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          marginBottom: 40,
-        }}>
+        <div style={{ display: 'flex', alignItems: 'center', marginBottom: 40 }}>
            <div style={{
+             display: 'flex',
+             alignItems: 'center',
+             justifyContent: 'center',
+             width: 60,
+             height: 60,
+             backgroundColor: '#14b8a6', // Teal 500
+             borderRadius: 12,
+             marginRight: 20,
+             color: 'white',
              fontSize: 40,
              fontWeight: 900,
-             color: '#14b8a6', // Teal
-             marginRight: 15,
            }}>T</div>
-           <div style={{ fontSize: 40, fontWeight: 700 }}>TruVouch</div>
+           <div style={{ fontSize: 50, fontWeight: 700 }}>TruVouch</div>
         </div>
 
         {/* Main Card */}
@@ -46,18 +57,19 @@ export default async function Image({ params }: { params: { username: string } }
           alignItems: 'center',
           backgroundColor: '#1e293b', // Slate 800
           padding: '40px 80px',
-          borderRadius: 20,
-          border: '1px solid #334155',
-        }}
-        >
+          borderRadius: 30,
+          border: '2px solid #334155',
+          boxShadow: '0 20px 50px rgba(0,0,0,0.5)',
+        }}>
           {/* Badge */}
           <div style={{
             backgroundColor: 'rgba(20, 184, 166, 0.2)',
-            color: '#2dd4bf',
-            padding: '10px 24px',
+            color: '#2dd4bf', // Teal 400
+            padding: '10px 30px',
             borderRadius: 50,
-            fontSize: 20,
-            marginBottom: 20,
+            fontSize: 24,
+            marginBottom: 30,
+            fontWeight: 600,
           }}>
             ✓ Identity Verified
           </div>
@@ -66,6 +78,7 @@ export default async function Image({ params }: { params: { username: string } }
           <div style={{ 
             fontSize: 70, 
             fontWeight: 900, 
+            color: 'white', 
             marginBottom: 10,
             textAlign: 'center',
             lineHeight: 1.1,
@@ -73,21 +86,19 @@ export default async function Image({ params }: { params: { username: string } }
             {username}
           </div>
 
-          {/* Stars (Text based to avoid icon fetch issues) */}
-          <div style={{ fontSize: 30, color: '#94a3b8', marginTop: 10 }}>
-            <span style={{ color: '#fbbf24', fontSize: 36 }}>★★★★★</span> 5.0 Rating
+          {/* Stars */}
+          <div style={{ fontSize: 32, color: '#94a3b8', marginTop: 10 }}>
+            <span style={{ color: '#fbbf24', fontSize: 40, marginRight: 10 }}>★★★★★</span>
+            <span style={{ color: 'white', fontWeight: 'bold' }}>5.0</span> Verified
           </div>
         </div>
 
-        <div style={{ position: 'absolute', bottom: 40, color: '#64748b', fontSize: 24 }}>
-          truvouch.app
+        {/* Footer */}
+        <div style={{ position: 'absolute', bottom: 50, color: '#64748b', fontSize: 24 }}>
+          Hire with confidence at truvouch.app
         </div>
       </div>
     ),
-    {
-      ...size,
-      // 2. Disable font loading to prevent timeouts
-      fonts: undefined, 
-    }
+    { ...size }
   )
 }
