@@ -1,6 +1,7 @@
 import Link from "next/link"
-import { createClient } from "@/utils/supabase/server" // IMPORTANT: Use server client
+import { createClient } from "@/utils/supabase/server" 
 import { Button } from "@/components/ui/button"
+import FadeIn from "@/components/FadeIn" // Ensure filename matches (FadeIn.tsx)
 import { 
   ShieldCheck, Star, TrendingUp,
   Code, Stethoscope, Laptop, Home, 
@@ -10,7 +11,7 @@ import {
 
 import { Navbar } from "@/components/navbar"
 import { Footer } from "@/components/footer"
-import { TrendingSection } from "@/components/trending-section" // Import the client component
+import { TrendingSection } from "@/components/trending-section"
 
 // SECTOR ICON MAP
 const sectorIcons: Record<string, any> = {
@@ -96,8 +97,8 @@ export default async function LandingPage() {
           <div className="container mx-auto">
             <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-start">
               
-              {/* LEFT COLUMN */}
-              <div className="space-y-6 max-w-2xl relative z-10 mx-auto lg:mx-0 text-center lg:text-left">
+              {/* LEFT COLUMN: Main Content Fades In */}
+              <FadeIn className="space-y-6 max-w-2xl relative z-10 mx-auto lg:mx-0 text-center lg:text-left">
                 <h1 className="text-4xl sm:text-5xl lg:text-[clamp(3rem,5.5vw,4.5rem)] font-extrabold text-slate-900 tracking-tight leading-[1.1]">
                   Unleash Your <br />
                   <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-800 to-teal-500">Reputation</span> with
@@ -120,7 +121,7 @@ export default async function LandingPage() {
                   </div>
                 </div>
 
-                {/* BUTTONS (Server logic, no loading flash) */}
+                {/* BUTTONS */}
                 <div className="flex flex-col sm:flex-row gap-4 pt-4 justify-center lg:justify-start">
                   {isProfessional ? (
                     <Link href="/service-provider-dashboard" className="w-full sm:w-auto">
@@ -143,10 +144,10 @@ export default async function LandingPage() {
                     </Button>
                   </Link>
                 </div>
-              </div>
+              </FadeIn>
 
-              {/* RIGHT COLUMN: CSS Art */}
-              <div className="w-fit mx-auto relative hidden lg:flex items-start justify-center origin-top transform lg:scale-[1.15] xl:scale-[1.2] 2xl:scale-[1.3]">  
+              {/* RIGHT COLUMN: Image Fades In slightly later */}
+              <FadeIn delay={0.2} className="w-fit mx-auto relative hidden lg:flex items-start justify-center origin-top transform lg:scale-[1.15] xl:scale-[1.2] 2xl:scale-[1.3]">  
                 <img 
                   src="/art.svg" 
                   alt="Geometric Pattern" 
@@ -154,7 +155,7 @@ export default async function LandingPage() {
                   height={400}
                   className="block" 
                 />
-              </div>
+              </FadeIn>
 
             </div>
           </div>
@@ -163,13 +164,15 @@ export default async function LandingPage() {
         {/* SECTORS SECTION */}
         <section className="py-12 bg-white border-b border-slate-100">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-            <h2 className="text-2xl font-bold text-slate-900 mb-8 text-center md:text-left">What are you looking for?</h2>
+            <FadeIn>
+                <h2 className="text-2xl font-bold text-slate-900 mb-8 text-center md:text-left">What are you looking for?</h2>
+            </FadeIn>
             
-            {/* No loading state needed - data is already here */}
             {formattedSectors.length === 0 ? (
                <div className="text-center text-slate-400 py-10">No sectors found.</div>
             ) : (
-              <div className="flex flex-wrap md:flex-nowrap justify-center md:justify-start gap-4 md:gap-6 overflow-x-auto pb-4 scrollbar-hide">
+              // Wrap the list in FadeIn
+              <FadeIn delay={0.1} className="flex flex-wrap md:flex-nowrap justify-center md:justify-start gap-4 md:gap-6 overflow-x-auto pb-4 scrollbar-hide">
                 {formattedSectors.map((cat: any, i: number) => {
                   const Icon = cat.icon
                   return (
@@ -187,7 +190,7 @@ export default async function LandingPage() {
                     </Link>
                   )
                 })}
-              </div>
+              </FadeIn>
             )}
           </div>
         </section>
@@ -195,55 +198,67 @@ export default async function LandingPage() {
         {/* VALUE PROPOSITION */}
         <section className="py-16 md:py-24 bg-white">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center max-w-3xl mx-auto mb-12 md:mb-16">
+            <FadeIn className="text-center max-w-3xl mx-auto mb-12 md:mb-16">
               <h2 className="text-3xl font-bold text-slate-900 mb-4">Why users trust <span className="text-teal-700">TruVouch</span></h2>
               <p className="text-slate-500 text-lg">We've built a platform where honesty is the only currency.</p>
-            </div>
+            </FadeIn>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-              <div className="p-8 rounded-2xl bg-teal-50 border border-teal-100 hover:shadow-lg transition-all">
-                <div className="w-12 h-12 bg-teal-100 rounded-xl flex items-center justify-center mb-6">
-                  <ShieldCheck className="w-6 h-6 text-teal-700" />
-                </div>
-                <h3 className="text-xl font-bold text-slate-900 mb-3">Identity Verification</h3>
-                <p className="text-slate-600 leading-relaxed">
-                  We verify every professional's identity so you know exactly who you are hiring. No bots, no fakes.
-                </p>
-              </div>
+              {/* STAGGERED ANIMATION FOR CARDS */}
+              
+              <FadeIn delay={0.1}>
+                  <div className="h-full p-8 rounded-2xl bg-teal-50 border border-teal-100 hover:shadow-lg transition-all">
+                    <div className="w-12 h-12 bg-teal-100 rounded-xl flex items-center justify-center mb-6">
+                      <ShieldCheck className="w-6 h-6 text-teal-700" />
+                    </div>
+                    <h3 className="text-xl font-bold text-slate-900 mb-3">Identity Verification</h3>
+                    <p className="text-slate-600 leading-relaxed">
+                      We verify every professional's identity so you know exactly who you are hiring. No bots, no fakes.
+                    </p>
+                  </div>
+              </FadeIn>
 
-              <div className="p-8 rounded-2xl bg-orange-50 border border-orange-100 hover:shadow-lg transition-all">
-                <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center mb-6">
-                  <Star className="w-6 h-6 text-orange-600" />
-                </div>
-                <h3 className="text-xl font-bold text-slate-900 mb-3">The "One Review" Rule</h3>
-                <p className="text-slate-600 leading-relaxed">
-                  A user can only review a professional once. This prevents spam and ensures every rating is genuine.
-                </p>
-              </div>
+              <FadeIn delay={0.2}>
+                  <div className="h-full p-8 rounded-2xl bg-orange-50 border border-orange-100 hover:shadow-lg transition-all">
+                    <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center mb-6">
+                      <Star className="w-6 h-6 text-orange-600" />
+                    </div>
+                    <h3 className="text-xl font-bold text-slate-900 mb-3">The "One Review" Rule</h3>
+                    <p className="text-slate-600 leading-relaxed">
+                      A user can only review a professional once. This prevents spam and ensures every rating is genuine.
+                    </p>
+                  </div>
+              </FadeIn>
 
-              <div className="p-8 rounded-2xl bg-slate-50 border border-slate-100 hover:shadow-lg transition-all">
-                <div className="w-12 h-12 bg-white border border-slate-200 rounded-xl flex items-center justify-center mb-6">
-                  <TrendingUp className="w-6 h-6 text-slate-700" />
-                </div>
-                <h3 className="text-xl font-bold text-slate-900 mb-3">Community Driven</h3>
-                <p className="text-slate-600 leading-relaxed">
-                  Our rankings are purely based on community feedback, not on who pays the most for ads.
-                </p>
-              </div>
+              <FadeIn delay={0.3}>
+                  <div className="h-full p-8 rounded-2xl bg-slate-50 border border-slate-100 hover:shadow-lg transition-all">
+                    <div className="w-12 h-12 bg-white border border-slate-200 rounded-xl flex items-center justify-center mb-6">
+                      <TrendingUp className="w-6 h-6 text-slate-700" />
+                    </div>
+                    <h3 className="text-xl font-bold text-slate-900 mb-3">Community Driven</h3>
+                    <p className="text-slate-600 leading-relaxed">
+                      Our rankings are purely based on community feedback, not on who pays the most for ads.
+                    </p>
+                  </div>
+              </FadeIn>
+
             </div>
           </div>
         </section>
 
-        {/* POPULAR THIS WEEK (Extracted to Client Component) */}
+        {/* POPULAR THIS WEEK */}
         <section className="py-16 md:py-24 bg-white border-b border-slate-100">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-10 md:mb-16">
+            <FadeIn className="text-center mb-10 md:mb-16">
               <h2 className="text-3xl md:text-4xl font-extrabold text-slate-900">Trending Now</h2>
               <p className="text-slate-500 mt-2">Tap to explore the most booked services.</p>
-            </div>
+            </FadeIn>
             
             {/* The interactive client component goes here */}
-            <TrendingSection />
+            {/* You can wrap this too if you want the whole section to fade in */}
+            <FadeIn delay={0.2}>
+                <TrendingSection />
+            </FadeIn>
             
           </div>
         </section>
