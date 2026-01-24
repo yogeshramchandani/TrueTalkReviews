@@ -6,13 +6,15 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from "@/components/ui/input"
 import { useRef, useState } from "react"
 
+// 1. UPDATE INTERFACE: Added 'username' (mandatory) and optional 'id'
 interface Provider {
   name: string
   profession: string
   city: string
+  username: string // <--- Crucial Addition
+  id?: string
 }
 
-// 👇 1. UPDATE INTERFACE to accept optional 'customTrigger'
 interface ShareProfileButtonProps {
   provider: Provider
   customTrigger?: React.ReactNode 
@@ -22,11 +24,12 @@ export default function ShareProfileButton({ provider, customTrigger }: SharePro
   const inputRef = useRef<HTMLInputElement>(null)
   const [copied, setCopied] = useState(false)
 
-  const profileUrl = typeof window !== "undefined" ? window.location.href : ""
+  // 2. FIX: Use Clean URL Logic
+  // We use the username directly. If it's missing for some reason, we fallback to 'undefined' or empty string to avoid crashes.
+  const safeUsername = provider.username || provider.id || "unknown"
+  const profileUrl = `https://truvouch.app/u/${safeUsername}`
 
   const handleCopyLink = async () => {
-    if (!profileUrl) return
-
     try {
       await navigator.clipboard.writeText(profileUrl)
       setCopied(true)
@@ -54,6 +57,9 @@ export default function ShareProfileButton({ provider, customTrigger }: SharePro
       } catch (err) {
         console.log("Share cancelled")
       }
+    } else {
+        // Fallback for desktop
+        handleCopyLink()
     }
   }
 
@@ -62,7 +68,6 @@ export default function ShareProfileButton({ provider, customTrigger }: SharePro
   return (
     <Dialog>
       <DialogTrigger asChild>
-        {/* 👇 2. LOGIC: If customTrigger exists, use it. Otherwise use default button. */}
         {customTrigger ? (
           customTrigger
         ) : (
@@ -113,11 +118,9 @@ export default function ShareProfileButton({ provider, customTrigger }: SharePro
             </div>
           </div>
 
-          {canShare && (
-            <Button onClick={handleShare} className="w-full bg-teal-700 hover:bg-teal-800 text-white">
-              Share on Social Media
-            </Button>
-          )}
+          <Button onClick={handleShare} className="w-full bg-teal-700 hover:bg-teal-800 text-white font-bold">
+            {canShare ? "Share on Social Media" : "Copy Link to Share"}
+          </Button>
         </div>
       </DialogContent>
     </Dialog>

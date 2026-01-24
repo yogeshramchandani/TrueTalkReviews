@@ -491,7 +491,7 @@ export default function PublicProfile({ profile, reviews, currentUser }: { profi
             
             <div className="flex gap-3 mb-6">
                 <div className="flex-1"><ReviewButton fullWidth size="default" /></div>
-                <ShareProfileButton provider={{ name: profile.full_name, profession: profile.profession, city: profile.city }} customTrigger={<Button variant="outline" className="h-10 w-10 rounded-full border-slate-300 p-0 flex items-center justify-center"><Share2 className="w-5 h-5 text-slate-600" /></Button>} />
+                <ShareProfileButton provider={{ name: profile.full_name, profession: profile.profession, city: profile.city, username: profile.username }} customTrigger={<Button variant="outline" className="h-10 w-10 rounded-full border-slate-300 p-0 flex items-center justify-center"><Share2 className="w-5 h-5 text-slate-600" /></Button>} />
             </div>
             
             {/* Stats */}
@@ -652,7 +652,7 @@ export default function PublicProfile({ profile, reviews, currentUser }: { profi
                 <div className="space-y-1">
                   <ReviewButton fullWidth />
                   <ShareProfileButton 
-                    provider={{ name: profile.full_name, profession: profile.profession, city: profile.city }} 
+                    provider={{ name: profile.full_name, profession: profile.profession, city: profile.city, username: profile.username }} 
                     customTrigger={
                       <Button 
                         variant="outline" 

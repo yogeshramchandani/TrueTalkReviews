@@ -9,9 +9,9 @@ import { Copy, CheckCircle2, Share2 } from "lucide-react"
 export function ShareProfileCard({ username }: { username: string }) {
   const [copied, setCopied] = useState(false)
   
-  // Construct the full URL (works on localhost and production)
-  const origin = typeof window !== 'undefined' ? window.location.origin : ''
-  const profileUrl = `${origin}/u/${username}`
+  // FIX: Hardcode the domain so it is ALWAYS the clean, real link.
+  // This prevents 'localhost' links or 'search?query=...' parameters from appearing.
+  const profileUrl = `https://truvouch.app/u/${username}`
 
   const handleCopy = () => {
     navigator.clipboard.writeText(profileUrl)
