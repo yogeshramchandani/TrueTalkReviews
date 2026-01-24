@@ -43,7 +43,7 @@ const locationString = profile.city ? ` in ${profile.city}` : ""
     openGraph: {
       title: title,
       description: description,
-      images: [profile.avatar_url || '/default-avatar.png'], 
+      // images: [profile.avatar_url || '/default-avatar.png'], 
       type: 'profile',
     },
   }

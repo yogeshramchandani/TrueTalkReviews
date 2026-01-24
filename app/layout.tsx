@@ -7,6 +7,7 @@ const inter = Inter({ subsets: ["latin"], display: 'swap', })
 
 export const metadata: Metadata = {
   // 1. Browser Tab Title
+  metadataBase: new URL('https://truvouch.app'),
   title: "TruVouch - Build Trust with Real Reviews",
   
   // 2. Search Engine Description
@@ -26,7 +27,9 @@ export const metadata: Metadata = {
     ],
     type: "website",
   },
-
+alternates: {
+    canonical: './', 
+  },
   // 4. Browser Tab Icon (Favicon)
   // Assuming 'logo.png' is in your public folder
   icons: {
