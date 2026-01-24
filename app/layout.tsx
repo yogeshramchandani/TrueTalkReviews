@@ -32,9 +32,7 @@ export const metadata: Metadata = {
     ],
     type: "website",
   },
-alternates: {
-    canonical: 'https://www.truvouch.app', 
-  },
+
   // 4. Browser Tab Icon (Favicon)
   // Assuming 'logo.png' is in your public folder
   icons: {

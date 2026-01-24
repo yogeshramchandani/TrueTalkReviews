@@ -36,10 +36,15 @@ const locationString = profile.city ? ` in ${profile.city}` : ""
   const description = profile.bio 
     ? profile.bio.slice(0, 160) 
     : `Contact ${profile.full_name}, a professional ${profile.profession || 'expert'}${locationString}. Read verified reviews, check ratings, and view their verified portfolio on TruVouch.`
+const canonicalUrl = `https://www.truvouch.app/u/${username}`
 
   return {
     title: title,
     description: description,
+    alternates: {
+    canonical: canonicalUrl,
+  },
+
     openGraph: {
       title: title,
       description: description,

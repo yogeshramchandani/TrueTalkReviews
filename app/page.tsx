@@ -8,6 +8,7 @@ import {
   Briefcase, Gavel, PenTool, GraduationCap, Truck, Music, PawPrint,
   LayoutDashboard 
 } from "lucide-react"
+import type { Metadata } from "next"
 
 import { Navbar } from "@/components/navbar"
 import { Footer } from "@/components/footer"
@@ -39,6 +40,22 @@ const bgColors = [
   { text: "text-green-600", bg: "bg-green-50" },
   { text: "text-purple-600", bg: "bg-purple-50" },
 ]
+export const metadata: Metadata = {
+  title: "TruVouch – Build Trust with Real Reviews",
+  description:
+    "Create a public profile and let real clients vouch for your services. Grow your business with authentic reviews.",
+  alternates: {
+    canonical: "https://www.truvouch.app",
+  },
+  openGraph: {
+    title: "TruVouch – Build Trust with Real Reviews",
+    description:
+      "Create a public profile and let real clients vouch for your services. Grow your business with authentic reviews.",
+    url: "https://www.truvouch.app",
+    siteName: "TruVouch",
+    type: "website",
+  },
+}
 
 export default async function LandingPage() {
   const supabase = createClient()
