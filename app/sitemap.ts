@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // TODO: Change this to 'https://truvouch.tech' once you connect your new domain!
-  const baseUrl = 'https://truvouch.vercel.app'
+  const baseUrl = 'https://truvouch.app'
 
   // 1. Define Static Routes (These will ALWAYS work)
   const staticRoutes = [

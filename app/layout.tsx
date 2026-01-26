@@ -17,7 +17,7 @@ const jakarta = Plus_Jakarta_Sans({
 
 export const metadata: Metadata = {
   // 1. Browser Tab Title
-  metadataBase: new URL('https://www.truvouch.app'),
+  metadataBase: new URL('https://truvouch.app'),
   title: "TruVouch - Build Trust with Real Reviews",
   
   // 2. Search Engine Description
