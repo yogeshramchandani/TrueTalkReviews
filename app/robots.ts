@@ -8,6 +8,6 @@ export default function robots(): MetadataRoute.Robots {
       disallow: ['/service-provider-dashboard/',
       '/auth/',] // Don't let Google scan private dashboards
     },
-    sitemap: 'https://truvouch.vercel.app',
+sitemap: 'https://truvouch.app/sitemap.xml',
   }
 }

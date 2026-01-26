@@ -201,7 +201,7 @@ export default function DashboardPage() {
               </p>
               <div className="bg-slate-100 p-3 rounded-lg border border-slate-200 flex items-center justify-between gap-2 overflow-hidden mb-4">
                 <code className="text-xs text-slate-600 truncate">
-                  TruVouch.vercel.app{publicUrl}
+                  TruVouch.app{publicUrl}
                 </code>
               </div>
               <Button 
