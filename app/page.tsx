@@ -6,7 +6,8 @@ import {
   ShieldCheck, Star, TrendingUp,
   Code, Stethoscope, Laptop, Home, 
   Briefcase, Gavel, PenTool, GraduationCap, Truck, Music, PawPrint,
-  LayoutDashboard 
+  LayoutDashboard ,Fingerprint, CheckCircle2, RefreshCw, UserCheck,
+  Award, 
 } from "lucide-react"
 import type { Metadata } from "next"
 
@@ -110,21 +111,27 @@ export default async function LandingPage() {
       <main className="flex-1">
         
         {/* HERO SECTION */}
-        <section className="relative px-4 sm:px-6 lg:px-20 pt-6 pb-12 lg:pt-12 lg:pb-10 overflow-hidden">
+        <section className="relative px-4 sm:px-6 lg:px-40 pt-28 pb-12 lg:pt-32 lg:pb-10 overflow-hidden">
           <div className="container mx-auto">
-            <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-start">
+            <div className="grid lg:grid-cols-2 gap-12 lg:gap-24 items-start">
               
               {/* LEFT COLUMN: Main Content Fades In */}
               <FadeIn className="space-y-6 max-w-2xl relative z-10 mx-auto lg:mx-0 text-center lg:text-left">
-                <h1 className="text-4xl sm:text-5xl lg:text-[clamp(3rem,5.5vw,4.5rem)] font-extrabold text-slate-900 tracking-tight leading-[1.1]">
-                  Unleash Your <br />
-                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-800 to-teal-500">Reputation</span> with
-                  Verified Reviews
-                </h1>
+  {/* - Mobile: text-3xl (was 4xl)
+      - Tablet: sm:text-4xl (was 5xl)
+      - Desktop: clamp min reduced to 2.5rem and max to 3.5rem 
+  */}
+  <h1 className="text-3xl sm:text-4xl lg:text-[clamp(2.5rem,3.5vw,3.5rem)] font-extrabold text-slate-900 tracking-tight leading-[1.15]">
+    Build 
+    <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-800 to-teal-500"> Credibility.</span><br /> 
+    with Verified<span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-orange-400"> Reviews.</span>
+  </h1>
+
                 
-                <p className="text-lg sm:text-xl lg:text-[clamp(1.1rem,1.5vw,1.25rem)] text-slate-600 leading-relaxed max-w-lg mx-auto lg:mx-0">
-                  Elevate your professional trust to new heights. Join the platform designed to inspire confidence, verify excellence, and empower your career journey.
-                </p>
+                {/* Replaced <motion.p> with standard <p> to fix the crash */}
+<p className="text-xl md:text-2xl text-slate-500 mb-10 font-medium max-w-2xl mx-auto leading-relaxed">
+  Verify your excellence. Build a reputation that inspires absolute confidence <span className="text-slate-900 font-bold">with every single client.</span>
+</p>
 
                 <div className="flex justify-center lg:justify-start items-center gap-8 sm:gap-12 pt-4">
                   <div>
@@ -138,29 +145,50 @@ export default async function LandingPage() {
                   </div>
                 </div>
 
-                {/* BUTTONS */}
-                <div className="flex flex-col sm:flex-row gap-4 pt-4 justify-center lg:justify-start">
-                  {isProfessional ? (
-                    <Link href="/service-provider-dashboard" className="w-full sm:w-auto">
-                      <Button size="lg" className="h-14 px-8 text-lg bg-teal-900 hover:bg-teal-800 text-white font-bold rounded-none w-full gap-2">
-                         <LayoutDashboard className="w-5 h-5" />
-                        Go to Dashboard
-                      </Button>
-                    </Link>
-                  ) : (
-                    <Link href="/auth/signup?role=professional" className="w-full sm:w-auto">
-                      <Button size="lg" className="h-14 px-8 text-lg bg-teal-900 hover:bg-teal-800 text-white font-bold rounded-none w-full">
-                        List My Business
-                      </Button>
-                    </Link>
-                  )}
+                {/* BUTTONS SECTION */}
+<div className="flex flex-col sm:flex-row gap-4 pt-6 justify-center lg:justify-start">
+  
+  {/* PRIMARY BUTTON */}
+  {isProfessional ? (
+    <Link href="/service-provider-dashboard" className="w-full sm:w-auto">
+      <Button 
+        className="group w-full sm:w-auto flex items-center justify-center gap-3 bg-teal-900 text-white 
+        h-auto !py-5 !px-10 
+        rounded-2xl font-bold text-lg hover:bg-teal-950 transition-all shadow-xl shadow-teal-900/10 active:scale-95"
+      >
+        <LayoutDashboard className="w-5 h-5" />
+        Go to Dashboard
+      </Button>
+    </Link>
+  ) : (
+    <Link href="/auth/signup?role=professional" className="w-full sm:w-auto">
+      <Button 
+        className="group w-full sm:w-auto flex items-center justify-center gap-3 bg-teal-900 text-white 
+        h-auto py-5! px-10! 
+        rounded-2xl font-bold text-lg hover:bg-teal-950 transition-all shadow-xl shadow-teal-900/10 active:scale-95"
+      >
+        List My Business
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-arrow-right w-5 h-5 group-hover:translate-x-1 transition-transform">
+          <path d="M5 12h14"></path>
+          <path d="m12 5 7 7-7 7"></path>
+        </svg>
+      </Button>
+    </Link>
+  )}
 
-                  <Link href="/categories" className="w-full sm:w-auto">
-                    <Button size="lg" variant="outline" className="h-14 px-8 text-lg border-2 border-slate-900 text-slate-900 hover:bg-slate-800 hover:text-white font-bold rounded-none w-full transition-all duration-300">
-                      Explore Services
-                    </Button>
-                  </Link>
-                </div>
+  {/* SECONDARY BUTTON */}
+  <Link href="/categories" className="w-full sm:w-auto">
+    <Button 
+      variant="ghost" 
+      className="w-full sm:w-auto flex items-center justify-center gap-3 bg-white border border-slate-200 text-slate-800 
+      h-auto py-5! px-10!
+      rounded-2xl font-bold text-lg hover:bg-slate-50 hover:text-slate-900 transition-all active:scale-95"
+    >
+      Explore Services
+    </Button>
+  </Link>
+  
+</div>
               </FadeIn>
 
               {/* RIGHT COLUMN: Image Fades In slightly later */}
@@ -168,8 +196,8 @@ export default async function LandingPage() {
                 <img 
                   src="/art.svg" 
                   alt="Geometric Pattern" 
-                  width={420} 
-                  height={400}
+                  width={380} 
+                  height={380}
                   className="block" 
                 />
               </FadeIn>
@@ -182,7 +210,7 @@ export default async function LandingPage() {
         <section className="py-12 bg-white border-b border-slate-100">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             <FadeIn>
-                <h2 className="text-2xl font-bold text-slate-900 mb-8 text-center md:text-left">What are you looking for?</h2>
+                <h2 className="text-2xl font-bold text-slate-900 mb-8 text-center md:text-left">Browse Excellence</h2>
             </FadeIn>
             
             {formattedSectors.length === 0 ? (
@@ -212,56 +240,111 @@ export default async function LandingPage() {
           </div>
         </section>
 
-        {/* VALUE PROPOSITION */}
-        <section className="py-16 md:py-24 bg-white">
-          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-            <FadeIn className="text-center max-w-3xl mx-auto mb-12 md:mb-16">
-              <h2 className="text-3xl font-bold text-slate-900 mb-4">Why users trust <span className="text-teal-700">TruVouch</span></h2>
-              <p className="text-slate-500 text-lg">We've built a platform where honesty is the only currency.</p>
-            </FadeIn>
+        <section id="features" className="py-12 md:py-24 px-4 sm:px-6 bg-[#FAFBFC] overflow-hidden">
+  <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-12 lg:gap-24 items-center">
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-              {/* STAGGERED ANIMATION FOR CARDS */}
-              
-              <FadeIn delay={0.1}>
-                  <div className="h-full p-8 rounded-2xl bg-teal-50 border border-teal-100 hover:shadow-lg transition-all">
-                    <div className="w-12 h-12 bg-teal-100 rounded-xl flex items-center justify-center mb-6">
-                      <ShieldCheck className="w-6 h-6 text-teal-700" />
-                    </div>
-                    <h3 className="text-xl font-bold text-slate-900 mb-3">Identity Verification</h3>
-                    <p className="text-slate-600 leading-relaxed">
-                      We verify every professional's identity so you know exactly who you are hiring. No bots, no fakes.
-                    </p>
-                  </div>
-              </FadeIn>
+    {/* LEFT VISUAL GRID 
+        - Mobile: Tighter gap, smaller images
+        - Desktop: Full size, large stagger effect
+    */}
+    <div className="grid grid-cols-2 gap-3 sm:gap-4 order-2 lg:order-1">
+      {/* Column 1 (Staggered down) */}
+      <div className="space-y-3 sm:space-y-4 pt-8 sm:pt-12">
+        <div className="rounded-2xl sm:rounded-3xl overflow-hidden shadow-lg h-40 sm:h-64 relative group">
+          <img
+            src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=400"
+            alt="trust"
+            className="object-cover h-full w-full grayscale group-hover:grayscale-0 transition-all duration-700"
+          />
+          <div className="absolute inset-0 bg-teal-900/20" />
+        </div>
 
-              <FadeIn delay={0.2}>
-                  <div className="h-full p-8 rounded-2xl bg-orange-50 border border-orange-100 hover:shadow-lg transition-all">
-                    <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center mb-6">
-                      <Star className="w-6 h-6 text-orange-600" />
-                    </div>
-                    <h3 className="text-xl font-bold text-slate-900 mb-3">The "One Review" Rule</h3>
-                    <p className="text-slate-600 leading-relaxed">
-                      A user can only review a professional once. This prevents spam and ensures every rating is genuine.
-                    </p>
-                  </div>
-              </FadeIn>
+        <div className="bg-teal-900 rounded-2xl sm:rounded-3xl p-4 sm:p-8 text-white h-32 sm:h-48 flex flex-col justify-end">
+          <h4 className="text-xl sm:text-2xl font-bold">100%</h4>
+          <p className="text-teal-200 text-xs sm:text-sm">Human Verified</p>
+        </div>
+      </div>
 
-              <FadeIn delay={0.3}>
-                  <div className="h-full p-8 rounded-2xl bg-slate-50 border border-slate-100 hover:shadow-lg transition-all">
-                    <div className="w-12 h-12 bg-white border border-slate-200 rounded-xl flex items-center justify-center mb-6">
-                      <TrendingUp className="w-6 h-6 text-slate-700" />
-                    </div>
-                    <h3 className="text-xl font-bold text-slate-900 mb-3">Community Driven</h3>
-                    <p className="text-slate-600 leading-relaxed">
-                      Our rankings are purely based on community feedback, not on who pays the most for ads.
-                    </p>
-                  </div>
-              </FadeIn>
-
-            </div>
+      {/* Column 2 */}
+      <div className="space-y-3 sm:space-y-4">
+        <div className="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-8 border border-slate-200 shadow-sm h-32 sm:h-48 flex flex-col justify-end">
+          <div className="w-10 h-10 sm:w-12 sm:h-12 bg-slate-100 rounded-xl mb-3 sm:mb-4 flex items-center justify-center text-teal-800">
+            <RefreshCw className="w-5 h-5 sm:w-6 sm:h-6" />
           </div>
-        </section>
+          <h4 className="font-bold text-slate-900 text-sm sm:text-base">Anti-Spam</h4>
+        </div>
+
+        <div className="rounded-2xl sm:rounded-3xl overflow-hidden shadow-lg h-40 sm:h-64 relative group">
+          <img
+            src="https://images.unsplash.com/photo-1556761175-b413da4baf72?auto=format&fit=crop&q=80&w=400"
+            alt="team"
+            className="object-cover h-full w-full grayscale group-hover:grayscale-0 transition-all duration-700"
+          />
+          <div className="absolute inset-0 bg-amber-900/20" />
+        </div>
+      </div>
+    </div>
+
+    {/* RIGHT CONTENT 
+        - Mobile: Order 1 (appears first), smaller text
+        - Desktop: Order 2 (appears right)
+    */}
+    <div className="order-1 lg:order-2 text-center lg:text-left">
+      <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight leading-[1.15] text-slate-900 mb-8 sm:mb-12">
+        Trust shouldn’t be a <br className="hidden lg:block" /> gamble.
+      </h2>
+
+      <div className="space-y-8 sm:space-y-10 text-left">
+
+        {/* ITEM 1 */}
+        <div className="flex gap-4 sm:gap-6">
+  <div className="shrink-0 w-12 h-12 sm:w-14 sm:h-14 bg-white border border-slate-200 rounded-xl sm:rounded-2xl shadow-sm flex items-center justify-center text-teal-800">
+    <Award className="w-5 h-5 sm:w-6 sm:h-6" />
+  </div>
+  <div>
+    <h4 className="text-lg sm:text-xl font-bold text-slate-900 mb-1 sm:mb-2">
+      Unshakeable Credibility
+    </h4>
+    <p className="text-slate-500 text-sm sm:text-base font-medium leading-relaxed">
+      Stand out from the noise. Build a dedicated <span className="text-slate-700 font-semibold">Trust Portfolio</span> that proves your excellence to clients instantly.
+    </p>
+  </div>
+</div>
+
+        {/* ITEM 2 */}
+        <div className="flex gap-4 sm:gap-6">
+          <div className="shrink-0 w-12 h-12 sm:w-14 sm:h-14 bg-white border border-slate-200 rounded-xl sm:rounded-2xl shadow-sm flex items-center justify-center text-teal-800">
+            <CheckCircle2 className="w-5 h-5 sm:w-6 sm:h-6" />
+          </div>
+          <div>
+            <h4 className="text-lg sm:text-xl font-bold text-slate-900 mb-1 sm:mb-2">
+              One Review Protocol
+            </h4>
+            <p className="text-slate-500 text-sm sm:text-base font-medium leading-relaxed">
+              Each client can leave only one verified review per professional — no manipulation.
+            </p>
+          </div>
+        </div>
+
+        {/* ITEM 3 */}
+        <div className="flex gap-4 sm:gap-6">
+          <div className="shrink-0 w-12 h-12 sm:w-14 sm:h-14 bg-white border border-slate-200 rounded-xl sm:rounded-2xl shadow-sm flex items-center justify-center text-teal-800">
+            <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6" />
+          </div>
+          <div>
+            <h4 className="text-lg sm:text-xl font-bold text-slate-900 mb-1 sm:mb-2">
+              Merit-Based Ranking
+            </h4>
+            <p className="text-slate-500 text-sm sm:text-base font-medium leading-relaxed">
+              Rankings are driven by quality and satisfaction — not paid promotions.
+            </p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</section>
 
         {/* POPULAR THIS WEEK */}
         <section className="py-16 md:py-24 bg-white border-b border-slate-100">

@@ -1,15 +1,20 @@
 import type { Metadata } from "next"
-import { Inter } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import "./globals.css"
-import { Alata } from "next/font/google";
+import { Plus_Jakarta_Sans } from "next/font/google";
 import { GoogleAnalytics } from '@next/third-parties/google'// Initialize the font
-const inter = Inter({ subsets: ["latin"], display: 'swap', })
-const alata = Alata({ 
+
+
+const jakarta = Plus_Jakarta_Sans({
   subsets: ["latin"],
-  weight: "400",
-  variable: "--font-alata", // We give it a variable name to use in Tailwind
+  weight: ["300", "400", "500", "600", "700", "800"],
+  variable: "--font-sans",
+  display: "swap",
 });
+
+
+
+
 export const metadata: Metadata = {
   // 1. Browser Tab Title
   metadataBase: new URL('https://www.truvouch.app'),
@@ -53,8 +58,8 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${alata.variable} font-sans antialiased`}>
-        {children}
+<body className={`${jakarta.variable} font-sans antialiased`}>
+       {children}
         <Analytics />
         
       </body>

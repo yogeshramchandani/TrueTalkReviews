@@ -45,31 +45,56 @@ export function Footer() {
           {/* Brand Column */}
           <div className="space-y-4">
             <div className="flex items-center gap-2 mb-4">
-              <img src="/logo.png" alt="TruVouch Logo" className="h-8 w-auto object-contain brightness-0 invert" />
-              <span className="font-bold text-white text-xl tracking-tight">TruVouch</span>
+              <img src="/full_logo_bg.png" alt="TruVouch Logo" className="h-12 w-35 object-cover rounded-2xl" />
             </div>
             <p className="text-slate-400 text-sm leading-relaxed">
               Connecting you with the most trusted professionals in your area. Real reviews, real people.
             </p>
-           
+            <div className="flex gap-4">
+           {/* Twitter / X */}
+      <Link 
+        href="https://x.com/TruetalkR54738" 
+        className="w-10 h-10 bg-slate-50 rounded-full flex items-center justify-center text-slate-400 hover:bg-teal-900 hover:text-white transition-all shadow-sm hover:shadow-md hover:-translate-y-1"
+      >
+        <Twitter className="w-5 h-5" />
+      </Link>
+
+      {/* LinkedIn */}
+      <Link 
+        href="https://www.linkedin.com/company/truvouch" 
+        className="w-10 h-10 bg-slate-50 rounded-full flex items-center justify-center text-slate-400 hover:bg-teal-900 hover:text-white transition-all shadow-sm hover:shadow-md hover:-translate-y-1"
+      >
+        <Linkedin className="w-5 h-5" />
+      </Link>
+
+      {/* Instagram */}
+      <Link 
+        href="https://www.instagram.com/truvouch" 
+        className="w-10 h-10 bg-slate-50 rounded-full flex items-center justify-center text-slate-400 hover:bg-teal-900 hover:text-white transition-all shadow-sm hover:shadow-md hover:-translate-y-1"
+      >
+        <Instagram className="w-5 h-5" />
+      </Link>
+      </div>
           </div>
 
           {/* Links Column 1 */}
           <div>
-            <h4 className="text-white font-bold mb-6">Platform</h4>
+            <h4 className="text-white font-bold mb-6">Explore</h4>
             <ul className="space-y-3 text-sm">
-              <li><Link href="/categories" className="hover:text-teal-400 transition-colors">Browse Categories</Link></li>
-              <li><Link href="/search" className="hover:text-teal-400 transition-colors">Find Professionals</Link></li>
+              <li><Link href="/categories" className="hover:text-teal-400 transition-colors">Categories</Link></li>
+              <li><Link href="/search" className="hover:text-teal-400 transition-colors">Search pro</Link></li>
               <li><Link href="/auth/signup?role=professional" className="hover:text-teal-400 transition-colors">For Businesses</Link></li>
             </ul>
+            
           </div>
 
           {/* Links Column 2 */}
           <div>
-            <h4 className="text-white font-bold mb-6">Support</h4>
+            <h4 className="text-white font-bold mb-6">Company</h4>
             <ul className="space-y-3 text-sm">
+              <li><Link href="/about" className="hover:text-teal-400 transition-colors">About Us</Link></li>
               <li><Link href="/help-center" className="hover:text-teal-400 transition-colors">Help Center</Link></li>
-              <li><Link href="/safety-guidelines" className="hover:text-teal-400 transition-colors">Safety Guidelines</Link></li>
+              <li><Link href="/safety-guidelines" className="hover:text-teal-400 transition-colors">Privacy Policy</Link></li>
               <li><Link href="/community-guidelines" className="hover:text-teal-400 transition-colors">Community Guidelines</Link></li>
               <li><Link href="/contact" className="hover:text-teal-400 transition-colors">Contact Us</Link></li>
             </ul>
