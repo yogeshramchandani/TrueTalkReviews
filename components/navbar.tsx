@@ -4,7 +4,7 @@ import Link from "next/link"
 import { useState, useEffect, useRef } from "react"
 import { supabase } from "@/lib/supabaseClient"
 import { usePathname } from "next/navigation"
-
+import Image from 'next/image';
 // UI Components
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -134,11 +134,14 @@ export function Navbar() {
         
         {/* LOGO (Styled as requested) */}
         <Link href="/" className="flex items-center gap-2">
-          <img 
-            src="/logo.png" 
-            alt="TrueTalk Logo" 
-            className="h-9 w-auto object-contain" 
-          />
+  <Image 
+    src="/logo.png" 
+    alt="TruVouch Logo" 
+    width={36}          // Equivalent to h-9 (9 * 4px)
+    height={36}         // Set a base height to prevent Layout Shift
+    priority            // Tells Next.js to load this immediately (LCP optimization)
+    className="object-contain w-auto h-9" 
+  />
           <span className="font-bold text-teal-900 text-xl tracking-tight sm:block">
             TruVouch
           </span>

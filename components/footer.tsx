@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import Image from 'next/image';
 import { useState } from "react"
 import { Facebook, Twitter, Instagram, Linkedin, Mail, Loader2, Check } from "lucide-react"
 import { supabase } from "@/lib/supabaseClient"
@@ -45,7 +46,7 @@ export function Footer() {
           {/* Brand Column */}
           <div className="space-y-4">
             <div className="flex items-center gap-2 mb-4">
-              <img src="/full_logo_bg.png" alt="TruVouch Logo" className="h-12 w-35 object-cover rounded-2xl" />
+              <Image src="/full_logo_bg.png" alt="TruVouch Logo" className="object-cover rounded-2xl" height={0} width={65} priority />
             </div>
             <p className="text-slate-400 text-sm leading-relaxed">
               Connecting you with the most trusted professionals in your area. Real reviews, real people.

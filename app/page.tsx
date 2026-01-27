@@ -1,6 +1,7 @@
 import Link from "next/link"
 import { createClient } from "@/utils/supabase/server" 
 import { Button } from "@/components/ui/button"
+import Image from "next/image"
 import FadeIn from "@/components/FadeIn" // Ensure filename matches (FadeIn.tsx)
 import { 
   ShieldCheck, Star, TrendingUp,
@@ -46,13 +47,13 @@ export const metadata: Metadata = {
   description:
     "Create a public profile and let real clients vouch for your services. Grow your business with authentic reviews.",
   alternates: {
-    canonical: "https://www.truvouch.app",
+    canonical: "https://truvouch.app",
   },
   openGraph: {
     title: "TruVouch – Build Trust with Real Reviews",
     description:
       "Create a public profile and let real clients vouch for your services. Grow your business with authentic reviews.",
-    url: "https://www.truvouch.app",
+    url: "https://truvouch.app",
     siteName: "TruVouch",
     type: "website",
   },
@@ -60,38 +61,33 @@ export const metadata: Metadata = {
 
 export default async function LandingPage() {
   const supabase = createClient()
-
-  // 1. Fetch User & Role (Server Side - Parallel Fetching)
-  const { data: { user } } = await supabase.auth.getUser()
+  const [userRes, sectorsRes] = await Promise.all([
+    supabase.auth.getUser(),
+    supabase.from('profession_taxonomy').select('sector')
+  ])
   
+const user = userRes.data.user
+  const sectorsData = sectorsRes.data
+
   let isProfessional = false
   if (user) {
-    const { data } = await supabase
+    const { data: profile } = await supabase
       .from('profiles')
       .select('role')
       .eq('id', user.id)
       .single()
-    
-    if (data && data.role === 'professional') {
-      isProfessional = true
-    }
+    isProfessional = profile?.role === 'professional'
   }
 
-  // 2. Fetch Sectors (Server Side)
-  const { data: sectorsData } = await supabase
-    .from('profession_taxonomy')
-    .select('sector')
-
-  // Process sectors immediately on the server
   let formattedSectors: any[] = []
   if (sectorsData) {
-    const uniqueSectors = Array.from(new Set(sectorsData.map(item => item.sector))).sort((a, b) => {
+    const uniqueSectors = Array.from(new Set(sectorsData.map(item => item.sector))).sort((a: any, b: any) => {
       if (a === "Other") return 1;
       if (b === "Other") return -1;
       return a.localeCompare(b);
     })
     
-    formattedSectors = uniqueSectors.map((sectorName, index) => {
+    formattedSectors = uniqueSectors.map((sectorName: any, index: number) => {
       const colorTheme = bgColors[index % bgColors.length]
       return {
         name: sectorName,
@@ -101,7 +97,7 @@ export default async function LandingPage() {
       }
     })
   }
-
+  
   return (
     <div className="min-h-screen bg-white font-sans text-slate-900 flex flex-col ">
       
@@ -153,7 +149,7 @@ export default async function LandingPage() {
     <Link href="/service-provider-dashboard" className="w-full sm:w-auto">
       <Button 
         className="group w-full sm:w-auto flex items-center justify-center gap-3 bg-teal-900 text-white 
-        h-auto !py-5 !px-10 
+        h-auto py-5! px-10! 
         rounded-2xl font-bold text-lg hover:bg-teal-950 transition-all shadow-xl shadow-teal-900/10 active:scale-95"
       >
         <LayoutDashboard className="w-5 h-5" />
@@ -193,13 +189,14 @@ export default async function LandingPage() {
 
               {/* RIGHT COLUMN: Image Fades In slightly later */}
               <FadeIn delay={0.2} className="w-fit mx-auto relative hidden lg:flex items-start justify-center origin-top transform lg:scale-[1.15] xl:scale-[1.2] 2xl:scale-[1.3]">  
-                <img 
-                  src="/art.svg" 
-                  alt="Geometric Pattern" 
-                  width={380} 
-                  height={380}
-                  className="block" 
-                />
+                <Image 
+  src="/art.svg" 
+  alt="Geometric Pattern" 
+  width={380} 
+  height={380}
+  priority // This is the most important prop for the Hero section!
+  className="block object-contain" 
+/>
               </FadeIn>
 
             </div>
@@ -241,50 +238,42 @@ export default async function LandingPage() {
         </section>
 
         <section id="features" className="py-12 md:py-24 px-4 sm:px-6 bg-[#FAFBFC] overflow-hidden">
-  <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-12 lg:gap-24 items-center">
+          <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-12 lg:gap-24 items-center">
+            <div className="grid grid-cols-2 gap-3 sm:gap-4 order-2 lg:order-1">
+              <div className="space-y-3 sm:space-y-4 pt-8 sm:pt-12">
+                <div className="rounded-2xl sm:rounded-3xl overflow-hidden shadow-lg h-40 sm:h-64 relative group">
+                  <Image
+                    src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=400"
+                    alt="trust"
+                    fill // FIX: Eliminates Layout Shift
+                    className="object-cover grayscale group-hover:grayscale-0 transition-all duration-700"
+                    sizes="(max-width: 768px) 100vw, 400px"
+                  />
+                  <div className="absolute inset-0 bg-teal-900/20" />
+                </div>
+                <div className="bg-teal-900 rounded-2xl sm:rounded-3xl p-4 sm:p-8 text-white h-32 sm:h-48 flex flex-col justify-end">
+                  <h4 className="text-xl sm:text-2xl font-bold">100%</h4>
+                  <p className="text-teal-200 text-xs sm:text-sm">Human Verified</p>
+                </div>
+              </div>
 
-    {/* LEFT VISUAL GRID 
-        - Mobile: Tighter gap, smaller images
-        - Desktop: Full size, large stagger effect
-    */}
-    <div className="grid grid-cols-2 gap-3 sm:gap-4 order-2 lg:order-1">
-      {/* Column 1 (Staggered down) */}
-      <div className="space-y-3 sm:space-y-4 pt-8 sm:pt-12">
-        <div className="rounded-2xl sm:rounded-3xl overflow-hidden shadow-lg h-40 sm:h-64 relative group">
-          <img
-            src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=400"
-            alt="trust"
-            className="object-cover h-full w-full grayscale group-hover:grayscale-0 transition-all duration-700"
-          />
-          <div className="absolute inset-0 bg-teal-900/20" />
-        </div>
-
-        <div className="bg-teal-900 rounded-2xl sm:rounded-3xl p-4 sm:p-8 text-white h-32 sm:h-48 flex flex-col justify-end">
-          <h4 className="text-xl sm:text-2xl font-bold">100%</h4>
-          <p className="text-teal-200 text-xs sm:text-sm">Human Verified</p>
-        </div>
-      </div>
-
-      {/* Column 2 */}
-      <div className="space-y-3 sm:space-y-4">
-        <div className="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-8 border border-slate-200 shadow-sm h-32 sm:h-48 flex flex-col justify-end">
-          <div className="w-10 h-10 sm:w-12 sm:h-12 bg-slate-100 rounded-xl mb-3 sm:mb-4 flex items-center justify-center text-teal-800">
-            <RefreshCw className="w-5 h-5 sm:w-6 sm:h-6" />
-          </div>
-          <h4 className="font-bold text-slate-900 text-sm sm:text-base">Anti-Spam</h4>
-        </div>
-
-        <div className="rounded-2xl sm:rounded-3xl overflow-hidden shadow-lg h-40 sm:h-64 relative group">
-          <img
-            src="https://images.unsplash.com/photo-1556761175-b413da4baf72?auto=format&fit=crop&q=80&w=400"
-            alt="team"
-            className="object-cover h-full w-full grayscale group-hover:grayscale-0 transition-all duration-700"
-          />
-          <div className="absolute inset-0 bg-amber-900/20" />
-        </div>
-      </div>
-    </div>
-
+              <div className="space-y-3 sm:space-y-4">
+                <div className="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-8 border border-slate-200 shadow-sm h-32 sm:h-48 flex flex-col justify-end">
+                  <RefreshCw className="w-6 h-6 text-teal-800 mb-4" />
+                  <h4 className="font-bold text-slate-900 text-sm sm:text-base">Anti-Spam</h4>
+                </div>
+                <div className="rounded-2xl sm:rounded-3xl overflow-hidden shadow-lg h-40 sm:h-64 relative group">
+                  <Image
+                    src="https://images.unsplash.com/photo-1556761175-b413da4baf72?auto=format&fit=crop&q=80&w=400"
+                    alt="team"
+                    fill // FIX: Eliminates Layout Shift
+                    className="object-cover grayscale group-hover:grayscale-0 transition-all duration-700"
+                    sizes="(max-width: 768px) 100vw, 400px"
+                  />
+                  <div className="absolute inset-0 bg-amber-900/20" />
+                </div>
+              </div>
+            </div>
     {/* RIGHT CONTENT 
         - Mobile: Order 1 (appears first), smaller text
         - Desktop: Order 2 (appears right)

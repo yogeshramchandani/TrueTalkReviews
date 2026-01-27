@@ -38,23 +38,24 @@ export function TrendingSection() {
   return (
     <div className="flex flex-col md:flex-row gap-4 h-[600px] md:h-[500px] w-full max-w-7xl mx-auto">
       {featuredCategories.map((cat) => (
-        <div 
-          key={cat.id}
-          onClick={() => setActiveId(cat.id)}
-          onMouseEnter={() => setActiveId(cat.id)}
-          className={`
-            relative rounded-3xl overflow-hidden cursor-pointer transition-all duration-500 ease-in-out shadow-md
-            ${activeId === cat.id ? "flex-3 md:flex-3" : "flex-1 md:flex-1"}
-          `}
-        >
-          <Image 
-            src={cat.img} 
-            alt={cat.title}
-            fill
-            priority={cat.id === 0}
-            sizes="(max-width: 768px) 100vw, 33vw"
-            className={`object-cover transition-transform duration-700 ${activeId === cat.id ? "scale-100" : "scale-125 opacity-80"}`}
-          />
+  <div 
+    key={cat.id}
+    onMouseEnter={() => setActiveId(cat.id)}
+    className={`
+      relative rounded-3xl overflow-hidden cursor-pointer transition-all duration-500 ease-in-out shadow-md
+      ${activeId === cat.id ? "flex-3" : "flex-1"} 
+    `}
+  >
+    <Image 
+      src={cat.img} 
+      alt={cat.title}
+      fill
+      priority={cat.id === 0} // Good! Helps LCP for the first item
+      sizes="(max-width: 768px) 100vw, 25vw"
+      className={`object-cover transition-transform duration-700 ${
+        activeId === cat.id ? "scale-100" : "scale-125 opacity-80"
+      }`}
+    />
           <div className={`absolute inset-0 bg-black/30 transition-colors duration-500 ${activeId === cat.id ? "bg-black/20" : "bg-black/60"}`} />
           
           <div className={`
