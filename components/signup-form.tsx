@@ -79,35 +79,46 @@ export default function SignupForm() {
   }, [])
 
   
+  // 2. CHECK SESSION & REDIRECT EXISTING PROS
   useEffect(() => {
     async function checkSession() {
+      // 1. Get Session
       const { data: { session } } = await supabase.auth.getSession()
       
       if (session) {
-        setIsUpgrading(true)
         setCurrentUserId(session.user.id)
-        setRole("professional") 
         setEmail(session.user.email || "")
 
-        // --- Fetch from Database to get the correct Username ---
+        // 2. Fetch Profile to check ROLE
         const { data: profile } = await supabase
           .from('profiles')
-          .select('username, full_name') 
+          .select('*') // Changed from 'username, full_name' to '*' to get the role
           .eq('id', session.user.id)
           .single()
 
         if (profile) {
+           // 🔒 REDIRECT LOGIC: If they are ALREADY a professional, kick them to dashboard
+           if (profile.role === 'professional') {
+             router.replace("/service-provider-dashboard")
+             return // Stop execution here
+           }
+
+           // If they are a "reviewer" (or other role) allowing upgrade:
+           setIsUpgrading(true)
+           setRole("professional") // Default them to professional tab for upgrading
            setUsername(profile.username || "") 
            setFullName(profile.full_name || "")
         } else {
+           // Fallback if profile doesn't exist yet (rare, but possible mid-signup)
            const meta = session.user.user_metadata
            setFullName(meta.full_name || "")
            setUsername(meta.username || "")
+           setIsUpgrading(true)
         }
       }
     }
     checkSession()
-  }, [])
+  }, [router])
 
   // 3. Update Roles based on Sector
   useEffect(() => {
