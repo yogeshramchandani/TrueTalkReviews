@@ -107,101 +107,132 @@ const user = userRes.data.user
       <main className="flex-1">
         
         {/* HERO SECTION */}
-        <section className="relative px-4 sm:px-6 lg:px-40 pt-28 pb-12 lg:pt-32 lg:pb-10 overflow-hidden">
-          <div className="container mx-auto">
-            <div className="grid lg:grid-cols-2 gap-12 lg:gap-24 items-start">
-              
-              {/* LEFT COLUMN: Main Content Fades In */}
-              <FadeIn className="space-y-6 max-w-2xl relative z-10 mx-auto lg:mx-0 text-center lg:text-left">
-  {/* - Mobile: text-3xl (was 4xl)
-      - Tablet: sm:text-4xl (was 5xl)
-      - Desktop: clamp min reduced to 2.5rem and max to 3.5rem 
-  */}
-  <h1 className="text-3xl sm:text-4xl lg:text-[clamp(2.5rem,3.5vw,3.5rem)] font-extrabold text-slate-900 tracking-tight leading-[1.15]">
-    Build 
-    <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-800 to-teal-500"> Credibility.</span><br /> 
-    with Verified<span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-orange-400"> Reviews.</span>
-  </h1>
+<section className="relative px-4 sm:px-6 lg:px-32 pt-28 pb-6 lg:pt-24 lg:pb-6 overflow-hidden">
+  <div className="container mx-auto">
+<div className="grid lg:grid-cols-[1fr_auto] gap-10 lg:gap-12 items-center">
 
-                
-                {/* Replaced <motion.p> with standard <p> to fix the crash */}
-<p className="text-xl md:text-2xl text-slate-500 mb-10 font-medium max-w-2xl mx-auto leading-relaxed">
-  Verify your excellence. Build a reputation that inspires absolute confidence <span className="text-slate-900 font-bold">with every single client.</span>
-</p>
+      {/* LEFT COLUMN */}
+      <FadeIn className="space-y-6 max-w-2xl relative z-10 mx-auto lg:mx-0 text-center lg:text-left">
 
-                <div className="flex justify-center lg:justify-start items-center gap-8 sm:gap-12 pt-4">
-                  <div>
-                    <h3 className="text-2xl sm:text-3xl lg:text-[clamp(1.5rem,2.5vw,1.875rem)] font-bold text-slate-900">500+</h3>
-                    <p className="text-xs sm:text-sm font-medium text-slate-500 mt-1">Active Pros</p>
-                  </div>
-                  <div className="w-px h-10 sm:h-12 bg-slate-200"></div>
-                  <div>
-                    <h3 className="text-2xl sm:text-3xl lg:text-[clamp(1.5rem,2.5vw,1.875rem)] font-bold text-slate-900">10k+</h3>
-                    <p className="text-xs sm:text-sm font-medium text-slate-500 mt-1">Verified Reviews</p>
-                  </div>
-                </div>
+        {/* HEADLINE */}
+        <h1 className="text-3xl sm:text-4xl lg:text-[clamp(2.5rem,3.5vw,3.5rem)] font-extrabold text-slate-900 tracking-tight leading-[1.15]">
+          Build{" "}
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-800 to-teal-500">
+            Credibility.
+          </span>
+          <br />
+          with Verified{" "}
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-orange-400">
+            Reviews.
+          </span>
+        </h1>
 
-                {/* BUTTONS SECTION */}
-<div className="flex flex-col sm:flex-row gap-4 pt-6 justify-center lg:justify-start">
-  
-  {/* PRIMARY BUTTON */}
-  {isProfessional ? (
-    <Link href="/service-provider-dashboard" className="w-full sm:w-auto">
-      <Button 
-        className="group w-full sm:w-auto flex items-center justify-center gap-3 bg-teal-900 text-white 
-        h-auto py-5! px-10! 
-        rounded-2xl font-bold text-lg hover:bg-teal-950 transition-all shadow-xl shadow-teal-900/10 active:scale-95"
-      >
-        <LayoutDashboard className="w-5 h-5" />
-        Go to Dashboard
-      </Button>
-    </Link>
-  ) : (
-    <Link href="/auth/signup?role=professional" className="w-full sm:w-auto">
-      <Button 
-        className="group w-full sm:w-auto flex items-center justify-center gap-3 bg-teal-900 text-white 
-        h-auto py-5! px-10! 
-        rounded-2xl font-bold text-lg hover:bg-teal-950 transition-all shadow-xl shadow-teal-900/10 active:scale-95"
-      >
-        List My Business
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-arrow-right w-5 h-5 group-hover:translate-x-1 transition-transform">
-          <path d="M5 12h14"></path>
-          <path d="m12 5 7 7-7 7"></path>
-        </svg>
-      </Button>
-    </Link>
-  )}
+        {/* SUBTEXT (LCP SAFE) */}
+        <p className="text-xl md:text-2xl text-slate-500 mb-8 font-medium max-w-2xl mx-auto leading-relaxed">
+          Verify your excellence. Build a reputation that inspires absolute confidence{" "}
+          <span className="text-slate-900 font-bold">
+            with every single client.
+          </span>
+        </p>
 
-  {/* SECONDARY BUTTON */}
-  <Link href="/categories" className="w-full sm:w-auto">
-    <Button 
-      variant="ghost" 
-      className="w-full sm:w-auto flex items-center justify-center gap-3 bg-white border border-slate-200 text-slate-800 
-      h-auto py-5! px-10!
-      rounded-2xl font-bold text-lg hover:bg-slate-50 hover:text-slate-900 transition-all active:scale-95"
-    >
-      Explore Services
-    </Button>
-  </Link>
-  
-</div>
-              </FadeIn>
-
-              {/* RIGHT COLUMN: Image Fades In slightly later */}
-              <FadeIn delay={0.2} className="w-fit mx-auto relative hidden lg:flex items-start justify-center origin-top transform lg:scale-[1.15] xl:scale-[1.2] 2xl:scale-[1.3]">  
-                <Image 
-  src="/art.svg" 
-  alt="Geometric Pattern" 
-  width={380} 
-  height={380}
-  priority // This is the most important prop for the Hero section!
-  className="block object-contain" 
-/>
-              </FadeIn>
-
-            </div>
+        {/* STATS */}
+        <div className="flex justify-center lg:justify-start items-center gap-8 sm:gap-12 pt-2">
+          <div>
+            <h3 className="text-2xl sm:text-3xl lg:text-[clamp(1.5rem,2.5vw,1.875rem)] font-bold text-slate-900">
+              500+
+            </h3>
+            <p className="text-xs sm:text-sm font-medium text-slate-500 mt-1">
+              Active Pros
+            </p>
           </div>
-        </section>
+
+          <div className="w-px h-10 sm:h-12 bg-slate-200" />
+
+          <div>
+            <h3 className="text-2xl sm:text-3xl lg:text-[clamp(1.5rem,2.5vw,1.875rem)] font-bold text-slate-900">
+              10k+
+            </h3>
+            <p className="text-xs sm:text-sm font-medium text-slate-500 mt-1">
+              Verified Reviews
+            </p>
+          </div>
+        </div>
+
+        {/* BUTTONS */}
+        <div className="flex flex-col sm:flex-row gap-4 pt-6 justify-center lg:justify-start">
+
+          {/* PRIMARY BUTTON */}
+          {isProfessional ? (
+            <Link href="/service-provider-dashboard" className="w-full sm:w-auto">
+              <Button className="group w-full sm:w-auto flex items-center justify-center gap-3 bg-teal-900 text-white
+                h-auto py-4 px-8
+                rounded-2xl font-bold text-lg hover:bg-teal-950 transition-all shadow-xl shadow-teal-900/10 active:scale-95">
+                <LayoutDashboard className="w-5 h-5" />
+                Go to Dashboard
+              </Button>
+            </Link>
+          ) : (
+            <Link href="/auth/signup?role=professional" className="w-full sm:w-auto">
+              <Button className="group w-full sm:w-auto flex items-center justify-center gap-3 bg-teal-900 text-white
+                h-auto py-4 px-8
+                rounded-2xl font-bold text-lg hover:bg-teal-950 transition-all shadow-xl shadow-teal-900/10 active:scale-95">
+                List My Business
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="w-5 h-5 group-hover:translate-x-1 transition-transform"
+                >
+                  <path d="M5 12h14" />
+                  <path d="m12 5 7 7-7 7" />
+                </svg>
+              </Button>
+            </Link>
+          )}
+
+          {/* SECONDARY BUTTON */}
+          <Link href="/categories" className="w-full sm:w-auto">
+            <Button
+              variant="ghost"
+              className="w-full sm:w-auto flex items-center justify-center gap-3 bg-white border border-slate-200 text-slate-800
+                h-auto py-4 px-8
+                rounded-2xl font-bold text-lg hover:bg-slate-50 hover:text-slate-900 transition-all active:scale-95"
+            >
+              Explore Services
+            </Button>
+          </Link>
+
+        </div>
+      </FadeIn>
+
+      {/* RIGHT COLUMN (FIXED – NO FAKE SPACE) */}
+      <FadeIn
+  delay={0.2}
+  className="relative hidden lg:flex items-center justify-end
+             lg:max-w-[420px] xl:max-w-[460px] 2xl:max-w-[500px]
+             justify-self-end -translate-y-4 pt-8"
+>
+
+        <Image
+          src="/art.svg"
+          alt="Geometric Pattern"
+          width={450}
+          height={380}
+          priority
+          className="block object-contain"
+        />
+      </FadeIn>
+
+    </div>
+  </div>
+</section>
+
 
         {/* SECTORS SECTION */}
         <section className="py-12 bg-white border-b border-slate-100">

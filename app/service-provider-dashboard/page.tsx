@@ -10,6 +10,7 @@ import { Loader2, Star, Users, TrendingUp, LogOut, ExternalLink, Share2 } from "
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { Card } from "@/components/ui/card"
+import Image from "next/image"
 
 export default function DashboardPage() {
   const router = useRouter()
@@ -99,9 +100,20 @@ export default function DashboardPage() {
       <header className="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
-             <img src="/logo.png" alt="Logo" className="h-8 w-auto object-contain" />
-             <span className="font-bold text-teal-900 text-lg hidden md:block">Provider<span className="text-teal-600">Dashboard</span></span>
-          </div>
+  <Image
+    src="/logo.png"
+    alt="Logo"
+    width={128}
+    height={32}
+    className="h-8 w-auto object-contain"
+    priority
+  />
+
+  <span className="font-bold text-teal-900 text-lg hidden md:block">
+    Provider<span className="text-teal-600">Dashboard</span>
+  </span>
+</div>
+
 
           <div className="flex items-center gap-3">
             <Link href={publicUrl} target="_blank">

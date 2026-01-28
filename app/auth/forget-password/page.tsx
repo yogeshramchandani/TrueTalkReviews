@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import Image from "next/image"
 import Link from "next/link"
 import { supabase } from "@/lib/supabaseClient"
 import { Button } from "@/components/ui/button"
@@ -122,11 +123,16 @@ export default function ForgotPassword() {
       {/* 2. RIGHT SIDE - DECORATIVE (Same as Login) */}
       <div className="hidden lg:flex relative bg-slate-900 h-full overflow-hidden flex-col justify-between p-16">
         <div className="absolute inset-0">
-          <img
-            className="h-full w-full object-cover opacity-40 mix-blend-overlay"
-            src="https://images.unsplash.com/photo-1557804506-669a67965ba0?auto=format&fit=crop&q=80"
-            alt="Office workspace"
-          />
+         <div className="relative h-full w-full">
+  <Image
+    src="https://images.unsplash.com/photo-1557804506-669a67965ba0?auto=format&fit=crop&q=80"
+    alt="Office workspace"
+    fill
+    priority
+    className="object-cover opacity-40 mix-blend-overlay"
+  />
+</div>
+
           <div className="absolute inset-0 bg-gradient-to-t from-teal-900/90 to-slate-900/50" />
         </div>
 

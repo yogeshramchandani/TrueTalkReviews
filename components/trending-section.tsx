@@ -46,16 +46,16 @@ export function TrendingSection() {
       ${activeId === cat.id ? "flex-3" : "flex-1"} 
     `}
   >
-    <Image 
-      src={cat.img} 
-      alt={cat.title}
-      fill
-      priority={cat.id === 0} // Good! Helps LCP for the first item
-      sizes="(max-width: 768px) 100vw, 25vw"
-      className={`object-cover transition-transform duration-700 ${
-        activeId === cat.id ? "scale-100" : "scale-125 opacity-80"
-      }`}
-    />
+    <Image
+  src={cat.img}
+  alt={cat.title}
+  fill
+  sizes="(max-width: 768px) 100vw, 25vw"
+  quality={60}
+  priority={cat.id === 0}
+  className="object-cover"
+ />
+
           <div className={`absolute inset-0 bg-black/30 transition-colors duration-500 ${activeId === cat.id ? "bg-black/20" : "bg-black/60"}`} />
           
           <div className={`

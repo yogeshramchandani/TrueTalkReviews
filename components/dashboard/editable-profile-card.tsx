@@ -69,17 +69,42 @@ export function EditableProfileCard({ profile, onUpdate }: Props) {
   const [previewUrl, setPreviewUrl] = useState<string | null>(profile.avatar_url)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
+
   const handleChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }))
   }
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (file) {
-      setNewAvatarFile(file)
-      setPreviewUrl(URL.createObjectURL(file)) 
-    }
+  const MAX_FILE_SIZE = 500 * 1024 // 500 KB
+
+const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const file = e.target.files?.[0]
+  if (!file) return
+
+  // ❌ Type check (important)
+  if (!file.type.startsWith("image/")) {
+    alert("Only image files are allowed.")
+    e.target.value = ""
+    return
   }
+
+  // ❌ Size check
+  if (file.size > MAX_FILE_SIZE) {
+    alert("Image size must be 500 KB or less.")
+    e.target.value = ""
+    return
+  }
+
+  // ✅ Clean up old preview URL
+  if (previewUrl) {
+    URL.revokeObjectURL(previewUrl)
+  }
+
+  // ✅ Set new preview
+  const objectUrl = URL.createObjectURL(file)
+  setPreviewUrl(objectUrl)
+  setNewAvatarFile(file)
+}
+
 
   const handleSave = async () => {
     setIsLoading(true)
@@ -141,7 +166,9 @@ export function EditableProfileCard({ profile, onUpdate }: Props) {
           
           updated_at: new Date().toISOString()
         })
-
+if (newAvatarFile && newAvatarFile.size > MAX_FILE_SIZE) {
+  throw new Error("Image exceeds 500 KB limit.")
+}
       if (dbError) throw dbError
 
       setIsEditing(false)

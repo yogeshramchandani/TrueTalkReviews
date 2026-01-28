@@ -4,6 +4,7 @@ import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useState, useEffect } from "react"
 import { supabase } from "@/lib/supabaseClient"
+import Image from "next/image"
 
 // UI Components
 import { Button } from "@/components/ui/button"
@@ -346,11 +347,14 @@ export default function SignupForm() {
           <div className="text-center">
             <Link href="/" className="flex items-center justify-center gap-2 mb-6 hover:opacity-80 transition-opacity">
               
-          <img 
-            src="/logo.png" 
-            alt="TrueTalk Logo" 
-            className="h-9 w-auto object-contain" 
-          />
+         <Image 
+    src="/logo.png" 
+    alt="TruVouch Logo" 
+    width={36}          // Equivalent to h-9 (9 * 4px)
+    height={36}         // Set a base height to prevent Layout Shift
+    priority            // Tells Next.js to load this immediately (LCP optimization)
+    className="object-contain w-auto h-9" 
+  />
           <span className="font-bold text-teal-900 text-xl tracking-tight sm:block">
             TruVouch
           </span>

@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Loader2, ArrowRight, Star, ShieldCheck } from "lucide-react"
 import GoogleAuthButton from "@/app/auth/google-button"
-
+import Image from "next/image"
 export default function LoginForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -65,11 +65,14 @@ export default function LoginForm() {
           <div className="text-center ">
             
                <Link href="/" className="flex items-center gap-2 justify-center">
-          <img 
-            src="/logo.png" 
-            alt="TrueTalk Logo" 
-            className="h-9 w-auto object-contain" 
-          />
+          <Image 
+              src="/logo.png" 
+              alt="TruVouch Logo" 
+              width={36}          // Equivalent to h-9 (9 * 4px)
+              height={36}         // Set a base height to prevent Layout Shift
+              priority            // Tells Next.js to load this immediately (LCP optimization)
+              className="object-contain w-auto h-9" 
+            />
           <span className="font-bold text-teal-900 text-xl tracking-tight sm:block">
             TruVouch
           </span>
@@ -118,7 +121,7 @@ export default function LoginForm() {
                     <label htmlFor="password" className="block text-sm font-medium text-slate-700">
                       Password
                     </label>
-                    <Link href="/auth/forgot-password" className="text-sm font-medium text-teal-600 hover:text-teal-500">
+                    <Link href="/auth/forget-password" className="text-sm font-medium text-teal-600 hover:text-teal-500">
                       Forgot password?
                     </Link>
                   </div>
@@ -171,11 +174,18 @@ export default function LoginForm() {
       {/* 2. RIGHT SIDE - DECORATIVE (PC Only) */}
       <div className="hidden lg:flex relative bg-slate-900 h-full overflow-hidden flex-col justify-between p-16">
         <div className="absolute inset-0">
-          <img
-            className="h-full w-full object-cover opacity-40 mix-blend-overlay"
-            src="https://images.unsplash.com/photo-1557804506-669a67965ba0?auto=format&fit=crop&q=80"
-            alt="Office workspace"
-          />
+          <div className="relative h-full w-full">
+  <Image
+    src="https://images.unsplash.com/photo-1557804506-669a67965ba0?auto=format&fit=crop&q=80"
+    alt="Office workspace"
+    fill
+    priority
+    sizes="100vw"
+    quality={75}
+    className="object-cover opacity-40 mix-blend-overlay"
+  />
+</div>
+
           <div className="absolute inset-0 bg-gradient-to-t from-teal-900/90 to-slate-900/50" />
         </div>
 
