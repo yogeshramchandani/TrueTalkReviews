@@ -36,7 +36,221 @@ const formatDate = (dateString: string) => {
     year: 'numeric'
   })
 }
+const DesktopReviewCard = ({ review, profile }: { review: any; profile: any }) => {
+  const [isOverflowing, setIsOverflowing] = useState(false);
+  const textRef = useRef<HTMLParagraphElement>(null);
 
+  useEffect(() => {
+    if (textRef.current) {
+      setIsOverflowing(textRef.current.scrollHeight > textRef.current.clientHeight);
+    }
+  }, [review.content]);
+
+  return (
+    <div className="bg-white p-5 rounded-xl border border-slate-200 hover:shadow-md transition-shadow h-fit flex flex-col">
+      <div className="flex justify-between items-start mb-3">
+        <div className="flex items-center gap-3">
+          <Avatar className="h-10 w-10 bg-slate-100">
+            <AvatarFallback className="text-slate-500 font-bold text-xs">
+              {review.reviewer_name?.charAt(0)}
+            </AvatarFallback>
+          </Avatar>
+          <div>
+            <p className="font-bold text-sm text-slate-900">{review.reviewer_name || "User"}</p>
+            <p className="text-xs text-slate-500">{formatDate(review.created_at)}</p>
+          </div>
+        </div>
+        <div className="flex text-amber-400">
+          {[...Array(review.rating)].map((_, i) => (
+            <Star key={i} className="w-3.5 h-3.5 fill-current" />
+          ))}
+        </div>
+      </div>
+
+      <div className="relative">
+        <p ref={textRef} className="text-slate-700 text-sm leading-relaxed line-clamp-4">
+          {review.content}
+        </p>
+
+        {isOverflowing && (
+          <Dialog>
+            <DialogTrigger asChild>
+              <button className="text-teal-700 text-xs font-bold mt-1 hover:underline">
+                Read more
+              </button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[550px] rounded-2xl">
+              <DialogHeader className="border-b pb-4">
+                <div className="flex items-center gap-3">
+                  <Avatar className="h-10 w-10 bg-slate-100">
+                    <AvatarFallback className="text-slate-500 font-bold text-xs">
+                      {review.reviewer_name?.charAt(0)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <DialogTitle className="text-lg font-bold">
+                      Review by {review.reviewer_name}
+                    </DialogTitle>
+                    <div className="flex items-center gap-2">
+                      <div className="flex text-amber-400">
+                        {[...Array(review.rating)].map((_, i) => (
+                          <Star key={i} className="w-3 h-3 fill-current" />
+                        ))}
+                      </div>
+                      <span className="text-xs text-slate-400 font-medium">
+                        • {formatDate(review.created_at)}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </DialogHeader>
+              <div className="space-y-4 py-4 max-h-[60vh] overflow-y-auto">
+                <p className="text-slate-700 text-sm leading-relaxed whitespace-pre-wrap">
+                  {review.content}
+                </p>
+
+                {review.provider_reply && (
+                  <div className="bg-teal-50/50 rounded-xl p-4 border border-teal-100">
+                    <div className="flex items-center gap-2 mb-2">
+                      <CornerDownRight className="w-4 h-4 text-teal-600" />
+                      <span className="text-sm font-bold text-slate-800">
+                        Response from {profile.full_name}
+                      </span>
+                    </div>
+                    <p className="text-sm text-slate-600 italic">
+                      {review.provider_reply}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </DialogContent>
+          </Dialog>
+        )}
+      </div>
+
+      {/* Professional Reply - Always visible on the main card */}
+      {review.provider_reply && (
+        <div className="mt-4 bg-slate-50 rounded-lg p-3 border border-slate-100">
+          <div className="flex items-center gap-2 mb-2">
+            <div className="bg-teal-100 p-1 rounded-full">
+              <CornerDownRight className="w-3 h-3 text-teal-700" />
+            </div>
+            <span className="text-xs font-bold text-slate-800">
+              Response from {profile.full_name || "Provider"}
+            </span>
+            {review.provider_reply_at && (
+              <span className="text-[10px] text-slate-400">
+                • {formatDate(review.provider_reply_at)}
+              </span>
+            )}
+          </div>
+          <p className="text-sm text-slate-600 pl-1 line-clamp-2">
+            {review.provider_reply}
+          </p>
+        </div>
+      )}
+    </div>
+  );
+};
+
+const MobileReviewCard = ({ review, profile }: { review: any; profile: any }) => {
+  const [isOverflowing, setIsOverflowing] = useState(false);
+  const textRef = useRef<HTMLParagraphElement>(null);
+
+  useEffect(() => {
+    if (textRef.current) {
+      setIsOverflowing(textRef.current.scrollHeight > textRef.current.clientHeight);
+    }
+  }, [review.content]);
+
+  return (
+    <div className="bg-white border border-slate-100 rounded-lg p-4 shadow-sm">
+      {/* Header Area */}
+      <div className="flex items-center gap-2 mb-2">
+        <Avatar className="h-8 w-8 bg-slate-100">
+          <AvatarFallback className="text-[10px]">{review.reviewer_name?.charAt(0)}</AvatarFallback>
+        </Avatar>
+        <div>
+          <p className="text-sm font-bold text-slate-900 leading-none">{review.reviewer_name || "User"}</p>
+          <div className="flex text-orange-400 mt-0.5">
+            {[...Array(review.rating)].map((_, i) => <Star key={i} className="w-2.5 h-2.5 fill-current"/>)}
+          </div>
+        </div>
+        <span className="ml-auto text-[10px] text-slate-400">{formatDate(review.created_at)}</span>
+      </div>
+
+      {/* Review Content */}
+      <div className="relative">
+        <p ref={textRef} className="text-slate-600 text-sm leading-relaxed line-clamp-4">
+          {review.content}
+        </p>
+        
+        {isOverflowing && (
+          <Dialog>
+            <DialogTrigger asChild>
+              <button className="text-teal-700 text-xs font-bold mt-1.5 active:opacity-70">
+                Read more
+              </button>
+            </DialogTrigger>
+            <DialogContent className="w-[92vw] max-w-[400px] rounded-2xl p-6 overflow-y-auto max-h-[80vh]">
+              <DialogHeader className="text-left">
+                <div className="flex items-center gap-3">
+                  <div className="flex flex-col">
+                    <DialogTitle className="text-lg font-bold">Review by {review.reviewer_name}</DialogTitle>
+                    <div className="flex items-center gap-2 mt-1">
+                       <div className="flex text-orange-400">
+                         {[...Array(review.rating)].map((_, i) => <Star key={i} className="w-3 h-3 fill-current"/>)}
+                       </div>
+                       <span className="text-[11px] text-slate-400 font-medium">• {formatDate(review.created_at)}</span>
+                    </div>
+                  </div>
+                </div>
+              </DialogHeader>
+              
+              <div className="space-y-4 pt-4">
+                <p className="text-slate-700 text-sm leading-relaxed whitespace-pre-wrap">
+                  {review.content}
+                </p>
+
+                {review.provider_reply && (
+                  <div className="mt-4 bg-slate-50 rounded-xl p-4 border border-teal-50">
+                    <div className="flex items-center gap-2 mb-2">
+                      <CornerDownRight className="w-3 h-3 text-teal-600" />
+                      <span className="text-xs font-bold text-slate-800">
+                        Reply from {profile.full_name?.split(' ')[0] || "Provider"}
+                      </span>
+                    </div>
+                    <p className="text-sm text-slate-600 leading-relaxed italic">
+                      "{review.provider_reply}"
+                    </p>
+                  </div>
+                )}
+              </div>
+            </DialogContent>
+          </Dialog>
+        )}
+      </div>
+
+      {/* Professional Reply (Visible on screen) */}
+      {review.provider_reply && (
+        <div className="mt-3 ml-2 pl-3 border-l-2 border-slate-200">
+          <div className="flex items-center gap-2 mb-1">
+            <CornerDownRight className="w-3 h-3 text-slate-400" />
+            <span className="text-xs font-bold text-slate-700">
+              Reply from {profile.full_name?.split(' ')[0] || "Provider"}
+            </span>
+            {review.provider_reply_at && (
+              <span className="text-[10px] text-slate-400">• {formatDate(review.provider_reply_at)}</span>
+            )}
+          </div>
+          <p className="text-sm text-slate-600 bg-slate-50 p-2 rounded-lg">
+            {review.provider_reply}
+          </p>
+        </div>
+      )}
+    </div>
+  );
+};
 // Custom Reddit Icon
 const RedditIcon = ({ className }: { className?: string }) => (
   <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
@@ -171,7 +385,89 @@ export default function PublicProfile({ profile, reviews, currentUser }: { profi
     const percentage = totalReviews > 0 ? (count / totalReviews) * 100 : 0
     return { star, count, percentage }
   })
+const ReviewItem = ({ review, profile }: { review: any, profile: any }) => {
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
+  return (
+    <div className="bg-white p-5 rounded-xl border border-slate-200 hover:shadow-md transition-shadow h-fit flex flex-col">
+      <div className="flex justify-between items-start mb-3">
+        <div className="flex items-center gap-3">
+          <Avatar className="h-10 w-10 bg-slate-100">
+            <AvatarFallback className="text-slate-500 font-bold text-xs">
+              {review.reviewer_name?.charAt(0)}
+            </AvatarFallback>
+          </Avatar>
+          <div>
+            <p className="font-bold text-sm text-slate-900">{review.reviewer_name || "User"}</p>
+            <p className="text-xs text-slate-500">{formatDate(review.created_at)}</p>
+          </div>
+        </div>
+        <div className="flex text-amber-400">
+          {[...Array(review.rating)].map((_, i) => (
+            <Star key={i} className="w-3.5 h-3.5 fill-current" />
+          ))}
+        </div>
+      </div>
+
+      {/* Review Content with Line Clamp */}
+      <div className="relative">
+        <p className="text-slate-700 text-sm leading-relaxed line-clamp-4 overflow-hidden">
+          {review.content}
+        </p>
+        
+        {/* "Read More" Trigger - Always shown if content is long, 
+            Dialog handles the "Full Version" */}
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogTrigger asChild>
+            <button className="text-teal-700 text-xs font-bold mt-1 hover:underline">
+              Read more
+            </button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[500px] max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                Review by {review.reviewer_name}
+                <div className="flex text-amber-400 ml-2">
+                  {[...Array(review.rating)].map((_, i) => (
+                    <Star key={i} className="w-3 h-3 fill-current" />
+                  ))}
+                </div>
+              </DialogTitle>
+            </DialogHeader>
+            
+            <div className="space-y-4 pt-4">
+              <p className="text-slate-700 text-sm leading-relaxed whitespace-pre-wrap">
+                {review.content}
+              </p>
+
+              {review.provider_reply && (
+                <div className="mt-4 bg-slate-50 rounded-lg p-4 border border-teal-100">
+                  <div className="flex items-center gap-2 mb-2">
+                    <CornerDownRight className="w-4 h-4 text-teal-600" />
+                    <span className="text-sm font-bold text-slate-800">
+                      Reply from {profile.full_name}
+                    </span>
+                  </div>
+                  <p className="text-sm text-slate-600 italic">
+                    "{review.provider_reply}"
+                  </p>
+                </div>
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
+      </div>
+
+      {/* Mini preview of reply on main page (optional, keeping your existing logic) */}
+      {review.provider_reply && (
+        <div className="mt-3 pt-3 border-t border-slate-50 flex items-center gap-2 text-teal-600">
+          <Check className="w-3 h-3" />
+          <span className="text-[10px] font-bold uppercase tracking-wider">Replied by Professional</span>
+        </div>
+      )}
+    </div>
+  );
+};
   // --- FILTERING LOGIC ---
   const filteredReviews = useMemo(() => {
     return reviews.filter(review => {
@@ -547,49 +843,17 @@ export default function PublicProfile({ profile, reviews, currentUser }: { profi
                
                {/* Mobile List Rendering (Mapped from filteredReviews) */}
                <div className="space-y-3">
-                   {filteredReviews.length > 0 ? (
-                       filteredReviews.map((review: any) => (
-                            <div key={review.id} className="bg-white border border-slate-100 rounded-lg p-4 shadow-sm">
-                               <div className="flex items-center gap-2 mb-2">
-                                  <Avatar className="h-8 w-8 bg-slate-100">
-                                    <AvatarFallback className="text-[10px]">{review.reviewer_name?.charAt(0)}</AvatarFallback>
-                                  </Avatar>
-                                  <div>
-                                     <p className="text-sm font-bold text-slate-900 leading-none">{review.reviewer_name || "User"}</p>
-                                     <div className="flex text-orange-400 mt-0.5">
-                                        {[...Array(review.rating)].map((_, i) => <Star key={i} className="w-2.5 h-2.5 fill-current"/>)}
-                                     </div>
-                                  </div>
-                                  <span className="ml-auto text-[10px] text-slate-400">{formatDate(review.created_at)}</span>
-                               </div>
-                               <p className="text-slate-600 text-sm leading-relaxed line-clamp-6">{review.content}</p>
-                               {review.provider_reply && (
-  <div className="mt-3 ml-2 pl-3 border-l-2 border-slate-200">
-    <div className="flex items-center gap-2 mb-1">
-      <CornerDownRight className="w-3 h-3 text-slate-400" />
-      <span className="text-xs font-bold text-slate-700">
-        Reply from {profile.full_name?.split(' ')[0] || "Provider"}
-      </span>
-      {review.provider_reply_at && (
-        <span className="text-[10px] text-slate-400">
-          • {formatDate(review.provider_reply_at)}
-        </span>
-      )}
-    </div>
-    <p className="text-sm text-slate-600 bg-slate-50 p-2 rounded-lg">
-      {review.provider_reply}
-    </p>
-  </div>
-)}
-                            </div>
-                       ))
-                   ) : (
-                       <div className="text-center py-8 bg-slate-50 rounded-lg border border-dashed border-slate-200">
-                          <p className="text-slate-400 text-sm">No reviews found.</p>
-                          <button onClick={() => { setSearchQuery(""); setActiveFilters({ rating: null, verified: false, replies: false, date: 'all' }) }} className="text-blue-600 text-xs font-bold mt-2">Clear Filters</button>
-                       </div>
-                   )}
-               </div>
+  {filteredReviews.length > 0 ? (
+        filteredReviews.map((review: any) => (
+            <MobileReviewCard key={review.id} review={review} profile={profile} />
+        ))
+    ) : (
+        <div className="text-center py-8 bg-slate-50 rounded-lg border border-dashed border-slate-200">
+            <p className="text-slate-400 text-sm">No reviews found.</p>
+            <button onClick={() => { setSearchQuery(""); setActiveFilters({ rating: null, verified: false, replies: false, date: 'all' }) }} className="text-blue-600 text-xs font-bold mt-2">Clear Filters</button>
+        </div>
+    )}
+</div>
             </div>
 
           </div>
@@ -700,55 +964,19 @@ export default function PublicProfile({ profile, reviews, currentUser }: { profi
             </div>
 
             <div className="h-[500px] overflow-y-auto pr-2 custom-scrollbar">
-               {filteredReviews.length > 0 ? (
-                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
-                    {filteredReviews.map((review: any) => (
-                       <div key={review.id} className="bg-white p-5 rounded-xl border border-slate-200 hover:shadow-md transition-shadow h-fit">
-                          <div className="flex justify-between items-start mb-3">
-                             <div className="flex items-center gap-3">
-                                <Avatar className="h-10 w-10 bg-slate-100">
-                                   <AvatarFallback className="text-slate-500 font-bold text-xs">{review.reviewer_name?.charAt(0)}</AvatarFallback>
-                                </Avatar>
-                                <div>
-                                   <p className="font-bold text-sm text-slate-900">{review.reviewer_name || "User"}</p>
-                                   <p className="text-xs text-slate-500">{formatDate(review.created_at)}</p>
-                                </div>
-                             </div>
-                             <div className="flex text-amber-400">
-                                {[...Array(review.rating)].map((_, i) => <Star key={i} className="w-3.5 h-3.5 fill-current"/>)}
-                             </div>
-                          </div>
-                          <p className="text-slate-700 text-sm leading-relaxed">{review.content}</p>
-                          {review.provider_reply && (
-  <div className="mt-4 bg-slate-50 rounded-lg p-3 border border-slate-100">
-    <div className="flex items-center gap-2 mb-2">
-      <div className="bg-teal-100 p-1 rounded-full">
-        <CornerDownRight className="w-3 h-3 text-teal-700" />
-      </div>
-      <span className="text-xs font-bold text-slate-800">
-        Response from {profile.full_name || "Provider"}
-      </span>
-      {review.provider_reply_at && (
-        <span className="text-[10px] text-slate-400">
-          • {formatDate(review.provider_reply_at)}
-        </span>
-      )}
+  {filteredReviews.length > 0 ? (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
+      {filteredReviews.map((review: any) => (
+        <DesktopReviewCard key={review.id} review={review} profile={profile} />
+      ))}
     </div>
-    <p className="text-sm text-slate-600 pl-1">
-      {review.provider_reply}
-    </p>
-  </div>
-)}
-                       </div>
-                    ))}
-                 </div>
-               ) : (
-                 <div className="h-full flex flex-col items-center justify-center text-slate-400">
-                    <Search className="w-12 h-12 mb-4 opacity-20" />
-                    <p>No reviews match your filters.</p>
-                 </div>
-               )}
-            </div>
+  ) : (
+    <div className="h-full flex flex-col items-center justify-center text-slate-400">
+      <Search className="w-12 h-12 mb-4 opacity-20" />
+      <p>No reviews match your filters.</p>
+    </div>
+  )}
+</div>
          </div>
       </div>
 
