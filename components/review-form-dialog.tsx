@@ -55,7 +55,7 @@ export function ReviewFormDialog({
         .select('*')
         .eq('provider_id', providerId)
         .eq('reviewer_id', user.id)
-        .single()
+        .maybeSingle();
 
       if (data) {
         setRating(data.rating)
