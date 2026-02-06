@@ -81,45 +81,66 @@ export default function SignupForm() {
 
   
   // 2. CHECK SESSION & REDIRECT EXISTING PROS
-  useEffect(() => {
-    async function checkSession() {
-      // 1. Get Session
-      const { data: { session } } = await supabase.auth.getSession()
-      
-      if (session) {
-        setCurrentUserId(session.user.id)
-        setEmail(session.user.email || "")
+  // 2. CHECK SESSION & HANDLE GOOGLE USERS / REDIRECTS
+useEffect(() => {
+  async function checkSession() {
+    const { data: { session } } = await supabase.auth.getSession()
+    
+    if (session) {
+      setCurrentUserId(session.user.id)
+      setEmail(session.user.email || "")
 
-        // 2. Fetch Profile to check ROLE
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('*') // Changed from 'username, full_name' to '*' to get the role
-          .eq('id', session.user.id)
-          .single()
+      // Fetch Profile
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', session.user.id)
+        .single()
 
-        if (profile) {
-           // 🔒 REDIRECT LOGIC: If they are ALREADY a professional, kick them to dashboard
-           if (profile.role === 'professional') {
-             router.replace("/service-provider-dashboard")
-             return // Stop execution here
-           }
+      if (profile) {
+        // 🔒 REDIRECT: If already a professional, kick them to dashboard
+        if (profile.role === 'professional') {
+          router.replace("/service-provider-dashboard")
+          return 
+        }
 
-           // If they are a "reviewer" (or other role) allowing upgrade:
-           setIsUpgrading(true)
-           setRole("professional") // Default them to professional tab for upgrading
-           setUsername(profile.username || "") 
-           setFullName(profile.full_name || "")
+        // Allow Reviewer -> Professional Upgrade
+        setIsUpgrading(true)
+        setRole("professional") 
+        setUsername(profile.username || "") 
+        setFullName(profile.full_name || "")
+      } else {
+        // 🆕 NEW: Handle Google User (No profile yet)
+        console.log("New User detected via Google/Auth - Creating default profile...")
+        
+        // Create clean username from email/name
+        const meta = session.user.user_metadata
+        const baseName = (meta.full_name || meta.name || session.user.email?.split('@')[0] || "user")
+          .toLowerCase().replace(/[^a-z0-9]/g, '')
+        const randomNum = Math.floor(Math.random() * 10000)
+
+        // Auto-insert the new user into profiles
+        const { error } = await supabase.from('profiles').insert({
+          id: session.user.id,
+          email: session.user.email,
+          full_name: meta.full_name || meta.name || "",
+          username: `${baseName}${randomNum}`,
+          avatar_url: meta.avatar_url || meta.picture || null,
+          role: 'reviewer', // Default to reviewer
+          created_at: new Date().toISOString()
+        })
+
+        if (!error) {
+           // Reload page to fetch the newly created profile and update UI
+           window.location.reload()
         } else {
-           // Fallback if profile doesn't exist yet (rare, but possible mid-signup)
-           const meta = session.user.user_metadata
-           setFullName(meta.full_name || "")
-           setUsername(meta.username || "")
-           setIsUpgrading(true)
+           console.error("Error creating Google profile:", error)
         }
       }
     }
-    checkSession()
-  }, [router])
+  }
+  checkSession()
+}, [router])
 
   // 3. Update Roles based on Sector
   useEffect(() => {
@@ -130,12 +151,7 @@ export default function SignupForm() {
     }
   }, [selectedSector, taxonomy])
 
-  useEffect(() => {
-    if (!isUpgrading) {
-      const roleParam = searchParams.get("role")
-      if (roleParam === "professional") setRole("professional")
-    }
-  }, [searchParams, isUpgrading])
+
 
   // --- HANDLERS ---
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -319,7 +335,20 @@ export default function SignupForm() {
            alert("Error saving profile: " + profileError.message)
        }
     }
-
+try {
+      if (role === 'professional') {
+        const res = await fetch('https://api.ipify.org?format=json')
+        const { ip } = await res.json()
+        
+        await fetch('/api/auth/sync-provider-ip', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId: userId, rawIp: ip })
+        })
+      }
+    } catch (ipError) {
+      console.error("Non-critical: IP Sync failed during signup/upgrade")
+    }
     setIsLoading(false)
     alert(isUpgrading ? "Business Listed Successfully!" : "Account Verified & Profile Created!")
     

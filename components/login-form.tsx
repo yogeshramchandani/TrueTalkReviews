@@ -36,6 +36,28 @@ export default function LoginForm() {
       return
     }
 
+try {
+    const user = data.user
+    // We only need to track this if they are a professional/provider
+    if (user?.user_metadata?.role === 'professional' || user?.user_metadata?.role === 'provider') {
+      
+      // We use a public API to get the IP, then hash it
+      const res = await fetch('https://api.ipify.org?format=json')
+      const { ip } = await res.json()
+      
+      // Send the IP to a Next.js API route to be hashed server-side
+      // This is safer than hashing it on the client
+      await fetch('/api/auth/sync-provider-ip', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user.id, rawIp: ip })
+      })
+    }
+  } catch (ipError) {
+    // We fail silently so the user can still log in even if IP sync fails
+    console.error("Non-critical: IP Sync failed")
+  }
+
     // 2. REDIRECT LOGIC FOR EMAIL LOGIN
     // If 'next' param exists (and isn't the default dashboard), go there
     if (next && next !== "/dashboard") {

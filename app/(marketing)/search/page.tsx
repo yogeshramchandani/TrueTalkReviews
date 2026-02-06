@@ -7,41 +7,56 @@ import Link from "next/link"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input" 
+import Image from "next/image"
 import { Card } from "@/components/ui/card"
 import { MapPin, Star, ShieldCheck, Loader2, ArrowLeft, Frown, Search } from "lucide-react"
+
+// --- 1. GLOBAL CACHE (Lives outside the component) ---
+// This persists as long as the tab is open (or until a hard refresh).
+const searchCache = new Map<string, any[]>();
 
 function SearchResults() {
   const searchParams = useSearchParams()
   const router = useRouter()
   
-  // 1. Get query from URL
+  // Get query params
   const categoryKey = searchParams.get("category")
   const sector = searchParams.get("sector")
   const categoryName = searchParams.get("name") || categoryKey || "Professionals"
   const searchQuery = searchParams.get("q") 
+const getOptimizedUrl = (url: string | null) => {
+  if (!url) return undefined
+  // Remove the cache buster (?v=...) and use Supabase transformation
+  // We request a 100x100px WebP image with 60% quality.
+  return `${url}?width=100&height=100&resize=cover&quality=60&format=webp`
+}
+  // Generate a unique key for this specific search
+  const cacheKey = `${categoryKey || ''}-${searchQuery || ''}-${sector || ''}`
 
-  // --- LOCAL SEARCH STATE ---
+  // --- LOCAL STATE ---
   const [localSearch, setLocalSearch] = useState(searchQuery || categoryKey || "")
   const [suggestions, setSuggestions] = useState<string[]>([])
   const [showSuggestions, setShowSuggestions] = useState(false)
   const wrapperRef = useRef<HTMLDivElement>(null)
 
-  const [profiles, setProfiles] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
+  // --- 2. INSTANT STATE INITIALIZATION ---
+  // We initialize state from the cache. If it exists, 'loading' starts as false.
+  // This prevents the "white flash" and allows scroll restoration to work.
+  const [profiles, setProfiles] = useState<any[]>(() => {
+      return searchCache.get(cacheKey) || []
+  })
+  
+  const [loading, setLoading] = useState(() => {
+      return !searchCache.has(cacheKey)
+  })
 
-  // Fallback link
-  const backLink = sector 
-    ? `/categories?sector=${encodeURIComponent(sector)}` 
-    : "/categories"
-
-  // 2. SUGGESTION LOGIC (Same as Categories Page)
+  // Suggestion Logic (Unchanged)
   useEffect(() => {
     async function fetchSuggestions() {
       if (localSearch.length < 2) {
         setSuggestions([])
         return
       }
-      
       const { data } = await supabase
         .from('profession_taxonomy')
         .select('profession')
@@ -49,16 +64,17 @@ function SearchResults() {
         .limit(5)
 
       if (data) {
+        // @ts-ignore
         const unique = Array.from(new Set(data.map(d => d.profession)))
+        // @ts-ignore
         setSuggestions(unique)
       }
     }
-
     const timer = setTimeout(fetchSuggestions, 300)
     return () => clearTimeout(timer)
   }, [localSearch])
 
-  // 3. CLICK OUTSIDE TO CLOSE DROPDOWN
+  // Click Outside Logic (Unchanged)
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (wrapperRef.current && !wrapperRef.current.contains(event.target as Node)) {
@@ -69,26 +85,32 @@ function SearchResults() {
     return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [])
 
-  // 4. MAIN SEARCH FETCH LOGIC
+  // --- 3. OPTIMIZED DATA FETCHING ---
   useEffect(() => {
+    // If we changed search params, check if the NEW params are already cached
+    if (searchCache.has(cacheKey)) {
+        setProfiles(searchCache.get(cacheKey)!)
+        setLoading(false)
+        return // STOP HERE - No need to fetch
+    }
+
     const fetchProfiles = async () => {
       setLoading(true)
       
       const term = categoryKey || searchQuery || ""
       const cleanTerm = term.trim()
-      
-      // Singularize (Doctors -> Doctor)
       let singularTerm = cleanTerm
       if (cleanTerm.toLowerCase().endsWith('s')) {
          singularTerm = cleanTerm.slice(0, -1)
       }
 
-      console.log(`Searching for: "${cleanTerm}" and "${singularTerm}"`)
+      console.log(`Fetching from DB: "${cleanTerm}"`)
 
       let query = supabase
         .from('profiles')
         .select('id, username, full_name, profession, avatar_url, city, bio')
         .in('role', ['professional', 'provider'])
+        .limit(50)
 
       if (cleanTerm) {
         const orClause = `profession.ilike.%${cleanTerm}%,profession.ilike.%${singularTerm}%`
@@ -103,16 +125,19 @@ function SearchResults() {
 
       if (error) {
         console.error("DB Error:", error)
+        setLoading(false)
       } else {
-        setProfiles(data || [])
+        const results = data || []
+        // --- 4. SAVE TO CACHE ---
+        searchCache.set(cacheKey, results)
+        setProfiles(results)
+        setLoading(false)
       }
-      setLoading(false)
     }
 
     fetchProfiles()
-  }, [categoryKey, searchQuery])
+  }, [cacheKey, categoryKey, searchQuery]) // Depend on cacheKey
 
-  // Handle manual search form submit
   const handleManualSearch = () => {
     if (localSearch.trim()) {
       router.push(`/search?q=${encodeURIComponent(localSearch)}`)
@@ -121,7 +146,7 @@ function SearchResults() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-slate-50 pt-24">
       {/* Header */}
       <div className="bg-white border-b border-slate-200 py-8 shadow-sm">
         <div className="container mx-auto px-4">
@@ -141,7 +166,7 @@ function SearchResults() {
                <p className="text-slate-500 mt-2">Verified experts ready to help you.</p>
              </div>
 
-             {/* --- SEARCH BAR IN HEADER --- */}
+             {/* Search Bar */}
              <div className="w-full md:w-96 relative" ref={wrapperRef}>
                <div className="relative">
                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
@@ -158,7 +183,6 @@ function SearchResults() {
                  />
                </div>
 
-               {/* SUGGESTIONS DROPDOWN */}
                {showSuggestions && suggestions.length > 0 && (
                   <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-xl border border-slate-100 overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-200">
                     {suggestions.map((suggestion, index) => (
@@ -209,15 +233,24 @@ function SearchResults() {
                 <div className="p-6">
                   {/* Top Section */}
                   <div className="flex items-start gap-4">
-                    <Avatar className="h-16 w-16 border-2 border-slate-100 group-hover:border-teal-100 transition-colors shadow-sm">
-                      <AvatarImage 
-                        src={profile.avatar_url ? `${profile.avatar_url}?v=${new Date().getTime()}` : undefined} 
-                        className="object-cover"
-                      />
-                      <AvatarFallback className="bg-teal-50 text-teal-800 font-bold text-xl">
-                        {profile.full_name?.charAt(0).toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
+                    <div className="relative h-16 w-16 flex-shrink-0">
+  <Avatar className="h-full w-full border-2 border-slate-100 group-hover:border-teal-100 transition-colors shadow-sm">
+    {profile.avatar_url ? (
+      // WE USE NEXT/IMAGE HERE INSTEAD OF AVATARIMAGE
+      <Image 
+        src={profile.avatar_url} 
+        alt={profile.full_name}
+        fill // Automatically fills the parent container
+        sizes="64px" // Tells browser to download a small version
+        className="object-cover rounded-full"
+      />
+    ) : (
+      <AvatarFallback className="bg-teal-50 text-teal-800 font-bold text-xl">
+        {profile.full_name?.charAt(0).toUpperCase()}
+      </AvatarFallback>
+    )}
+  </Avatar>
+</div>
                     
                     <div className="flex-1 min-w-0">
                       <div className="flex justify-between items-start">
@@ -271,7 +304,7 @@ function SearchResults() {
 
 export default function SearchPage() {
   return (
-    <Suspense fallback={<div className="flex justify-center py-20"><Loader2 className="animate-spin" /></div>}>
+    <Suspense fallback={<div className="flex justify-center pt-24 py-20"><Loader2 className="animate-spin text-teal-700" /></div>}>
       <SearchResults />
     </Suspense>
   )

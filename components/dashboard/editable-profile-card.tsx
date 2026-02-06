@@ -205,7 +205,7 @@ if (newAvatarFile && newAvatarFile.size > MAX_FILE_SIZE) {
         )}
       </CardHeader>
       
-      <CardContent className="space-y-6 pt-4">
+      <CardContent className="space-y-5 px-4 pt-4">
         {/* AVATAR SECTION */}
         <div className="flex flex-col items-center gap-4">
           <div className="relative group">
@@ -251,16 +251,10 @@ if (newAvatarFile && newAvatarFile.size > MAX_FILE_SIZE) {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium text-muted-foreground">Profession / Title</label>
-              {isEditing ? (
-                <Input 
-                  value={formData.profession} 
-                  onChange={(e) => handleChange('profession', e.target.value)} 
-                />
-              ) : (
-                <p className="text-foreground">{profile.profession}</p>
-              )}
-            </div>
+               
+            <label className="text-xs text-muted-foreground">Profession</label>
+            <p>{profile.profession}</p>
+          </div>
           </div>
 
           <div className="space-y-2">
@@ -280,132 +274,135 @@ if (newAvatarFile && newAvatarFile.size > MAX_FILE_SIZE) {
         </div>
 
         {/* LOCATION SECTION */}
+       <div className="border-t border-border pt-6">
+  <h3 className="text-sm font-bold mb-4 text-slate-700 flex items-center gap-2">
+    <MapPin className="w-4 h-4" /> Location Details
+  </h3>
+
+  <div className="space-y-4">
+    {/* Street Address */}
+    <div className="space-y-1">
+      <label className="text-xs text-muted-foreground">Street Address</label>
+      {isEditing ? (
+        <Input
+          placeholder="123 Main St"
+          value={formData.address || ""}
+          onChange={(e) => handleChange("address", e.target.value)}
+        />
+      ) : (
+        <p className="text-sm">{profile.address || "Not added"}</p>
+      )}
+    </div>
+
+    {/* City */}
+    <div className="space-y-1">
+      <label className="text-xs text-muted-foreground">City</label>
+      {isEditing ? (
+        <Input
+          placeholder="New York"
+          value={formData.city || ""}
+          onChange={(e) => handleChange("city", e.target.value)}
+        />
+      ) : (
+        <p className="text-sm">{profile.city || "Not added"}</p>
+      )}
+    </div>
+
+    {/* State */}
+    <div className="space-y-1">
+      <label className="text-xs text-muted-foreground">State</label>
+      {isEditing ? (
+        <Input
+          placeholder="NY"
+          value={formData.state || ""}
+          onChange={(e) => handleChange("state", e.target.value)}
+        />
+      ) : (
+        <p className="text-sm">{profile.state || "Not added"}</p>
+      )}
+    </div>
+  </div>
+</div>
+
+
         <div className="border-t border-border pt-6">
-          <h3 className="text-sm font-bold mb-4 text-slate-700 flex items-center gap-2">
-             <MapPin className="w-4 h-4" /> Location Details
-          </h3>
-          <div className="space-y-4">
-            <div className="space-y-2">
-               <label className="text-xs font-medium text-muted-foreground">Street Address</label>
-               {isEditing ? (
-                  <Input placeholder="123 Main St" value={formData.address || ''} onChange={(e) => handleChange('address', e.target.value)} />
-               ) : (
-                  <p className="text-sm">{profile.address || "Not added"}</p>
-               )}
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-               <div className="space-y-2">
-                  <label className="text-xs font-medium text-muted-foreground">City</label>
-                  {isEditing ? (
-                     <Input placeholder="New York" value={formData.city || ''} onChange={(e) => handleChange('city', e.target.value)} />
-                  ) : (
-                     <p className="text-sm">{profile.city || "Not added"}</p>
-                  )}
-               </div>
-               <div className="space-y-2">
-                  <label className="text-xs font-medium text-muted-foreground">State</label>
-                  {isEditing ? (
-                     <Input placeholder="NY" value={formData.state || ''} onChange={(e) => handleChange('state', e.target.value)} />
-                  ) : (
-                     <p className="text-sm">{profile.state || "Not added"}</p>
-                  )}
-               </div>
-            </div>
-          </div>
-        </div>
+  <h3 className="text-sm font-bold mb-4 text-slate-700">
+    Contact & Social Links
+  </h3>
 
-        {/* SOCIAL LINKS SECTION */}
-        <div className="border-t border-border pt-6">
-          <h3 className="text-sm font-bold mb-4 text-slate-700">Contact & Social Links</h3>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Phone */}
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <Phone className="w-4 h-4 text-slate-400" />
-                <label className="text-xs font-medium text-muted-foreground">Phone Number</label>
-              </div>
-              {isEditing ? (
-                <Input
-                  placeholder="+91 98765 43210"
-                  value={formData.phone_number || ''}
-                  onChange={(e) => handleChange('phone_number', e.target.value)}
-                />
-              ) : (
-                <p className="text-sm">{profile.phone_number || "Not added"}</p>
-              )}
-            </div>
+  <div className="space-y-4">
+    {/* Phone */}
+    <div className="flex gap-3">
+      <Phone className="w-4 h-4 mt-1 text-slate-400" />
+      <div className="flex-1 space-y-1">
+        <label className="text-xs text-muted-foreground">Phone Number</label>
+        {isEditing ? (
+          <Input
+            value={formData.phone_number || ""}
+            onChange={(e) => handleChange("phone_number", e.target.value)}
+          />
+        ) : (
+          <p className="text-sm">{profile.phone_number || "Not added"}</p>
+        )}
+      </div>
+    </div>
 
-            {/* Instagram */}
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <Instagram className="w-4 h-4 text-pink-500" />
-                <label className="text-xs font-medium text-muted-foreground">Instagram URL</label>
-              </div>
-              {isEditing ? (
-                <Input
-                  placeholder="https://instagram.com/..."
-                  value={formData.instagram_url || ''}
-                  onChange={(e) => handleChange('instagram_url', e.target.value)}
-                />
-              ) : (
-                <p className="text-sm truncate text-blue-600">{profile.instagram_url || "Not added"}</p>
-              )}
-            </div>
+    {/* Instagram */}
+    <div className="flex gap-3">
+      <Instagram className="w-4 h-4 mt-1 text-pink-500" />
+      <div className="flex-1 space-y-1">
+        <label className="text-xs text-muted-foreground">Instagram</label>
+        {isEditing ? (
+          <Input
+            value={formData.instagram_url || ""}
+            onChange={(e) => handleChange("instagram_url", e.target.value)}
+          />
+        ) : (
+          <p className="text-sm truncate">
+            {profile.instagram_url || "Not added"}
+          </p>
+        )}
+      </div>
+    </div>
 
-            {/* LinkedIn */}
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <Linkedin className="w-4 h-4 text-blue-600" />
-                <label className="text-xs font-medium text-muted-foreground">LinkedIn URL</label>
-              </div>
-              {isEditing ? (
-                <Input
-                  placeholder="https://linkedin.com/in/..."
-                  value={formData.linkedin_url || ''}
-                  onChange={(e) => handleChange('linkedin_url', e.target.value)}
-                />
-              ) : (
-                <p className="text-sm truncate text-blue-600">{profile.linkedin_url || "Not added"}</p>
-              )}
-            </div>
-            
-             {/* 4. REDDIT LINK INPUT */}
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                {/* No text color class needed here since SVG handles its own brand colors */}
-                <RedditIcon className="w-4 h-4" />
-                <label className="text-xs font-medium text-muted-foreground">Reddit Profile</label>
-              </div>
-              {isEditing ? (
-                <Input
-                  placeholder="https://reddit.com/user/..."
-                  value={formData.reddit_url || ''}
-                  onChange={(e) => handleChange('reddit_url', e.target.value)}
-                />
-              ) : (
-                <p className="text-sm truncate text-blue-600">{profile.reddit_url || "Not added"}</p>
-              )}
-            </div>
+    {/* LinkedIn */}
+    <div className="flex gap-3">
+      <Linkedin className="w-4 h-4 mt-1 text-blue-600" />
+      <div className="flex-1 space-y-1">
+        <label className="text-xs text-muted-foreground">LinkedIn</label>
+        {isEditing ? (
+          <Input
+            value={formData.linkedin_url || ""}
+            onChange={(e) => handleChange("linkedin_url", e.target.value)}
+          />
+        ) : (
+          <p className="text-sm truncate">
+            {profile.linkedin_url || "Not added"}
+          </p>
+        )}
+      </div>
+    </div>
 
-            {/* Website */}
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <Globe className="w-4 h-4 text-teal-600" />
-                <label className="text-xs font-medium text-muted-foreground">Website / Portfolio</label>
-              </div>
-              {isEditing ? (
-                <Input
-                  placeholder="https://yourwebsite.com"
-                  value={formData.website_url || ''}
-                  onChange={(e) => handleChange('website_url', e.target.value)}
-                />
-              ) : (
-                <p className="text-sm truncate text-blue-600">{profile.website_url || "Not added"}</p>
-              )}
-            </div>
-          </div>
-        </div>
+    {/* Website */}
+    <div className="flex gap-3">
+      <Globe className="w-4 h-4 mt-1 text-teal-600" />
+      <div className="flex-1 space-y-1">
+        <label className="text-xs text-muted-foreground">Website</label>
+        {isEditing ? (
+          <Input
+            value={formData.website_url || ""}
+            onChange={(e) => handleChange("website_url", e.target.value)}
+          />
+        ) : (
+          <p className="text-sm truncate">
+            {profile.website_url || "Not added"}
+          </p>
+        )}
+      </div>
+    </div>
+  </div>
+</div>
+
 
       </CardContent>
     </Card>

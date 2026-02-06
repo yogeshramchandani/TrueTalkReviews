@@ -11,14 +11,17 @@ interface ReviewReplyFormProps {
   reviewId: string
   existingReply: string | null
   onReplySaved: () => void
-  providerName: string // <--- ADD THIS
+  providerName: string
+  providerId: string // ✅ ADD THIS
 }
+
 
 export default function ReviewReplyForm({ 
   reviewId, 
   existingReply, 
   onReplySaved,
-  providerName // <--- DESTRUCTURE THIS
+  providerName,
+  providerId  // <--- DESTRUCTURE THIS
 }: ReviewReplyFormProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -33,41 +36,47 @@ export default function ReviewReplyForm({
   }, [existingReply])
 
   const handleSubmit = async () => {
-    if (!draftText.trim()) return
-    setIsSubmitting(true)
+  if (!draftText.trim()) return
+  setIsSubmitting(true)
 
-    try {
-      const { error } = await supabase
-        .from('reviews')
-        .update({
-          provider_reply: draftText,
-          provider_reply_at: new Date().toISOString(),
-        })
-        .eq('id', reviewId)
-
-      if (error) throw error
-
-      setCurrentReply(draftText) 
-      setIsEditing(false)
-      onReplySaved()
-
-      // 2. USE THE PROP IN THE API CALL
-      fetch('/api/send-reply-notification', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          reviewId: reviewId,
-          replyText: draftText,
-          providerName: providerName // <--- PASS IT HERE
-        })
+  try {
+    const { error } = await supabase
+      .from('reviews')
+      .update({
+        provider_reply: draftText,
+        provider_reply_at: new Date().toISOString(),
       })
+      .eq('id', reviewId)
 
-    } catch (error) {
-      console.error("Error submitting reply:", error)
-    } finally {
-      setIsSubmitting(false)
-    }
+    if (error) throw error
+
+    setCurrentReply(draftText)
+    setIsEditing(false)
+
+    // ✅ RECALCULATE SCORE
+    await supabase.rpc("recalculate_provider_score", {
+      p_provider_id: providerId,
+    })
+
+    onReplySaved()
+
+    fetch('/api/send-reply-notification', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        reviewId,
+        replyText: draftText,
+        providerName,
+      }),
+    })
+
+  } catch (error) {
+    console.error("Error submitting reply:", error)
+  } finally {
+    setIsSubmitting(false)
   }
+}
+
 
   // ... (Rest of the render code is the same) ...
   // --- VIEW MODE ---

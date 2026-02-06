@@ -27,6 +27,7 @@ import {
   Star, MapPin, Globe, Linkedin, Instagram, Twitter, Facebook,
   Ban, Pencil, Filter, Share2, Search, X, Check, Mail, ShieldCheck, LogOut, User, CornerDownRight
 } from "lucide-react"
+import GoogleAuthButton from "@/app/auth/google-button"
 
 // --- 1. HELPER COMPONENTS & FUNCTIONS ---
 
@@ -36,6 +37,7 @@ const formatDate = (dateString: string) => {
     year: 'numeric'
   })
 }
+
 const DesktopReviewCard = ({ review, profile }: { review: any; profile: any }) => {
   const [isOverflowing, setIsOverflowing] = useState(false);
   const textRef = useRef<HTMLParagraphElement>(null);
@@ -258,6 +260,41 @@ const RedditIcon = ({ className }: { className?: string }) => (
     <path fillRule="evenodd" clipRule="evenodd" d="M20.0193 8.90951C20.0066 8.98984 20 9.07226 20 9.15626C20 10.0043 20.6716 10.6918 21.5 10.6918C22.3284 10.6918 23 10.0043 23 9.15626C23 8.30819 22.3284 7.6207 21.5 7.6207C21.1309 7.6207 20.7929 7.7572 20.5315 7.98359L16.6362 7L15.2283 12.7651C13.3554 12.8913 11.671 13.4719 10.4003 14.3485C10.0395 13.9863 9.54524 13.7629 9 13.7629C7.89543 13.7629 7 14.6796 7 15.8103C7 16.5973 7.43366 17.2805 8.06967 17.6232C8.02372 17.8674 8 18.1166 8 18.3696C8 21.4792 11.5817 24 16 24C20.4183 24 24 21.4792 24 18.3696C24 18.1166 23.9763 17.8674 23.9303 17.6232C24.5663 17.2805 25 16.5973 25 15.8103C25 14.6796 24.1046 13.7629 23 13.7629C22.4548 13.7629 21.9605 13.9863 21.5997 14.3485C20.2153 13.3935 18.3399 12.7897 16.2647 12.7423L17.3638 8.24143L20.0193 8.90951ZM12.5 18.8815C13.3284 18.8815 14 18.194 14 17.3459C14 16.4978 13.3284 15.8103 12.5 15.8103C11.6716 15.8103 11 16.4978 11 17.3459C11 18.194 11.6716 18.8815 12.5 18.8815ZM19.5 18.8815C20.3284 18.8815 21 18.194 21 17.3459C21 16.4978 20.3284 15.8103 19.5 15.8103C18.6716 15.8103 18 16.4978 18 17.3459C18 18.194 18.6716 18.8815 19.5 18.8815ZM12.7773 20.503C12.5476 20.3462 12.2372 20.4097 12.084 20.6449C11.9308 20.8802 11.9929 21.198 12.2226 21.3548C13.3107 22.0973 14.6554 22.4686 16 22.4686C17.3446 22.4686 18.6893 22.0973 19.7773 21.3548C20.0071 21.198 20.0692 20.8802 19.916 20.6449C19.7628 20.4097 19.4524 20.3462 19.2226 20.503C18.3025 21.1309 17.1513 21.4449 16 21.4449C15.3173 21.4449 14.6345 21.3345 14 21.1137C13.5646 20.9621 13.1518 20.7585 12.7773 20.503Z" fill="white"/>
   </svg>
 )
+function ReviewTabs({
+  active,
+  onChange,
+  verifiedCount,
+  unverifiedCount,
+}: {
+  active: "verified" | "unverified"
+  onChange: (v: "verified" | "unverified") => void
+  verifiedCount: number
+  unverifiedCount: number
+}) {
+  return (
+    <div className="flex bg-slate-100 rounded-full p-1 w-fit">
+      <button
+        onClick={() => onChange("verified")}
+        className={`px-4 py-2 text-sm font-semibold rounded-full transition
+          ${active === "verified"
+            ? "bg-white text-slate-900 shadow"
+            : "text-slate-500 hover:text-slate-800"}`}
+      >
+        Verified ({verifiedCount})
+      </button>
+
+      <button
+        onClick={() => onChange("unverified")}
+        className={`px-4 py-2 text-sm font-semibold rounded-full transition
+          ${active === "unverified"
+            ? "bg-white text-slate-900 shadow"
+            : "text-slate-500 hover:text-slate-800"}`}
+      >
+        Unverified ({unverifiedCount})
+      </button>
+    </div>
+  )
+}
 
 // --- 2. NAVBAR COMPONENT ---
 const Navbar = ({ viewer }: { viewer: any }) => {
@@ -291,9 +328,13 @@ const Navbar = ({ viewer }: { viewer: any }) => {
 
           {/* Right: Actions */}
           <div className="flex items-center gap-2 md:gap-4">
-             <Link href="/for-business" className="hidden md:block text-sm font-medium text-slate-600 hover:text-slate-900">
-               For Business
-             </Link>
+            {viewer?.role == 'reviewer' && (
+              <Link href="/auth/signup?role=professional">
+                <Button variant="ghost" className="text-teal-800 hover:bg-teal-50 font-bold text-sm h-9 px-4 rounded-xl">
+                  For Business
+                </Button>
+              </Link>
+            )}
              
              {viewer ? (
                <DropdownMenu>
@@ -335,7 +376,8 @@ const Navbar = ({ viewer }: { viewer: any }) => {
 export default function PublicProfile({ profile, reviews, currentUser }: { profile: any, reviews: any[], currentUser: any }) {
   const router = useRouter()
   const hasViewed = useRef(false)
-  
+  const [activeReviewTab, setActiveReviewTab] = useState<"verified" | "unverified">("verified")
+
   // STATE
   const [viewer, setViewer] = useState(currentUser)
   const [isReviewOpen, setIsReviewOpen] = useState(false)
@@ -515,6 +557,16 @@ const ReviewItem = ({ review, profile }: { review: any, profile: any }) => {
     }).sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
   }, [reviews, searchQuery, activeFilters])
 
+const verifiedReviews = filteredReviews.filter(
+  (r: any) => r.professional_vouch === "vouched"
+)
+
+const unverifiedReviews = filteredReviews.filter(
+  (r: any) => r.professional_vouch !== "vouched"
+)
+
+const visibleReviews =
+  activeReviewTab === "verified" ? verifiedReviews : unverifiedReviews
 
   // Socials
   const socialLinks = [
@@ -539,35 +591,15 @@ const ReviewItem = ({ review, profile }: { review: any, profile: any }) => {
     // Standard button styles
     const btnClass = `${fullWidth ? 'w-full' : ''} bg-teal-700 hover:bg-teal-800 text-white font-semibold rounded-full shadow-sm`
 
-    // 1. Handle Google Login Logic
-    const handleGoogleLogin = async () => {
-      setIsLoading(true)
-      const nextUrl = `/u/${profile.username}`
-      const redirectTo = `${window.location.origin}/auth/callback?next=${encodeURIComponent(nextUrl)}`
-
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: {
-          redirectTo: redirectTo,
-          queryParams: {
-            access_type: "offline",
-            prompt: "consent",
-          },
-        },
-      })
-
-      if (error) {
-        alert("Error logging in: " + error.message)
-        setIsLoading(false)
-      }
-    }
-
     // 2. State: NOT LOGGED IN -> Show Login Options Modal
     if (!viewer) {
       return (
         <Dialog open={isLoginModalOpen} onOpenChange={setIsLoginModalOpen}>
           <DialogTrigger asChild>
-            <Button size={size} className={btnClass}>
+            <Button size={size} className={btnClass}  onClick={() => {
+      const next = `/u/${profile.username}`
+      router.replace(`?next=${encodeURIComponent(next)}`, { scroll: false })
+    }}>
               Log in to Review
             </Button>
           </DialogTrigger>
@@ -581,21 +613,7 @@ const ReviewItem = ({ review, profile }: { review: any, profile: any }) => {
               </p>
               
               {/* Option A: Continue with Google */}
-              <Button 
-                variant="outline" 
-                className="w-full h-12 relative flex items-center justify-center gap-3 border-slate-600 text-slate-600 hover:bg-slate-50 hover:text-slate-900 hover:border-slate-900 font-semibold"
-                onClick={handleGoogleLogin}
-                disabled={isLoading}
-              >
-                {/* Google SVG Icon */}
-                <svg className="w-5 h-5" viewBox="0 0 24 24">
-                  <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
-                  <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
-                  <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
-                  <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
-                </svg>
-                {isLoading ? "Redirecting..." : "Continue with Google"}
-              </Button>
+              <GoogleAuthButton />
 
               <div className="relative">
                 <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-slate-200" /></div>
@@ -764,10 +782,24 @@ const ReviewItem = ({ review, profile }: { review: any, profile: any }) => {
           <div className="h-28 w-full bg-slate-200 relative"></div>
           <div className="px-4 relative">
              <div className="flex justify-between items-end -mt-10 mb-4">
-               <Avatar className="h-24 w-24 border-[3px] border-white bg-white shadow-sm z-10">
-                  <AvatarImage src={profile.avatar_url ? `${profile.avatar_url}?v=${new Date().getTime()}` : undefined} className="object-cover" />
-                  <AvatarFallback className="text-3xl font-bold text-slate-500 bg-slate-100">{profile.full_name?.charAt(0).toUpperCase()}</AvatarFallback>
-               </Avatar>
+              <div className="relative h-24 w-24 flex-shrink-0">
+  <Avatar className="h-full w-full border-2 border-slate-100 group-hover:border-teal-100 transition-colors shadow-sm">
+    {profile.avatar_url ? (
+      // WE USE NEXT/IMAGE HERE INSTEAD OF AVATARIMAGE
+      <Image 
+        src={profile.avatar_url} 
+        alt={profile.full_name}
+        fill // Automatically fills the parent container
+        sizes="64px" // Tells browser to download a small version
+        className="object-cover rounded-full"
+      />
+    ) : (
+      <AvatarFallback className="bg-teal-50 text-teal-800 font-bold text-xl">
+        {profile.full_name?.charAt(0).toUpperCase()}
+      </AvatarFallback>
+    )}
+  </Avatar>
+</div>
                <div className="bg-white border border-slate-200 rounded-xl px-2 py-1.5 flex gap-2 shadow-sm mb-1 z-10">
                   {socialLinks.map((social) => (
                     <a key={social.key} href={social.url} target="_blank" className={`p-1.5 rounded-full bg-slate-50 text-slate-500 hover:text-slate-900 transition-colors`}>
@@ -813,51 +845,59 @@ const ReviewItem = ({ review, profile }: { review: any, profile: any }) => {
             </div>
 
             {/* 👇 UPDATED MOBILE REVIEWS SECTION WITH FILTERS 👇 */}
-            <div>
-               <div className="flex flex-col gap-3 mb-4">
-                 <h3 className="text-lg font-bold text-slate-900">Reviews</h3>
-                 
-                 <div className="flex gap-2">
-                    {/* Mobile Search */}
-                    <div className="relative flex-1">
-                       <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                       <Input 
-                         placeholder="Search..." 
-                         value={searchQuery}
-                         onChange={(e) => setSearchQuery(e.target.value)}
-                         className="pl-9 h-10 rounded-full bg-slate-50 border-slate-200 text-sm focus:bg-white transition-colors"
-                       />
-                    </div>
-                    
-                    {/* Mobile Filter Button */}
-                    <Button 
-                       variant="outline" 
-                       size="icon" 
-                       className="h-10 w-10 shrink-0 rounded-full border-slate-200 relative"
-                       onClick={() => setShowFilterModal(true)}
-                    >
-                       <Filter className="w-4 h-4 text-slate-600" />
-                       {isFilterActive && (
-                         <span className="absolute top-0 right-0 h-3 w-3 rounded-full bg-blue-600 border-2 border-white"></span>
-                       )}
-                    </Button>
-                 </div>
-               </div>
-               
-               {/* Mobile List Rendering (Mapped from filteredReviews) */}
-               <div className="space-y-3">
-  {filteredReviews.length > 0 ? (
-        filteredReviews.map((review: any) => (
-            <MobileReviewCard key={review.id} review={review} profile={profile} />
-        ))
+            {/* 👇 MOBILE REVIEWS SECTION */}
+<div>
+  <div className="flex flex-col gap-3 mb-4">
+    <h3 className="text-lg font-bold text-slate-900">Reviews</h3>
+
+    {/* Tabs */}
+    <ReviewTabs
+      active={activeReviewTab}
+      onChange={setActiveReviewTab}
+      verifiedCount={verifiedReviews.length}
+      unverifiedCount={unverifiedReviews.length}
+    />
+
+    {/* Search + Filter */}
+    <div className="flex gap-2">
+      <div className="relative flex-1">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+        <Input
+          placeholder="Search..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="pl-9 h-10 rounded-full bg-slate-50 border-slate-200"
+        />
+      </div>
+
+      <Button
+        variant="outline"
+        size="icon"
+        className="h-10 w-10 rounded-full"
+        onClick={() => setShowFilterModal(true)}
+      >
+        <Filter className="w-4 h-4" />
+      </Button>
+    </div>
+  </div>
+
+  {/* LIST */}
+  <div className="space-y-3">
+    {visibleReviews.length > 0 ? (
+      visibleReviews.map((review: any) => (
+        <MobileReviewCard
+          key={review.id}
+          review={review}
+          profile={profile}
+        />
+      ))
     ) : (
-        <div className="text-center py-8 bg-slate-50 rounded-lg border border-dashed border-slate-200">
-            <p className="text-slate-400 text-sm">No reviews found.</p>
-            <button onClick={() => { setSearchQuery(""); setActiveFilters({ rating: null, verified: false, replies: false, date: 'all' }) }} className="text-blue-600 text-xs font-bold mt-2">Clear Filters</button>
-        </div>
+      <div className="text-center py-8 text-slate-400">
+        No {activeReviewTab} reviews found.
+      </div>
     )}
+  </div>
 </div>
-            </div>
 
           </div>
       </div>
@@ -874,8 +914,24 @@ const ReviewItem = ({ review, profile }: { review: any, profile: any }) => {
                    <div className="h-48 w-full bg-[#A0B4B7] relative"></div>
                    <div className="px-6 pb-6 relative">
                       <div className="-mt-24 mb-4 inline-block rounded-full border-4 border-white bg-white">
-                         <Avatar className="h-40 w-40"><AvatarImage src={profile.avatar_url ? `${profile.avatar_url}?v=${new Date().getTime()}` : undefined} className="object-cover" /><AvatarFallback className="text-6xl font-bold text-slate-400 bg-slate-100">{profile.full_name?.charAt(0)}</AvatarFallback></Avatar>
-                      </div>
+<div className="relative h-36 w-36 flex-shrink-0">
+  <Avatar className="h-full w-full transition-colors shadow-sm">
+    {profile.avatar_url ? (
+      // WE USE NEXT/IMAGE HERE INSTEAD OF AVATARIMAGE
+      <Image 
+        src={profile.avatar_url} 
+        alt={profile.full_name}
+        fill // Automatically fills the parent container
+        sizes="128px" // Tells browser to download a small version
+        className="object-cover rounded-full"
+      />
+    ) : (
+      <AvatarFallback className="bg-teal-50 text-teal-800 font-bold text-xl">
+        {profile.full_name?.charAt(0).toUpperCase()}
+      </AvatarFallback>
+    )}
+  </Avatar>
+</div>                      </div>
                       <div className="flex justify-between items-start">
                          <div>
                             <h1 className="text-2xl font-bold text-slate-900">{profile.full_name}</h1>
@@ -941,47 +997,63 @@ const ReviewItem = ({ review, profile }: { review: any, profile: any }) => {
          </div>
 
          {/* DESKTOP REVIEWS */}
-         <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm mt-4">
-            <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl font-bold text-slate-900">Recent Reviews</h3>
-                <div className="flex items-center gap-3">
-                   <div className="relative w-64">
-                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                      <Input 
-                         placeholder="Search reviews..." 
-                         className="pl-9 h-10 rounded-full border-slate-300 focus:border-blue-500"
-                         value={searchQuery}
-                         onChange={(e) => setSearchQuery(e.target.value)}
-                      />
-                   </div>
-                   <Button 
-                      variant="outline" 
-                      className="rounded-full border-slate-600 text-slate-600 hover:bg-slate-50 hover:text-slate-900 hover:border-slate-900 gap-2 h-10 px-4"
-                      onClick={() => setShowFilterModal(true)}
-                   >
-                      <Filter className="w-4 h-4" />
-                      Filters
-                      {isFilterActive && <span className="flex h-2 w-2 rounded-full bg-blue-600"></span>}
-                   </Button>
-                </div>
-            </div>
+         {/* DESKTOP REVIEWS */}
+<div className="bg-white border rounded-xl p-6 shadow-sm mt-4">
+  <div className="flex items-center justify-between mb-6">
+    <div className="flex flex-col gap-3">
+      <h3 className="text-xl font-bold text-slate-900">Reviews</h3>
 
-            <div className="h-[500px] overflow-y-auto pr-2 custom-scrollbar">
-  {filteredReviews.length > 0 ? (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
-      {filteredReviews.map((review: any) => (
-        <DesktopReviewCard key={review.id} review={review} profile={profile} />
-      ))}
+      <ReviewTabs
+        active={activeReviewTab}
+        onChange={setActiveReviewTab}
+        verifiedCount={verifiedReviews.length}
+        unverifiedCount={unverifiedReviews.length}
+      />
     </div>
-  ) : (
-    <div className="h-full flex flex-col items-center justify-center text-slate-400">
-      <Search className="w-12 h-12 mb-4 opacity-20" />
-      <p>No reviews match your filters.</p>
-    </div>
-  )}
-</div>
-         </div>
+
+    <div className="flex items-center gap-3">
+      <div className="relative w-64">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+        <Input
+          placeholder="Search reviews..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="pl-9 h-10 rounded-full"
+        />
       </div>
+
+      <Button
+        variant="outline"
+        className="rounded-full gap-2"
+        onClick={() => setShowFilterModal(true)}
+      >
+        <Filter className="w-4 h-4" />
+        Filters
+      </Button>
+    </div>
+  </div>
+
+  <div className="h-[500px] overflow-y-auto pr-2">
+    {visibleReviews.length > 0 ? (
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {visibleReviews.map((review: any) => (
+          <DesktopReviewCard
+            key={review.id}
+            review={review}
+            profile={profile}
+          />
+        ))}
+      </div>
+    ) : (
+      <div className="h-full flex items-center justify-center text-slate-400">
+        No {activeReviewTab} reviews.
+      </div>
+    )}
+  </div>
+</div>
+
+         </div>
+
 
     </div>
   )

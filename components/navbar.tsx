@@ -3,8 +3,9 @@
 import Link from "next/link"
 import { useState, useEffect, useRef } from "react"
 import { supabase } from "@/lib/supabaseClient"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import Image from 'next/image';
+
 // UI Components
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -14,15 +15,21 @@ import {
   DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuItem 
 } from "@/components/ui/dropdown-menu"
 
-// Icons - Added ShieldCheck to match your requested Logo UI
-import { Menu, X, Search, LayoutDashboard, LogOut, User, PlusCircle, ShieldCheck } from "lucide-react"
+// Icons
+import { Menu, X, Search, LayoutDashboard, LogOut, User, PlusCircle } from "lucide-react"
 
-export function Navbar() {
-  const [user, setUser] = useState<any>(null)
-  const [profile, setProfile] = useState<any>(null)
+export function Navbar({
+  user,
+  profile,
+}: {
+  user: any
+  profile: any
+}) {
+  
   const [isMenuOpen, setIsMenuOpen] = useState(false)
-  const [initials, setInitials] = useState("U")
+  const [initials, setInitials] = useState("U") // Default start
   const pathname = usePathname()
+  const router = useRouter()
 
   // --- SEARCH STATE ---
   const [searchQuery, setSearchQuery] = useState("")
@@ -30,47 +37,20 @@ export function Navbar() {
   const [showSuggestions, setShowSuggestions] = useState(false)
   const wrapperRef = useRef<HTMLFormElement>(null)
 
-  // Helper function to calculate initials
-  const calculateInitials = (name: string) => {
-    if (!name) return "U"
-    const nameParts = name.trim().split(' ')
-    return nameParts.length > 1 
-      ? `${nameParts[0][0]}${nameParts[1][0]}`.toUpperCase() 
-      : name.substring(0, 2).toUpperCase()
-  }
+  // Determine Display Name logic immediately
+  const displayName = profile?.full_name || user?.user_metadata?.full_name || "User"
+  const avatarUrl = profile?.avatar_url || user?.user_metadata?.avatar_url
 
-  // 1. Fetch User Data
+  // 1. FIX: Calculate Initials on Mount/Change
   useEffect(() => {
-    const getUser = async () => {
-      const { data: { session } } = await supabase.auth.getSession()
-      
-      if (session?.user) {
-        setUser(session.user)
-        
-        // Try to fetch Professional Profile
-        const { data } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', session.user.id)
-          .single()
-          
-        if (data) {
-          // CASE A: It is a Professional
-          setProfile(data)
-          if (data.full_name) {
-             setInitials(calculateInitials(data.full_name))
-          }
-        } else {
-          // CASE B: It is a Reviewer (No profile row)
-          const metaName = session.user.user_metadata?.full_name
-          if (metaName) {
-            setInitials(calculateInitials(metaName))
-          }
-        }
-      }
+    if (displayName) {
+      const nameParts = displayName.trim().split(' ')
+      const calculated = nameParts.length > 1 
+        ? `${nameParts[0][0]}${nameParts[1][0]}`.toUpperCase() 
+        : displayName.substring(0, 2).toUpperCase()
+      setInitials(calculated)
     }
-    getUser()
-  }, [])
+  }, [displayName])
 
   // 2. SEARCH SUGGESTIONS LOGIC
   useEffect(() => {
@@ -87,7 +67,9 @@ export function Navbar() {
         .limit(5)
 
       if (data) {
+        // @ts-ignore
         const unique = Array.from(new Set(data.map(d => d.profession)))
+        // @ts-ignore
         setSuggestions(unique)
       }
     }
@@ -99,6 +81,7 @@ export function Navbar() {
   // 3. Close Dropdown on Click Outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
+      // @ts-ignore
       if (wrapperRef.current && !wrapperRef.current.contains(event.target as Node)) {
         setShowSuggestions(false)
       }
@@ -111,16 +94,13 @@ export function Navbar() {
     await supabase.auth.signOut()
     window.location.href = "/"
   }
-
-  // Determine Display Name logic
-  const displayName = profile?.full_name || user?.user_metadata?.full_name || "User"
   
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
-    if (searchQuery.trim()) {
-      window.location.href = `/search?q=${encodeURIComponent(searchQuery)}`
-      setShowSuggestions(false)
-    }
+    if (!searchQuery.trim()) return
+
+    router.push(`/search?q=${encodeURIComponent(searchQuery)}`)
+    setShowSuggestions(false)
   }
 
   const dashboardLink = '/service-provider-dashboard'
@@ -132,22 +112,22 @@ export function Navbar() {
       {/* Inner Container: Glassmorphism + Rounded Corners */}
       <div className="max-w-7xl mx-auto flex items-center justify-between bg-white/70 backdrop-blur-md rounded-2xl px-4 py-2.5 shadow-sm border border-slate-200/50 pointer-events-auto">
         
-        {/* LOGO (Styled as requested) */}
+        {/* LOGO */}
         <Link href="/" className="flex items-center gap-2">
-  <Image 
-    src="/logo.png" 
-    alt="TruVouch Logo" 
-    width={36}          // Equivalent to h-9 (9 * 4px)
-    height={36}         // Set a base height to prevent Layout Shift
-    priority            // Tells Next.js to load this immediately (LCP optimization)
-    className="object-contain w-auto h-9" 
-  />
+          <Image 
+            src="/logo.png" 
+            alt="TruVouch Logo" 
+            width={36}          
+            height={36}         
+            priority            
+            className="object-contain w-auto h-9" 
+          />
           <span className="font-bold text-teal-900 text-xl tracking-tight sm:block">
             TruVouch
           </span>
         </Link>
 
-        {/* DESKTOP SEARCH (Preserved Functionality) */}
+        {/* DESKTOP SEARCH */}
         <div className="hidden md:flex flex-1 max-w-sm mx-8 relative">
            <form ref={wrapperRef} onSubmit={handleSearch} className="relative w-full">
              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
@@ -174,7 +154,7 @@ export function Navbar() {
                       onClick={() => {
                         setSearchQuery(suggestion)
                         setShowSuggestions(false)
-                        window.location.href = `/search?q=${encodeURIComponent(suggestion)}`
+                        router.push(`/search?q=${encodeURIComponent(suggestion)}`)
                       }}
                       className="px-4 py-2.5 hover:bg-teal-50 cursor-pointer text-sm text-slate-700 font-medium flex items-center gap-3 border-b border-slate-50 last:border-0 transition-colors"
                     >
@@ -209,7 +189,8 @@ export function Navbar() {
               <DropdownMenu>
                 <DropdownMenuTrigger className="outline-none ml-2">
                   <Avatar className="h-10 w-10 border-2 border-slate-100 hover:border-teal-200 transition-all cursor-pointer">
-                    <AvatarImage src={profile?.avatar_url} className="object-cover" />
+                    {/* FIX: Ensure src is passed correctly. If url is invalid, it falls back */}
+                    <AvatarImage src={avatarUrl} className="object-cover" />
                     <AvatarFallback className="bg-teal-900 text-white text-xs font-bold">{initials}</AvatarFallback>
                   </Avatar>
                 </DropdownMenuTrigger>
@@ -300,7 +281,7 @@ export function Navbar() {
                <div className="space-y-3">
                  <div className="flex items-center gap-3 px-2">
                     <Avatar className="h-10 w-10 border border-slate-200">
-                      <AvatarImage src={profile?.avatar_url} />
+                      <AvatarImage src={avatarUrl} />
                       <AvatarFallback className="bg-teal-900 text-white">{initials}</AvatarFallback>
                     </Avatar>
                     <div>

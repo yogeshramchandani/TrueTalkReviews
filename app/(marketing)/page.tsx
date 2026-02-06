@@ -4,16 +4,13 @@ import { Button } from "@/components/ui/button"
 import Image from "next/image"
 import FadeIn from "@/components/FadeIn" // Ensure filename matches (FadeIn.tsx)
 import { 
-  ShieldCheck, Star, TrendingUp,
+   TrendingUp,
   Code, Stethoscope, Laptop, Home, 
   Briefcase, Gavel, PenTool, GraduationCap, Truck, Music, PawPrint,
-  LayoutDashboard ,Fingerprint, CheckCircle2, RefreshCw, UserCheck,
+  LayoutDashboard , CheckCircle2, RefreshCw, 
   Award, 
 } from "lucide-react"
 import type { Metadata } from "next"
-
-import { Navbar } from "@/components/navbar"
-import { Footer } from "@/components/footer"
 import { TrendingSection } from "@/components/trending-section"
 
 // SECTOR ICON MAP
@@ -68,6 +65,15 @@ export default async function LandingPage() {
   
 const user = userRes.data.user
   const sectorsData = sectorsRes.data
+const profile = user
+  ? (
+      await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", user.id)
+        .single()
+    ).data
+  : null
 
   let isProfessional = false
   if (user) {
@@ -100,9 +106,7 @@ const user = userRes.data.user
   
   return (
     <div className="min-h-screen bg-white font-sans text-slate-900 flex flex-col ">
-      
-      {/* Navbar gets the user object immediately */}
-      <Navbar />
+    
       
       <main className="flex-1">
         
@@ -383,8 +387,6 @@ const user = userRes.data.user
           </div>
         </section>
       </main>
-
-      <Footer />
     </div>
   )
 }
