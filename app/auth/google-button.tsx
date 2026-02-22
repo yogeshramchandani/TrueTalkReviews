@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Loader2 } from "lucide-react"
 // 1. Import useSearchParams to read the URL
 import { useSearchParams } from "next/navigation"
+import { toast } from "sonner"
 
 export default function GoogleAuthButton() {
   const [isLoading, setIsLoading] = useState(false)
@@ -33,7 +34,7 @@ export default function GoogleAuthButton() {
     })
 
     if (error) {
-      alert("Error logging in: " + error.message)
+      toast.error("Error logging in: " + error.message)
       setIsLoading(false)
     }
   }

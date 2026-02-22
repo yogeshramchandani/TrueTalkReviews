@@ -1,48 +1,426 @@
-"use client"
+"use client";
 
-import Link from "next/link"
-import { useRouter } from "next/navigation"
-import { useState, useEffect, useRef, useMemo } from "react"
-import { supabase } from "@/lib/supabaseClient"
-import Image from "next/image"
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState, useEffect, useRef, useMemo } from "react";
+import { supabase } from "@/lib/supabaseClient";
+import Image from "next/image";
 // UI Components
-import { Button } from "@/components/ui/button"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Card } from "@/components/ui/card"
-import { Progress } from "@/components/ui/progress"
-import { ReviewFormDialog } from "@/components/review-form-dialog"
-import ShareProfileButton from "@/components/share-profile-button"
-import { Input } from "@/components/ui/input" 
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Card } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
+import { ReviewFormDialog } from "@/components/review-form-dialog";
+import ShareProfileButton from "@/components/share-profile-button";
+import { Input } from "@/components/ui/input";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog"
+} from "@/components/ui/dialog";
 
 // Icons
-import { 
-  Star, MapPin, Globe, Linkedin, Instagram, Twitter, Facebook,
-  Ban, Pencil, Filter, Share2, Search, X, Check, Mail, ShieldCheck, LogOut, User, CornerDownRight
-} from "lucide-react"
+import {
+  Star,
+  MapPin,
+  Globe,
+  Linkedin,
+  Instagram,
+  Twitter,
+  Facebook,
+  Share2,
+  Search,
+  X,
+  Mail,
+  ShieldCheck,
+  LogOut,
+  CornerDownRight,
+  Menu,
+  LayoutDashboard,
+  Briefcase,
+  Filter,
+} from "lucide-react";
+import GoogleAuthButton from "@/app/auth/google-button";
+import { toast } from "sonner";
 
 // --- 1. HELPER COMPONENTS & FUNCTIONS ---
 
 const formatDate = (dateString: string) => {
-  return new Date(dateString).toLocaleDateString('en-US', {
-    month: 'long',
-    year: 'numeric'
-  })
-}
-const DesktopReviewCard = ({ review, profile }: { review: any; profile: any }) => {
+  return new Date(dateString).toLocaleDateString("en-US", {
+    month: "long",
+    year: "numeric",
+  });
+};
+
+const Navbar = ({
+  viewer,
+  profile,
+  onOpenAuth,
+}: {
+  viewer: any;
+  profile: any;
+  onOpenAuth: () => void;
+}) => {
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+      toast.success("Logged out");
+      window.location.reload();
+    } catch (error) {
+      toast.error("Error logging out");
+    }
+  };
+
+  // 🟢 LOGIC FIX: Check if the visitor is the owner OR has a professional role in metadata
+  const isProfessionalOwner = useMemo(() => {
+    if (!viewer) return false;
+    // 1. If the logged in user ID matches the profile ID, they are the pro owner
+    if (viewer.id === profile.id) return true;
+    // 2. Fallback check for metadata
+    const role = viewer?.user_metadata?.role || viewer?.role;
+    return role?.toLowerCase() === "professional";
+  }, [viewer, profile.id]);
+
+  return (
+    <nav className="sticky top-0 z-50 w-full bg-white border-b border-slate-200 shadow-sm h-16">
+      <div className="container mx-auto px-4 h-full flex items-center justify-between">
+        {/* Left: Logo */}
+        <Link href="/" className="flex items-center gap-2 shrink-0">
+          <Image
+            src="/logo.png"
+            alt="TruVouch Logo"
+            width={120}
+            height={40}
+            priority
+            className="object-contain h-8 w-auto"
+          />
+          <span className="sm:block font-bold text-[#1a5353] text-xl tracking-tight">
+            TruVouch
+          </span>
+        </Link>
+
+        {/* Center: Search Bar (Desktop) */}
+        <div className="hidden md:flex relative w-1/3 max-w-md mx-4">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+          <Input
+            placeholder="Find professionals..."
+            className="pl-9 bg-slate-50 border-slate-200 focus:border-[#1a5353]/30 focus:bg-white rounded-full h-10 w-full transition-all"
+          />
+        </div>
+
+        {/* Right: Actions */}
+        <div className="flex items-center gap-2 md:gap-4">
+          {/* --- DESKTOP VIEW --- */}
+          <div className="hidden md:flex items-center gap-4">
+            {/* 🟢 FIXED: Hide if user is the pro owner or already marked as pro */}
+            {!isProfessionalOwner && viewer?.role == "professional" && (
+              <Link href="/auth/signup?role=professional">
+                <Button
+                  variant="ghost"
+                  className="text-[#1a5353] hover:bg-[#1a5353] hover:text-white font-bold text-sm h-9 px-3 rounded-full transition-colors"
+                >
+                  List Your Business
+                </Button>
+              </Link>
+            )}
+
+            {viewer ? (
+              <DropdownMenu>
+                {/* 🟢 REF FIX: Native <button> prevents "Function components cannot be given refs" error */}
+                <DropdownMenuTrigger asChild>
+                  <button className="relative h-10 w-10 rounded-full p-0 overflow-hidden border border-slate-200 hover:border-[#1a5353] hover:ring-2 hover:ring-[#1a5353]/20 transition-all focus:outline-none">
+                    <Avatar className="h-full w-full">
+                      <AvatarImage src={viewer.user_metadata?.avatar_url} />
+                      <AvatarFallback className="bg-[#1a5353] text-white text-xs font-bold">
+                        {viewer.email?.charAt(0).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                  </button>
+                </DropdownMenuTrigger>
+
+                <DropdownMenuContent
+                  align="end"
+                  className="w-56 mt-2 bg-white border border-slate-200 shadow-lg p-1"
+                >
+                  {/* 🟢 DASHBOARD LINK - Force Teal Background on Highlight */}
+                  <DropdownMenuItem className="p-0 focus:bg-transparent data-[highlighted]:bg-transparent">
+                    <Link
+                      href={
+                        isProfessionalOwner
+                          ? "/service-provider-dashboard"
+                          : "/auth/signup?role=professional"
+                      }
+                      className="
+      w-full flex items-center px-3 py-2 rounded-md
+      text-[#111625] font-medium
+      transition-colors
+      hover:bg-[#1a5353]
+      hover:text-white
+      focus:bg-[#1a5353]
+      focus:text-white
+    "
+                    >
+                      <Briefcase className="mr-2 h-4 w-4" />
+                      {isProfessionalOwner
+                        ? "Provider Dashboard"
+                        : "List Your Business"}
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator className="bg-slate-100" />
+
+                  <DropdownMenuItem className="p-0 focus:bg-transparent data-[highlighted]:bg-transparent">
+                    <button
+                      onClick={handleLogout}
+                      className="
+      w-full flex items-center px-3 py-2 rounded-md
+      text-[#111625] font-medium
+      transition-colors
+      hover:bg-[#FB923C]
+      hover:text-white
+      focus:bg-[#FB923C]
+      focus:text-white
+    "
+                    >
+                      <LogOut className="mr-2 h-4 w-4" />
+                      Log out
+                    </button>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="ghost"
+                  className="text-[#334155] font-semibold hover:text-[#1a5353] hover:bg-transparent"
+                  onClick={onOpenAuth}
+                >
+                  Log in
+                </Button>
+                <Button
+                  className="bg-[#1a5353] hover:bg-[#111625] text-white font-semibold rounded-full px-6 shadow-sm transition-all"
+                  onClick={onOpenAuth}
+                >
+                  Join Now
+                </Button>
+              </div>
+            )}
+          </div>
+
+          {/* --- MOBILE VIEW --- */}
+          <div className="flex md:hidden">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="flex items-center justify-center h-10 w-10 rounded-md hover:bg-slate-100 focus:outline-none">
+                  {viewer ? (
+                    <Avatar className="h-8 w-8 border border-slate-200">
+                      <AvatarImage src={viewer.user_metadata?.avatar_url} />
+                      <AvatarFallback className="bg-[#1a5353] text-white text-xs font-bold">
+                        {viewer.email?.charAt(0).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                  ) : (
+                    <Menu className="h-6 w-6 text-[#111625]" />
+                  )}
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                align="end"
+                className="w-64 mt-2 p-2 bg-white border border-slate-200 shadow-xl"
+              >
+                {viewer ? (
+                  <>
+                    <div className="px-2 py-2 mb-2 bg-slate-50 rounded-lg border border-slate-100">
+                      <p className="text-sm font-bold text-[#111625] truncate">
+                        {viewer.user_metadata?.full_name || "User"}
+                      </p>
+                      <p className="text-xs text-[#334155] truncate">
+                        {viewer.email}
+                      </p>
+                    </div>
+
+                    <DropdownMenuItem className="p-0 focus:bg-transparent data-[highlighted]:bg-transparent">
+                      <Link
+                        href={
+                          isProfessionalOwner
+                            ? "/service-provider-dashboard"
+                            : "/auth/signup?role=professional"
+                        }
+                        className="
+      w-full flex items-center px-3 py-2 rounded-md
+      text-[#111625] font-medium
+      transition-colors
+      hover:bg-[#1a5353]
+      hover:text-white
+      focus:bg-[#1a5353]
+      focus:text-white
+    "
+                      >
+                        <Briefcase className="mr-2 h-4 w-4" />
+                        {isProfessionalOwner
+                          ? "Provider Dashboard"
+                          : "List Your Business"}
+                      </Link>
+                    </DropdownMenuItem>
+
+                    <DropdownMenuSeparator className="bg-slate-100 my-1" />
+
+                    <DropdownMenuItem className="p-0 focus:bg-transparent data-[highlighted]:bg-transparent">
+                      <button
+                        onClick={handleLogout}
+                        className="
+      w-full flex items-center px-3 py-2 rounded-md
+      text-[#111625] font-medium
+      transition-colors
+      hover:bg-[#FB923C]
+      hover:text-white
+      focus:bg-[#FB923C]
+      focus:text-white
+    "
+                      >
+                        <LogOut className="mr-2 h-4 w-4" />
+                        Log out
+                      </button>
+                    </DropdownMenuItem>
+                  </>
+                ) : (
+                  <>
+                    <DropdownMenuItem
+                      className="cursor-pointer font-bold py-3 justify-center bg-[#1a5353] text-white mb-2 rounded-md hover:bg-[#111625] focus:bg-[#111625] focus:text-white"
+                      onClick={onOpenAuth}
+                    >
+                      Join Now
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      className="cursor-pointer font-medium py-3 justify-center text-[#111625] hover:bg-slate-50 focus:bg-slate-50"
+                      onClick={onOpenAuth}
+                    >
+                      Log in
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator className="bg-slate-100 my-1" />
+                    <DropdownMenuItem
+                      asChild
+                      className="p-0 focus:bg-transparent"
+                    >
+                      <Link
+                        href="/auth/signup?role=professional"
+                        className="cursor-pointer py-3 w-full text-center block text-[#1a5353] font-medium hover:bg-[#1a5353]/10 focus:bg-[#1a5353]/10 rounded-md"
+                      >
+                        List Your Business
+                      </Link>
+                    </DropdownMenuItem>
+                  </>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </div>
+      </div>
+    </nav>
+  );
+};
+
+// --- 🆕 REUSABLE AUTH MODAL COMPONENT ---
+const AuthModal = ({
+  open,
+  onOpenChange,
+  profile,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  profile: any;
+}) => {
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleGoogleLogin = async () => {
+    setIsLoading(true);
+    const nextUrl = `/u/${profile.username}`;
+    const redirectTo = `${window.location.origin}/auth/callback?next=${encodeURIComponent(nextUrl)}`;
+
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: redirectTo,
+        queryParams: {
+          access_type: "offline",
+          prompt: "consent",
+        },
+      },
+    });
+
+    if (error) {
+      toast.error("Error logging in: " + error.message);
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle className="text-center text-xl font-bold">
+            Sign in to continue
+          </DialogTitle>
+        </DialogHeader>
+        <div className="flex flex-col gap-4 py-4">
+          <p className="text-center text-slate-500 text-sm mb-2">
+            Please sign in to view details, write reviews, or contact{" "}
+            {profile.full_name}.
+          </p>
+
+          <div onClick={handleGoogleLogin}>
+            <GoogleAuthButton />
+          </div>
+
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t border-slate-200" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-white px-2 text-slate-500">Or</span>
+            </div>
+          </div>
+
+          <Link
+            href={`/auth/login?next=/u/${profile.username}`}
+            className="w-full"
+          >
+            <Button className="w-full h-12 bg-slate-900 hover:bg-slate-800 text-white gap-3">
+              <Mail className="w-5 h-5" />
+              Continue with Email
+            </Button>
+          </Link>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+const DesktopReviewCard = ({
+  review,
+  profile,
+}: {
+  review: any;
+  profile: any;
+}) => {
   const [isOverflowing, setIsOverflowing] = useState(false);
   const textRef = useRef<HTMLParagraphElement>(null);
 
   useEffect(() => {
     if (textRef.current) {
-      setIsOverflowing(textRef.current.scrollHeight > textRef.current.clientHeight);
+      setIsOverflowing(
+        textRef.current.scrollHeight > textRef.current.clientHeight,
+      );
     }
   }, [review.content]);
 
@@ -56,8 +434,12 @@ const DesktopReviewCard = ({ review, profile }: { review: any; profile: any }) =
             </AvatarFallback>
           </Avatar>
           <div>
-            <p className="font-bold text-sm text-slate-900">{review.reviewer_name || "User"}</p>
-            <p className="text-xs text-slate-500">{formatDate(review.created_at)}</p>
+            <p className="font-bold text-sm text-slate-900">
+              {review.reviewer_name || "User"}
+            </p>
+            <p className="text-xs text-slate-500">
+              {formatDate(review.created_at)}
+            </p>
           </div>
         </div>
         <div className="flex text-amber-400">
@@ -68,7 +450,10 @@ const DesktopReviewCard = ({ review, profile }: { review: any; profile: any }) =
       </div>
 
       <div className="relative">
-        <p ref={textRef} className="text-slate-700 text-sm leading-relaxed line-clamp-4">
+        <p
+          ref={textRef}
+          className="text-slate-700 text-sm leading-relaxed line-clamp-4"
+        >
           {review.content}
         </p>
 
@@ -128,7 +513,6 @@ const DesktopReviewCard = ({ review, profile }: { review: any; profile: any }) =
         )}
       </div>
 
-      {/* Professional Reply - Always visible on the main card */}
       {review.provider_reply && (
         <div className="mt-4 bg-slate-50 rounded-lg p-3 border border-slate-100">
           <div className="flex items-center gap-2 mb-2">
@@ -153,38 +537,55 @@ const DesktopReviewCard = ({ review, profile }: { review: any; profile: any }) =
   );
 };
 
-const MobileReviewCard = ({ review, profile }: { review: any; profile: any }) => {
+const MobileReviewCard = ({
+  review,
+  profile,
+}: {
+  review: any;
+  profile: any;
+}) => {
   const [isOverflowing, setIsOverflowing] = useState(false);
   const textRef = useRef<HTMLParagraphElement>(null);
 
   useEffect(() => {
     if (textRef.current) {
-      setIsOverflowing(textRef.current.scrollHeight > textRef.current.clientHeight);
+      setIsOverflowing(
+        textRef.current.scrollHeight > textRef.current.clientHeight,
+      );
     }
   }, [review.content]);
 
   return (
     <div className="bg-white border border-slate-100 rounded-lg p-4 shadow-sm">
-      {/* Header Area */}
       <div className="flex items-center gap-2 mb-2">
         <Avatar className="h-8 w-8 bg-slate-100">
-          <AvatarFallback className="text-[10px]">{review.reviewer_name?.charAt(0)}</AvatarFallback>
+          <AvatarFallback className="text-[10px]">
+            {review.reviewer_name?.charAt(0)}
+          </AvatarFallback>
         </Avatar>
         <div>
-          <p className="text-sm font-bold text-slate-900 leading-none">{review.reviewer_name || "User"}</p>
+          <p className="text-sm font-bold text-slate-900 leading-none">
+            {review.reviewer_name || "User"}
+          </p>
           <div className="flex text-orange-400 mt-0.5">
-            {[...Array(review.rating)].map((_, i) => <Star key={i} className="w-2.5 h-2.5 fill-current"/>)}
+            {[...Array(review.rating)].map((_, i) => (
+              <Star key={i} className="w-2.5 h-2.5 fill-current" />
+            ))}
           </div>
         </div>
-        <span className="ml-auto text-[10px] text-slate-400">{formatDate(review.created_at)}</span>
+        <span className="ml-auto text-[10px] text-slate-400">
+          {formatDate(review.created_at)}
+        </span>
       </div>
 
-      {/* Review Content */}
       <div className="relative">
-        <p ref={textRef} className="text-slate-600 text-sm leading-relaxed line-clamp-4">
+        <p
+          ref={textRef}
+          className="text-slate-600 text-sm leading-relaxed line-clamp-4"
+        >
           {review.content}
         </p>
-        
+
         {isOverflowing && (
           <Dialog>
             <DialogTrigger asChild>
@@ -196,17 +597,23 @@ const MobileReviewCard = ({ review, profile }: { review: any; profile: any }) =>
               <DialogHeader className="text-left">
                 <div className="flex items-center gap-3">
                   <div className="flex flex-col">
-                    <DialogTitle className="text-lg font-bold">Review by {review.reviewer_name}</DialogTitle>
+                    <DialogTitle className="text-lg font-bold">
+                      Review by {review.reviewer_name}
+                    </DialogTitle>
                     <div className="flex items-center gap-2 mt-1">
-                       <div className="flex text-orange-400">
-                         {[...Array(review.rating)].map((_, i) => <Star key={i} className="w-3 h-3 fill-current"/>)}
-                       </div>
-                       <span className="text-[11px] text-slate-400 font-medium">• {formatDate(review.created_at)}</span>
+                      <div className="flex text-orange-400">
+                        {[...Array(review.rating)].map((_, i) => (
+                          <Star key={i} className="w-3 h-3 fill-current" />
+                        ))}
+                      </div>
+                      <span className="text-[11px] text-slate-400 font-medium">
+                        • {formatDate(review.created_at)}
+                      </span>
                     </div>
                   </div>
                 </div>
               </DialogHeader>
-              
+
               <div className="space-y-4 pt-4">
                 <p className="text-slate-700 text-sm leading-relaxed whitespace-pre-wrap">
                   {review.content}
@@ -217,7 +624,8 @@ const MobileReviewCard = ({ review, profile }: { review: any; profile: any }) =>
                     <div className="flex items-center gap-2 mb-2">
                       <CornerDownRight className="w-3 h-3 text-teal-600" />
                       <span className="text-xs font-bold text-slate-800">
-                        Reply from {profile.full_name?.split(' ')[0] || "Provider"}
+                        Reply from{" "}
+                        {profile.full_name?.split(" ")[0] || "Provider"}
                       </span>
                     </div>
                     <p className="text-sm text-slate-600 leading-relaxed italic">
@@ -231,16 +639,17 @@ const MobileReviewCard = ({ review, profile }: { review: any; profile: any }) =>
         )}
       </div>
 
-      {/* Professional Reply (Visible on screen) */}
       {review.provider_reply && (
         <div className="mt-3 ml-2 pl-3 border-l-2 border-slate-200">
           <div className="flex items-center gap-2 mb-1">
             <CornerDownRight className="w-3 h-3 text-slate-400" />
             <span className="text-xs font-bold text-slate-700">
-              Reply from {profile.full_name?.split(' ')[0] || "Provider"}
+              Reply from {profile.full_name?.split(" ")[0] || "Provider"}
             </span>
             {review.provider_reply_at && (
-              <span className="text-[10px] text-slate-400">• {formatDate(review.provider_reply_at)}</span>
+              <span className="text-[10px] text-slate-400">
+                • {formatDate(review.provider_reply_at)}
+              </span>
             )}
           </div>
           <p className="text-sm text-slate-600 bg-slate-50 p-2 rounded-lg">
@@ -251,117 +660,75 @@ const MobileReviewCard = ({ review, profile }: { review: any; profile: any }) =>
     </div>
   );
 };
-// Custom Reddit Icon
+
 const RedditIcon = ({ className }: { className?: string }) => (
-  <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
-    <path d="M16 2C8.27812 2 2 8.27812 2 16C2 23.7219 8.27812 30 16 30C23.7219 30 30 23.7219 30 16C30 8.27812 23.7219 2 16 2Z" fill="#FC471E"/>
-    <path fillRule="evenodd" clipRule="evenodd" d="M20.0193 8.90951C20.0066 8.98984 20 9.07226 20 9.15626C20 10.0043 20.6716 10.6918 21.5 10.6918C22.3284 10.6918 23 10.0043 23 9.15626C23 8.30819 22.3284 7.6207 21.5 7.6207C21.1309 7.6207 20.7929 7.7572 20.5315 7.98359L16.6362 7L15.2283 12.7651C13.3554 12.8913 11.671 13.4719 10.4003 14.3485C10.0395 13.9863 9.54524 13.7629 9 13.7629C7.89543 13.7629 7 14.6796 7 15.8103C7 16.5973 7.43366 17.2805 8.06967 17.6232C8.02372 17.8674 8 18.1166 8 18.3696C8 21.4792 11.5817 24 16 24C20.4183 24 24 21.4792 24 18.3696C24 18.1166 23.9763 17.8674 23.9303 17.6232C24.5663 17.2805 25 16.5973 25 15.8103C25 14.6796 24.1046 13.7629 23 13.7629C22.4548 13.7629 21.9605 13.9863 21.5997 14.3485C20.2153 13.3935 18.3399 12.7897 16.2647 12.7423L17.3638 8.24143L20.0193 8.90951ZM12.5 18.8815C13.3284 18.8815 14 18.194 14 17.3459C14 16.4978 13.3284 15.8103 12.5 15.8103C11.6716 15.8103 11 16.4978 11 17.3459C11 18.194 11.6716 18.8815 12.5 18.8815ZM19.5 18.8815C20.3284 18.8815 21 18.194 21 17.3459C21 16.4978 20.3284 15.8103 19.5 15.8103C18.6716 15.8103 18 16.4978 18 17.3459C18 18.194 18.6716 18.8815 19.5 18.8815ZM12.7773 20.503C12.5476 20.3462 12.2372 20.4097 12.084 20.6449C11.9308 20.8802 11.9929 21.198 12.2226 21.3548C13.3107 22.0973 14.6554 22.4686 16 22.4686C17.3446 22.4686 18.6893 22.0973 19.7773 21.3548C20.0071 21.198 20.0692 20.8802 19.916 20.6449C19.7628 20.4097 19.4524 20.3462 19.2226 20.503C18.3025 21.1309 17.1513 21.4449 16 21.4449C15.3173 21.4449 14.6345 21.3345 14 21.1137C13.5646 20.9621 13.1518 20.7585 12.7773 20.503Z" fill="white"/>
+  <svg
+    viewBox="0 0 32 32"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    className={className}
+  >
+    <path
+      d="M16 2C8.27812 2 2 8.27812 2 16C2 23.7219 8.27812 30 16 30C23.7219 30 30 23.7219 30 16C30 8.27812 23.7219 2 16 2Z"
+      fill="#FC471E"
+    />
+    <path
+      fillRule="evenodd"
+      clipRule="evenodd"
+      d="M20.0193 8.90951C20.0066 8.98984 20 9.07226 20 9.15626C20 10.0043 20.6716 10.6918 21.5 10.6918C22.3284 10.6918 23 10.0043 23 9.15626C23 8.30819 22.3284 7.6207 21.5 7.6207C21.1309 7.6207 20.7929 7.7572 20.5315 7.98359L16.6362 7L15.2283 12.7651C13.3554 12.8913 11.671 13.4719 10.4003 14.3485C10.0395 13.9863 9.54524 13.7629 9 13.7629C7.89543 13.7629 7 14.6796 7 15.8103C7 16.5973 7.43366 17.2805 8.06967 17.6232C8.02372 17.8674 8 18.1166 8 18.3696C8 21.4792 11.5817 24 16 24C20.4183 24 24 21.4792 24 18.3696C24 18.1166 23.9763 17.8674 23.9303 17.6232C24.5663 17.2805 25 16.5973 25 15.8103C25 14.6796 24.1046 13.7629 23 13.7629C22.4548 13.7629 21.9605 13.9863 21.5997 14.3485C20.2153 13.3935 18.3399 12.7897 16.2647 12.7423L17.3638 8.24143L20.0193 8.90951ZM12.5 18.8815C13.3284 18.8815 14 18.194 14 17.3459C14 16.4978 13.3284 15.8103 12.5 15.8103C11.6716 15.8103 11 16.4978 11 17.3459C11 18.194 11.6716 18.8815 12.5 18.8815ZM19.5 18.8815C20.3284 18.8815 21 18.194 21 17.3459C21 16.4978 20.3284 15.8103 19.5 15.8103C18.6716 15.8103 18 16.4978 18 17.3459C18 18.194 18.6716 18.8815 19.5 18.8815ZM12.7773 20.503C12.5476 20.3462 12.2372 20.4097 12.084 20.6449C11.9308 20.8802 11.9929 21.198 12.2226 21.3548C13.3107 22.0973 14.6554 22.4686 16 22.4686C17.3446 22.4686 18.6893 22.0973 19.7773 21.3548C20.0071 21.198 20.0692 20.8802 19.916 20.6449C19.7628 20.4097 19.4524 20.3462 19.2226 20.503C18.3025 21.1309 17.1513 21.4449 16 21.4449C15.3173 21.4449 14.6345 21.3345 14 21.1137C13.5646 20.9621 13.1518 20.7585 12.7773 20.503Z"
+      fill="white"
+    />
   </svg>
-)
+);
 
-// --- 2. NAVBAR COMPONENT ---
-const Navbar = ({ viewer }: { viewer: any }) => {
-  return (
-    <nav className="sticky top-0 z-50 w-full bg-white border-b border-slate-200 shadow-sm h-16">
-       <div className="container mx-auto px-4 h-full flex items-center justify-between">
-          
-          {/* Left: Logo */}
-          <Link href="/" className="flex items-center gap-2">
-          <Image 
-    src="/logo.png" 
-    alt="TruVouch Logo" 
-    width={36}          // Equivalent to h-9 (9 * 4px)
-    height={36}         // Set a base height to prevent Layout Shift
-    priority            // Tells Next.js to load this immediately (LCP optimization)
-    className="object-contain w-auto h-9" 
-  />
-          <span className="font-bold text-teal-900 text-xl tracking-tight sm:block">
-            TruVouch
-          </span>
-        </Link>
+export default function PublicProfile({
+  profile,
+  reviews,
+  currentUser,
+}: {
+  profile: any;
+  reviews: any[];
+  currentUser: any;
+}) {
+  const router = useRouter();
+  const hasViewed = useRef(false);
 
-          {/* Center: Search Bar (Desktop only) */}
-          <div className="hidden md:flex relative w-1/3 max-w-md">
-             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-             <Input 
-                placeholder="Find professionals, services..." 
-                className="pl-9 bg-slate-50 border-slate-200 focus:bg-white rounded-full h-10"
-             />
-          </div>
-
-          {/* Right: Actions */}
-          <div className="flex items-center gap-2 md:gap-4">
-             <Link href="/for-business" className="hidden md:block text-sm font-medium text-slate-600 hover:text-slate-900">
-               For Business
-             </Link>
-             
-             {viewer ? (
-               <DropdownMenu>
-                 <DropdownMenuTrigger asChild>
-                   <Button variant="ghost" className="relative h-9 w-9 rounded-full p-0 overflow-hidden border border-slate-200">
-                     <Avatar className="h-full w-full">
-                       <AvatarImage src={viewer.user_metadata?.avatar_url} />
-                       <AvatarFallback className="bg-teal-50 text-teal-700 text-xs font-bold">
-                         {viewer.email?.charAt(0).toUpperCase()}
-                       </AvatarFallback>
-                     </Avatar>
-                   </Button>
-                 </DropdownMenuTrigger>
-                 <DropdownMenuContent align="end" className="w-56">
-                   <DropdownMenuItem className="cursor-pointer">
-                      <User className="mr-2 h-4 w-4" /> My Profile
-                   </DropdownMenuItem>
-                   <DropdownMenuItem className="cursor-pointer text-red-600 focus:text-red-600">
-                      <LogOut className="mr-2 h-4 w-4" /> Log out
-                   </DropdownMenuItem>
-                 </DropdownMenuContent>
-               </DropdownMenu>
-             ) : (
-               <div className="flex items-center gap-2">
-                 <Link href="/auth/login">
-                    <Button variant="ghost" className="text-slate-600 font-semibold hover:text-slate-900">Log in</Button>
-                 </Link>
-                 <Link href="/auth/signup">
-                    <Button className="bg-teal-700 hover:bg-teal-800 text-white font-semibold rounded-full">Join Now</Button>
-                 </Link>
-               </div>
-             )}
-          </div>
-       </div>
-    </nav>
-  )
-}
-
-export default function PublicProfile({ profile, reviews, currentUser }: { profile: any, reviews: any[], currentUser: any }) {
-  const router = useRouter()
-  const hasViewed = useRef(false)
-  
   // STATE
-  const [viewer, setViewer] = useState(currentUser)
-  const [isReviewOpen, setIsReviewOpen] = useState(false)
-  
+  const [viewer, setViewer] = useState(currentUser);
+  const [isReviewOpen, setIsReviewOpen] = useState(false);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false); // 🟢 New Shared State
+
   // Filter & Search State
-  const [searchQuery, setSearchQuery] = useState("")
-  const [showFilterModal, setShowFilterModal] = useState(false)
-  
+  const [searchQuery, setSearchQuery] = useState("");
+  const [showFilterModal, setShowFilterModal] = useState(false);
+
   // Complex Filter State
   const [activeFilters, setActiveFilters] = useState({
     rating: null as number | null,
     verified: false,
     replies: false,
-    date: 'all' as 'all' | '30days' | '3months' | '6months'
-  })
+    date: "all" as "all" | "30days" | "3months" | "6months",
+  });
+
+  // Clean data for math & buttons
+  const validReviews = useMemo(() => {
+    return reviews.filter(
+      (r) => r.status !== "removed" && r.is_visible !== false,
+    );
+  }, [reviews]);
 
   // Client-side auth check
   useEffect(() => {
     const checkUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (user) {
-        setViewer(user)
+        setViewer(user);
       }
-    }
-    if (!currentUser) checkUser()
-  }, [currentUser])
+    };
+    if (!currentUser) checkUser();
+  }, [currentUser]);
 
   // View Tracking
   useEffect(() => {
@@ -369,301 +736,210 @@ export default function PublicProfile({ profile, reviews, currentUser }: { profi
       if (hasViewed.current) return;
       hasViewed.current = true;
       if (currentUser?.id === profile.id) return;
-      await supabase.rpc('increment_view_count', { row_id: profile.id })
-    }
-    trackView()
-  }, [profile.id, currentUser?.id])
+      await supabase.rpc("increment_view_count", { row_id: profile.id });
+    };
+    trackView();
+  }, [profile.id, currentUser?.id]);
 
   // Logic
-  const isOwnProfile = viewer?.id === profile.id
-  const existingReview = reviews.find(r => r.reviewer_id === viewer?.id)
+  const isOwnProfile = viewer?.id === profile.id;
+  const existingReview = validReviews.find((r) => r.reviewer_id === viewer?.id);
 
-  const totalReviews = reviews.length
-  const averageRating = totalReviews > 0 
-    ? (reviews.reduce((acc, r) => acc + r.rating, 0) / totalReviews).toFixed(1) 
-    : "0.0"
-  
-  const distribution = [5, 4, 3, 2, 1].map(star => {
-    const count = reviews.filter(r => r.rating === star).length
-    const percentage = totalReviews > 0 ? (count / totalReviews) * 100 : 0
-    return { star, count, percentage }
-  })
-const ReviewItem = ({ review, profile }: { review: any, profile: any }) => {
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const totalReviews = validReviews.length;
+  const averageRating =
+    totalReviews > 0
+      ? (
+          validReviews.reduce((acc, r) => acc + r.rating, 0) / totalReviews
+        ).toFixed(1)
+      : "0.0";
 
-  return (
-    <div className="bg-white p-5 rounded-xl border border-slate-200 hover:shadow-md transition-shadow h-fit flex flex-col">
-      <div className="flex justify-between items-start mb-3">
-        <div className="flex items-center gap-3">
-          <Avatar className="h-10 w-10 bg-slate-100">
-            <AvatarFallback className="text-slate-500 font-bold text-xs">
-              {review.reviewer_name?.charAt(0)}
-            </AvatarFallback>
-          </Avatar>
-          <div>
-            <p className="font-bold text-sm text-slate-900">{review.reviewer_name || "User"}</p>
-            <p className="text-xs text-slate-500">{formatDate(review.created_at)}</p>
-          </div>
-        </div>
-        <div className="flex text-amber-400">
-          {[...Array(review.rating)].map((_, i) => (
-            <Star key={i} className="w-3.5 h-3.5 fill-current" />
-          ))}
-        </div>
-      </div>
+  const distribution = [5, 4, 3, 2, 1].map((star) => {
+    const count = validReviews.filter((r) => r.rating === star).length;
+    const percentage = totalReviews > 0 ? (count / totalReviews) * 100 : 0;
+    return { star, count, percentage };
+  });
 
-      {/* Review Content with Line Clamp */}
-      <div className="relative">
-        <p className="text-slate-700 text-sm leading-relaxed line-clamp-4 overflow-hidden">
-          {review.content}
-        </p>
-        
-        {/* "Read More" Trigger - Always shown if content is long, 
-            Dialog handles the "Full Version" */}
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <button className="text-teal-700 text-xs font-bold mt-1 hover:underline">
-              Read more
-            </button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[500px] max-h-[80vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                Review by {review.reviewer_name}
-                <div className="flex text-amber-400 ml-2">
-                  {[...Array(review.rating)].map((_, i) => (
-                    <Star key={i} className="w-3 h-3 fill-current" />
-                  ))}
-                </div>
-              </DialogTitle>
-            </DialogHeader>
-            
-            <div className="space-y-4 pt-4">
-              <p className="text-slate-700 text-sm leading-relaxed whitespace-pre-wrap">
-                {review.content}
-              </p>
-
-              {review.provider_reply && (
-                <div className="mt-4 bg-slate-50 rounded-lg p-4 border border-teal-100">
-                  <div className="flex items-center gap-2 mb-2">
-                    <CornerDownRight className="w-4 h-4 text-teal-600" />
-                    <span className="text-sm font-bold text-slate-800">
-                      Reply from {profile.full_name}
-                    </span>
-                  </div>
-                  <p className="text-sm text-slate-600 italic">
-                    "{review.provider_reply}"
-                  </p>
-                </div>
-              )}
-            </div>
-          </DialogContent>
-        </Dialog>
-      </div>
-
-      {/* Mini preview of reply on main page (optional, keeping your existing logic) */}
-      {review.provider_reply && (
-        <div className="mt-3 pt-3 border-t border-slate-50 flex items-center gap-2 text-teal-600">
-          <Check className="w-3 h-3" />
-          <span className="text-[10px] font-bold uppercase tracking-wider">Replied by Professional</span>
-        </div>
-      )}
-    </div>
-  );
-};
-  // --- FILTERING LOGIC ---
+  // --- 🔥 FILTERING LOGIC 🔥 ---
   const filteredReviews = useMemo(() => {
-    return reviews.filter(review => {
-      // 1. Search Query
-      if (searchQuery) {
-        const query = searchQuery.toLowerCase()
-        const contentMatch = review.content?.toLowerCase().includes(query)
-        const nameMatch = review.reviewer_name?.toLowerCase().includes(query)
-        if (!contentMatch && !nameMatch) return false
-      }
+    return validReviews
+      .filter((review) => {
+        // Search Query
+        if (searchQuery) {
+          const query = searchQuery.toLowerCase();
+          const contentMatch = review.content?.toLowerCase().includes(query);
+          const nameMatch = review.reviewer_name?.toLowerCase().includes(query);
+          if (!contentMatch && !nameMatch) return false;
+        }
 
-      // 2. Rating Filter
-      if (activeFilters.rating !== null && review.rating !== activeFilters.rating) {
-        return false
-      }
+        // Rating Filter
+        if (
+          activeFilters.rating !== null &&
+          review.rating !== activeFilters.rating
+        ) {
+          return false;
+        }
 
-      // 3. Verified Filter
-      if (activeFilters.verified && !review.is_verified) { 
-         // return false 
-      }
+        // Verified Filter
+        if (activeFilters.verified && review.professional_vouch !== "vouched") {
+          // return false
+        }
 
-      // 4. Replies Filter
-      if (activeFilters.replies && !review.reply_content) {
-        return false
-      }
+        // Replies Filter
+        if (activeFilters.replies && !review.reply_content) {
+          return false;
+        }
 
-      // 5. Date Filter
-      if (activeFilters.date !== 'all') {
-        const reviewDate = new Date(review.created_at).getTime()
-        const now = Date.now()
-        const day = 24 * 60 * 60 * 1000
-        
-        let cutoff = 0
-        if (activeFilters.date === '30days') cutoff = 30 * day
-        if (activeFilters.date === '3months') cutoff = 90 * day
-        if (activeFilters.date === '6months') cutoff = 180 * day
+        // Date Filter
+        if (activeFilters.date !== "all") {
+          const reviewDate = new Date(review.created_at).getTime();
+          const now = Date.now();
+          const day = 24 * 60 * 60 * 1000;
 
-        if (now - reviewDate > cutoff) return false
-      }
+          let cutoff = 0;
+          if (activeFilters.date === "30days") cutoff = 30 * day;
+          if (activeFilters.date === "3months") cutoff = 90 * day;
+          if (activeFilters.date === "6months") cutoff = 180 * day;
 
-      return true
-    }).sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-  }, [reviews, searchQuery, activeFilters])
+          if (now - reviewDate > cutoff) return false;
+        }
 
+        return true;
+      })
+      .sort(
+        (a, b) =>
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+      );
+  }, [validReviews, searchQuery, activeFilters]);
+
+  const [activeTab, setActiveTab] = useState<"verified" | "unverified">(
+    "verified",
+  );
+
+  // Separate filtered reviews into two buckets
+  const verifiedReviews = useMemo(
+    () => filteredReviews.filter((r) => r.professional_vouch === "vouched"),
+    [filteredReviews],
+  );
+
+  const unverifiedReviews = useMemo(
+    () => filteredReviews.filter((r) => r.professional_vouch !== "vouched"),
+    [filteredReviews],
+  );
+
+  const currentDisplayReviews =
+    activeTab === "verified" ? verifiedReviews : unverifiedReviews;
 
   // Socials
   const socialLinks = [
-    { key: 'instagram', icon: Instagram, url: profile.instagram_url },
-    { key: 'linkedin', icon: Linkedin, url: profile.linkedin_url },
-    { key: 'twitter', icon: Twitter, url: profile.twitter_url },
-    { key: 'facebook', icon: Facebook, url: profile.facebook_url },
-    { key: 'reddit', icon: RedditIcon, url: profile.reddit_url },
-    {key: 'website', icon: Globe, url:profile.website_url}
-  ].filter(link => link.url && link.url.trim() !== "")
+    { key: "instagram", icon: Instagram, url: profile.instagram_url },
+    { key: "linkedin", icon: Linkedin, url: profile.linkedin_url },
+    { key: "twitter", icon: Twitter, url: profile.twitter_url },
+    { key: "facebook", icon: Facebook, url: profile.facebook_url },
+    { key: "reddit", icon: RedditIcon, url: profile.reddit_url },
+    { key: "website", icon: Globe, url: profile.website_url },
+  ].filter((link) => link.url && link.url.trim() !== "");
 
-  // Check if any filter is active for the dot indicator
-  const isFilterActive = activeFilters.rating || activeFilters.verified || activeFilters.replies || activeFilters.date !== 'all'
-
-  // --- SUB-COMPONENTS ---
+  const isFilterActive =
+    activeFilters.rating ||
+    activeFilters.verified ||
+    activeFilters.replies ||
+    activeFilters.date !== "all";
 
   // --- UPDATED REVIEW BUTTON COMPONENT ---
-  const ReviewButton = ({ fullWidth = false, size = "default" }: { fullWidth?: boolean, size?: "default" | "sm" | "lg" }) => {
-    const [isLoginModalOpen, setIsLoginModalOpen] = useState(false)
-    const [isLoading, setIsLoading] = useState(false)
-    
-    // Standard button styles
-    const btnClass = `${fullWidth ? 'w-full' : ''} bg-teal-700 hover:bg-teal-800 text-white font-semibold rounded-full shadow-sm`
+  const ReviewButton = ({
+    fullWidth = false,
+    size = "default",
+  }: {
+    fullWidth?: boolean;
+    size?: "default" | "sm" | "lg";
+  }) => {
+    const btnClass = `${fullWidth ? "w-full" : ""} bg-teal-700 hover:bg-teal-800 text-white font-semibold rounded-full shadow-sm`;
 
-    // 1. Handle Google Login Logic
-    const handleGoogleLogin = async () => {
-      setIsLoading(true)
-      const nextUrl = `/u/${profile.username}`
-      const redirectTo = `${window.location.origin}/auth/callback?next=${encodeURIComponent(nextUrl)}`
-
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: {
-          redirectTo: redirectTo,
-          queryParams: {
-            access_type: "offline",
-            prompt: "consent",
-          },
-        },
-      })
-
-      if (error) {
-        alert("Error logging in: " + error.message)
-        setIsLoading(false)
-      }
-    }
-
-    // 2. State: NOT LOGGED IN -> Show Login Options Modal
     if (!viewer) {
       return (
-        <Dialog open={isLoginModalOpen} onOpenChange={setIsLoginModalOpen}>
-          <DialogTrigger asChild>
-            <Button size={size} className={btnClass}>
-              Log in to Review
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle className="text-center text-xl font-bold">Sign in to continue</DialogTitle>
-            </DialogHeader>
-            <div className="flex flex-col gap-4 py-4">
-              <p className="text-center text-slate-500 text-sm mb-2">
-                Please sign in to share your experience with {profile.full_name}.
-              </p>
-              
-              {/* Option A: Continue with Google */}
-              <Button 
-                variant="outline" 
-                className="w-full h-12 relative flex items-center justify-center gap-3 border-slate-600 text-slate-600 hover:bg-slate-50 hover:text-slate-900 hover:border-slate-900 font-semibold"
-                onClick={handleGoogleLogin}
-                disabled={isLoading}
-              >
-                {/* Google SVG Icon */}
-                <svg className="w-5 h-5" viewBox="0 0 24 24">
-                  <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
-                  <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
-                  <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
-                  <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
-                </svg>
-                {isLoading ? "Redirecting..." : "Continue with Google"}
-              </Button>
-
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-slate-200" /></div>
-                <div className="relative flex justify-center text-xs uppercase"><span className="bg-white px-2 text-slate-500">Or</span></div>
-              </div>
-
-              {/* Option B: Continue with Email (Redirects to Login Page) */}
-              <Link href={`/auth/login?next=/u/${profile.username}`} className="w-full">
-                <Button className="w-full h-12 bg-slate-900 hover:bg-slate-800 text-white gap-3">
-                  <Mail className="w-5 h-5" />
-                  Continue with Email
-                </Button>
-              </Link>
-            </div>
-          </DialogContent>
-        </Dialog>
-      )
+        <Button
+          size={size}
+          className={btnClass}
+          onClick={() => setIsAuthModalOpen(true)}
+        >
+          Log in to Review
+        </Button>
+      );
     }
 
-    // 3. State: LOGGED IN (Owner)
     if (isOwnProfile) {
       return (
-        <Button variant="secondary" size={size} disabled className={`${fullWidth ? 'w-full' : ''} bg-slate-100 text-slate-400 opacity-70 cursor-not-allowed rounded-full`}>
-          <Ban className="w-4 h-4 mr-2" /> Can't review yourself
-        </Button>
-      )
+        <Link href="/service-provider-dashboard" className="w-full sm:w-auto">
+          <Button
+            size={size}
+            className={`${fullWidth ? "w-full" : ""} 
+              bg-gradient-to-r from-teal-700 to-teal-900 hover:from-teal-600 hover:to-teal-800
+              text-white font-semibold shadow-lg shadow-teal-900/20
+              h-auto py-3 px-6 rounded-full transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]
+              flex items-center justify-center gap-2 border border-teal-600/30`}
+          >
+            <LayoutDashboard className="w-5 h-5" />
+            <span>Go to Dashboard</span>
+          </Button>
+        </Link>
+      );
     }
 
-    // 4. State: LOGGED IN (Has Reviewed) -> Edit
     if (existingReview) {
       return (
-        <Button 
-          variant="outline" 
+        <Button
+          variant="outline"
           size={size}
-          className={`${fullWidth ? 'w-full' : ''} border-teal-600 text-teal-700 hover:bg-teal-50 rounded-full`}
+          className={`${fullWidth ? "w-full" : ""} border-teal-600 text-teal-700 hover:bg-teal-50 rounded-full`}
           onClick={() => setIsReviewOpen(true)}
         >
-          <Pencil className="w-4 h-4 mr-2" /> Edit Review
+          <div className="flex items-center">
+            {" "}
+            {/* added div for flex layout within button */}
+            <div className="mr-2 h-4 w-4">
+              {/* Place Pencil icon here if imported */}
+            </div>
+            Edit Review
+          </div>
         </Button>
-      )
+      );
     }
 
-    // 5. State: LOGGED IN (New Review) -> Write
     return (
-      <Button 
+      <Button
         size={size}
         className={btnClass}
         onClick={() => setIsReviewOpen(true)}
       >
         Write a Review
       </Button>
-    )
-  }
+    );
+  };
 
   // --- RENDER ---
   return (
     <div className="min-h-screen bg-[#F4F2EE] font-sans text-slate-900">
-      
-      {/* 🟢 NAVBAR INTEGRATED HERE 🟢 */}
-      <Navbar viewer={viewer} />
-      
-      <ReviewFormDialog 
-        open={isReviewOpen} 
+      {/* 🟢 NAVBAR INTEGRATED HERE WITH SHARED AUTH HANDLER 🟢 */}
+      <Navbar
+        viewer={viewer}
+        profile={profile} // 🟢 Pass the profile object here
+        onOpenAuth={() => setIsAuthModalOpen(true)}
+      />
+
+      {/* 🟢 SHARED AUTH MODAL FOR NAVBAR AND REVIEW BUTTON 🟢 */}
+      <AuthModal
+        open={isAuthModalOpen}
+        onOpenChange={setIsAuthModalOpen}
+        profile={profile}
+      />
+
+      <ReviewFormDialog
+        open={isReviewOpen}
         onOpenChange={setIsReviewOpen}
         providerId={profile.id}
         onSuccess={() => {
-          setIsReviewOpen(false)
-          router.refresh()
+          setIsReviewOpen(false);
+          router.refresh();
         }}
       />
 
@@ -671,80 +947,101 @@ const ReviewItem = ({ review, profile }: { review: any, profile: any }) => {
       {showFilterModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
           <div className="bg-white rounded-xl shadow-2xl w-[95%] max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-            
-            {/* Modal Header */}
             <div className="flex justify-between items-center px-6 py-4 border-b border-slate-100">
               <h2 className="text-lg font-bold text-slate-900">Filter by</h2>
-              <button onClick={() => setShowFilterModal(false)} className="text-slate-400 hover:text-slate-600 transition-colors">
+              <button
+                onClick={() => setShowFilterModal(false)}
+                className="text-slate-400 hover:text-slate-600 transition-colors"
+              >
                 <X className="w-6 h-6" />
               </button>
             </div>
 
-            {/* Modal Body */}
             <div className="p-6 space-y-6 max-h-[70vh] overflow-y-auto">
-              
-              {/* Rating Section */}
               <div className="space-y-3">
                 <h3 className="text-sm font-semibold text-slate-900">Rating</h3>
                 <div className="flex gap-2">
                   {[5, 4, 3, 2, 1].map((star) => {
-                    const isActive = activeFilters.rating === star
+                    const isActive = activeFilters.rating === star;
                     return (
                       <button
                         key={star}
-                        onClick={() => setActiveFilters(prev => ({ ...prev, rating: isActive ? null : star }))}
+                        onClick={() =>
+                          setActiveFilters((prev) => ({
+                            ...prev,
+                            rating: isActive ? null : star,
+                          }))
+                        }
                         className={`flex-1 h-10 border rounded flex items-center justify-center gap-1.5 text-sm font-medium transition-all
-                          ${isActive 
-                            ? 'bg-slate-900 border-slate-900 text-white' 
-                            : 'bg-white border-slate-300 text-slate-700 hover:border-slate-400'
+                          ${
+                            isActive
+                              ? "bg-slate-900 border-slate-900 text-white"
+                              : "bg-white border-slate-300 text-slate-700 hover:border-slate-400"
                           }`}
                       >
-                        <Star className={`w-3.5 h-3.5 ${isActive ? 'fill-white' : 'fill-slate-700'}`} />
+                        <Star
+                          className={`w-3.5 h-3.5 ${isActive ? "fill-white" : "fill-slate-700"}`}
+                        />
                         {star}
                       </button>
-                    )
+                    );
                   })}
                 </div>
               </div>
 
-              {/* Recommended Section (Hidden in simplified version but logic exists) */}
-
-              {/* Date Posted Section */}
               <div className="space-y-3">
-                <h3 className="text-sm font-semibold text-slate-900">Date posted</h3>
+                <h3 className="text-sm font-semibold text-slate-900">
+                  Date posted
+                </h3>
                 <div className="space-y-2">
                   {[
-                    { val: 'all', label: 'All reviews' },
-                    { val: '30days', label: 'Last 30 days' },
-                    { val: '3months', label: 'Last 3 months' },
-                    { val: '6months', label: 'Last 6 months' }
+                    { val: "all", label: "All reviews" },
+                    { val: "30days", label: "Last 30 days" },
+                    { val: "3months", label: "Last 3 months" },
+                    { val: "6months", label: "Last 6 months" },
                   ].map((option) => (
-                    <label key={option.val} className="flex items-center gap-3 cursor-pointer py-1">
+                    <label
+                      key={option.val}
+                      className="flex items-center gap-3 cursor-pointer py-1"
+                    >
                       <div className="relative flex items-center justify-center">
-                        <input 
-                          type="radio" 
+                        <input
+                          type="radio"
                           name="date_posted"
                           className="peer h-5 w-5 appearance-none border border-slate-300 rounded-full bg-white checked:border-blue-600 checked:border-[6px] transition-all"
                           checked={activeFilters.date === option.val}
-                          onChange={() => setActiveFilters(prev => ({ ...prev, date: option.val as any }))}
+                          onChange={() =>
+                            setActiveFilters((prev) => ({
+                              ...prev,
+                              date: option.val as any,
+                            }))
+                          }
                         />
                       </div>
-                      <span className="text-sm text-slate-700">{option.label}</span>
+                      <span className="text-sm text-slate-700">
+                        {option.label}
+                      </span>
                     </label>
                   ))}
                 </div>
               </div>
             </div>
 
-            {/* Modal Footer */}
             <div className="p-4 border-t border-slate-100 bg-slate-50 flex items-center justify-between">
-              <button 
-                onClick={() => setActiveFilters({ rating: null, verified: false, replies: false, date: 'all' })}
+              <button
+                onClick={() =>
+                  setActiveFilters({
+                    rating: null,
+                    verified: false,
+                    replies: false,
+                    date: "all",
+                  })
+                }
                 className="text-sm font-semibold text-slate-500 hover:text-slate-800 hover:underline px-2"
               >
                 Reset
               </button>
-              <Button 
+              <Button
                 className="bg-blue-600 hover:bg-blue-700 text-white rounded-full px-6"
                 onClick={() => setShowFilterModal(false)}
               >
@@ -755,234 +1052,390 @@ const ReviewItem = ({ review, profile }: { review: any, profile: any }) => {
         </div>
       )}
 
-
-      {/* ============================================================
-          📱 MOBILE LAYOUT 
-      ============================================================ */}
+      {/* MOBILE LAYOUT */}
       <div className="block md:hidden bg-white min-h-screen pb-12">
-          {/* Header Area */}
-          <div className="h-28 w-full bg-slate-200 relative"></div>
-          <div className="px-4 relative">
-             <div className="flex justify-between items-end -mt-10 mb-4">
-               <Avatar className="h-24 w-24 border-[3px] border-white bg-white shadow-sm z-10">
-                  <AvatarImage src={profile.avatar_url ? `${profile.avatar_url}?v=${new Date().getTime()}` : undefined} className="object-cover" />
-                  <AvatarFallback className="text-3xl font-bold text-slate-500 bg-slate-100">{profile.full_name?.charAt(0).toUpperCase()}</AvatarFallback>
-               </Avatar>
-               <div className="bg-white border border-slate-200 rounded-xl px-2 py-1.5 flex gap-2 shadow-sm mb-1 z-10">
-                  {socialLinks.map((social) => (
-                    <a key={social.key} href={social.url} target="_blank" className={`p-1.5 rounded-full bg-slate-50 text-slate-500 hover:text-slate-900 transition-colors`}>
-                       <social.icon className="w-4 h-4" />
-                    </a>
-                  ))}
-               </div>
+        <div className="h-28 w-full bg-slate-200 relative"></div>
+        <div className="px-4 relative">
+          <div className="flex justify-between items-end -mt-10 mb-4">
+            <div className="relative h-24 w-24 shrink-0">
+              <Avatar className="h-full w-full border-2 border-slate-100 group-hover:border-teal-100 transition-colors shadow-sm">
+                {profile.avatar_url ? (
+                  <Image
+                    src={profile.avatar_url}
+                    alt={profile.full_name}
+                    fill
+                    sizes="64px"
+                    className="object-cover rounded-full"
+                  />
+                ) : (
+                  <AvatarFallback className="bg-teal-50 text-teal-800 font-bold text-xl">
+                    {profile.full_name?.charAt(0).toUpperCase()}
+                  </AvatarFallback>
+                )}
+              </Avatar>
             </div>
-            
-            {/* Info */}
-            <div className="mb-4">
-               <h1 className="text-2xl font-bold text-slate-900 leading-tight">{profile.full_name}</h1>
-               <p className="text-slate-600 text-sm mt-0.5">{profile.profession || "Professional"}</p>
-               {profile.city && (
-                 <div className="flex items-center gap-1 mt-1 text-slate-500 text-xs">
-                    <MapPin className="w-3 h-3" /> <span>{profile.city}{profile.state ? `, ${profile.state}` : ''}</span>
-                 </div>
-               )}
+            <div className="bg-white border border-slate-200 rounded-xl px-2 py-1.5 flex gap-2 shadow-sm mb-1 z-10">
+              {socialLinks.map((social) => (
+                <a
+                  key={social.key}
+                  href={social.url}
+                  target="_blank"
+                  className={`p-1.5 rounded-full bg-slate-50 text-slate-500 hover:text-slate-900 transition-colors`}
+                >
+                  <social.icon className="w-4 h-4" />
+                </a>
+              ))}
             </div>
-            
-            <div className="flex gap-3 mb-6">
-                <div className="flex-1"><ReviewButton fullWidth size="default" /></div>
-                <ShareProfileButton provider={{ name: profile.full_name, profession: profile.profession, city: profile.city, username: profile.username }} customTrigger={<Button variant="outline" className="h-10 w-10 rounded-full border-slate-300 p-0 flex items-center justify-center"><Share2 className="w-5 h-5 text-slate-600" /></Button>} />
-            </div>
-            
-            {/* Stats */}
-            <div className="mb-6 bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
-                <div className="flex gap-4 items-center">
-                    <div className="flex flex-col items-center justify-center w-[100px] shrink-0 border-r border-slate-100 pr-4">
-                        <span className="text-4xl font-black text-slate-900 leading-none mb-1">{averageRating}</span>
-                        <div className="flex gap-0.5 mb-1">
-                            {[1, 2, 3, 4, 5].map((star) => (<Star key={star} className={`w-3 h-3 ${star <= Math.round(Number(averageRating)) ? "fill-emerald-500 text-emerald-500" : "fill-slate-200 text-slate-200"}`} />))}
-                        </div>
-                        <p className="text-[10px] text-slate-500 text-center font-medium">{totalReviews} reviews</p>
-                    </div>
-                    <div className="flex-1 space-y-1.5 py-1">
-                        {[5, 4, 3, 2, 1].map((star) => {
-                            const item = distribution.find(d => d.star === star) || { count: 0, percentage: 0 }
-                            return (<div key={star} className="flex items-center gap-2"><span className="text-[10px] font-bold text-slate-600 w-2">{star}</span><div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden"><div className="h-full bg-emerald-500 rounded-full" style={{ width: `${item.percentage}%` }}/></div></div>)
-                        })}
-                    </div>
-                </div>
-            </div>
-
-            {/* 👇 UPDATED MOBILE REVIEWS SECTION WITH FILTERS 👇 */}
-            <div>
-               <div className="flex flex-col gap-3 mb-4">
-                 <h3 className="text-lg font-bold text-slate-900">Reviews</h3>
-                 
-                 <div className="flex gap-2">
-                    {/* Mobile Search */}
-                    <div className="relative flex-1">
-                       <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                       <Input 
-                         placeholder="Search..." 
-                         value={searchQuery}
-                         onChange={(e) => setSearchQuery(e.target.value)}
-                         className="pl-9 h-10 rounded-full bg-slate-50 border-slate-200 text-sm focus:bg-white transition-colors"
-                       />
-                    </div>
-                    
-                    {/* Mobile Filter Button */}
-                    <Button 
-                       variant="outline" 
-                       size="icon" 
-                       className="h-10 w-10 shrink-0 rounded-full border-slate-200 relative"
-                       onClick={() => setShowFilterModal(true)}
-                    >
-                       <Filter className="w-4 h-4 text-slate-600" />
-                       {isFilterActive && (
-                         <span className="absolute top-0 right-0 h-3 w-3 rounded-full bg-blue-600 border-2 border-white"></span>
-                       )}
-                    </Button>
-                 </div>
-               </div>
-               
-               {/* Mobile List Rendering (Mapped from filteredReviews) */}
-               <div className="space-y-3">
-  {filteredReviews.length > 0 ? (
-        filteredReviews.map((review: any) => (
-            <MobileReviewCard key={review.id} review={review} profile={profile} />
-        ))
-    ) : (
-        <div className="text-center py-8 bg-slate-50 rounded-lg border border-dashed border-slate-200">
-            <p className="text-slate-400 text-sm">No reviews found.</p>
-            <button onClick={() => { setSearchQuery(""); setActiveFilters({ rating: null, verified: false, replies: false, date: 'all' }) }} className="text-blue-600 text-xs font-bold mt-2">Clear Filters</button>
-        </div>
-    )}
-</div>
-            </div>
-
           </div>
-      </div>
 
+          <div className="mb-4">
+            <h1 className="text-2xl font-bold text-slate-900 leading-tight">
+              {profile.full_name}
+            </h1>
+            <p className="text-slate-600 text-sm mt-0.5">
+              {profile.profession || "Professional"}
+            </p>
+            {profile.city && (
+              <div className="flex items-center gap-1 mt-1 text-slate-500 text-xs">
+                <MapPin className="w-3 h-3" />{" "}
+                <span>
+                  {profile.city}
+                  {profile.state ? `, ${profile.state}` : ""}
+                </span>
+              </div>
+            )}
+          </div>
 
-      {/* ============================================================
-          💻 DESKTOP LAYOUT (Unchanged structure, using same logic)
-      ============================================================ */}
-      <div className="hidden md:block container mx-auto max-w-282 pt-6 px-0">
-         <div className="grid grid-cols-12 gap-6">
-            
-            <div className="col-span-8 space-y-4">
-                <div className="bg-white rounded-xl border border-slate-300 overflow-hidden relative">
-                   <div className="h-48 w-full bg-[#A0B4B7] relative"></div>
-                   <div className="px-6 pb-6 relative">
-                      <div className="-mt-24 mb-4 inline-block rounded-full border-4 border-white bg-white">
-                         <Avatar className="h-40 w-40"><AvatarImage src={profile.avatar_url ? `${profile.avatar_url}?v=${new Date().getTime()}` : undefined} className="object-cover" /><AvatarFallback className="text-6xl font-bold text-slate-400 bg-slate-100">{profile.full_name?.charAt(0)}</AvatarFallback></Avatar>
-                      </div>
-                      <div className="flex justify-between items-start">
-                         <div>
-                            <h1 className="text-2xl font-bold text-slate-900">{profile.full_name}</h1>
-                            <p className="text-base text-slate-700 mt-1 font-medium">{profile.profession || "Professional"}</p>
-                            <div className="flex items-center gap-2 mt-2 text-sm text-slate-500">
-                               {profile.city && (<span className="flex items-center gap-1"><MapPin className="w-3.5 h-3.5" />{profile.city}{profile.state ? `, ${profile.state}` : ''}</span>)}
-                            </div>
-                         </div>
-                      </div>
-                   </div>
-                </div>
-
-                <div className="bg-white rounded-xl border border-slate-300 p-6">
-                   <h2 className="text-xl font-bold text-slate-900 mb-3">About</h2>
-                   <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">{profile.bio || "No bio provided."}</p>
-                </div>
+          <div className="flex gap-3 mb-6">
+            <div className="flex-1">
+              <ReviewButton fullWidth size="default" />
             </div>
+            <ShareProfileButton
+              provider={{
+                name: profile.full_name,
+                profession: profile.profession,
+                city: profile.city,
+                username: profile.username,
+              }}
+              customTrigger={
+                <Button
+                  variant="outline"
+                  className="h-10 w-10 rounded-full border-slate-300 p-0 flex items-center justify-center text-slate-600 hover:text-amber-50 transition-colors"
+                >
+                  <Share2 className="w-5 h-5" />
+                </Button>
+              }
+            />
+          </div>
 
-            <div className="col-span-4 space-y-4">
-                <Card className="p-6 border-slate-200 shadow-sm">
-                  <div className="flex items-end gap-3 mb-6">
-                    <span className="text-5xl font-extrabold text-slate-900">{averageRating}</span>
-                    <div className="mb-2">
-                      <div className="flex gap-1 mb-1">
-                        {[1, 2, 3, 4, 5].map((star) => (<Star key={star} className={`w-5 h-5 ${star <= Math.round(Number(averageRating)) ? "fill-emerald-500 text-emerald-500" : "fill-slate-200 text-slate-200"}`} />))}
+          <div className="mb-6 bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+            <div className="flex gap-4 items-center">
+              <div className="flex flex-col items-center justify-center w-25 shrink-0 border-r border-slate-100 pr-4">
+                <span className="text-4xl font-black text-slate-900 leading-none mb-1">
+                  {averageRating}
+                </span>
+                <div className="flex gap-0.5 mb-1">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <Star
+                      key={star}
+                      className={`w-3 h-3 ${star <= Math.round(Number(averageRating)) ? "fill-emerald-500 text-emerald-500" : "fill-slate-200 text-slate-200"}`}
+                    />
+                  ))}
+                </div>
+                <p className="text-[10px] text-slate-500 text-center font-medium">
+                  {totalReviews} reviews
+                </p>
+              </div>
+              <div className="flex-1 space-y-1.5 py-1">
+                {[5, 4, 3, 2, 1].map((star) => {
+                  const item = distribution.find((d) => d.star === star) || {
+                    count: 0,
+                    percentage: 0,
+                  };
+                  return (
+                    <div key={star} className="flex items-center gap-2">
+                      <span className="text-[10px] font-bold text-slate-600 w-2">
+                        {star}
+                      </span>
+                      <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-emerald-500 rounded-full"
+                          style={{ width: `${item.percentage}%` }}
+                        />
                       </div>
-                      <p className="text-xs text-slate-500 font-medium">{totalReviews} verified reviews</p>
                     </div>
-                  </div>
-                  <div className="space-y-3">
-                    {distribution.map((item) => (
-                      <div key={item.star} className="flex items-center gap-3 text-sm">
-                        <span className="font-bold w-3 text-slate-700">{item.star}</span>
-                        <Star className="w-3 h-3 text-slate-300" />
-                        <Progress value={item.percentage} className="h-2 flex-1 bg-slate-100" />
-                        <span className="text-slate-400 w-8 text-right text-xs">{item.count}</span>
-                      </div>
-                    ))}
-                  </div>
-                </Card>
-                <div className="space-y-1">
-                  <ReviewButton fullWidth />
-                  <ShareProfileButton 
-                    provider={{ name: profile.full_name, profession: profile.profession, city: profile.city, username: profile.username }} 
-                    customTrigger={
-                      <Button 
-                        variant="outline" 
-                        className="w-full rounded-full border-slate-600 text-slate-600 hover:bg-slate-50 hover:text-slate-900 hover:border-slate-900 font-semibold mt-4"
-                      >
-                        <Share2 className="w-4 h-4 mr-2" /> Share Profile
-                      </Button>
-                    }
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          {/* MOBILE LAYOUT - REVIEWS SECTION */}
+          <div>
+            <div className="flex flex-col gap-3 mb-4">
+              <h3 className="text-lg font-bold text-slate-900 px-1">Reviews</h3>
+
+              {/* 🆕 TAB TOGGLE */}
+              <div className="flex bg-slate-100 p-1 rounded-xl mb-2">
+                <button
+                  onClick={() => setActiveTab("verified")}
+                  className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${activeTab === "verified" ? "bg-white text-teal-700 shadow-sm" : "text-slate-500"}`}
+                >
+                  Verified ({verifiedReviews.length})
+                </button>
+                <button
+                  onClick={() => setActiveTab("unverified")}
+                  className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${activeTab === "unverified" ? "bg-white text-teal-700 shadow-sm" : "text-slate-500"}`}
+                >
+                  Unverified ({unverifiedReviews.length})
+                </button>
+              </div>
+
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                  <Input
+                    placeholder="Search..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-9 h-10 rounded-full bg-slate-50 border-slate-200 text-sm focus:bg-white transition-colors"
                   />
                 </div>
-                <div className="bg-white rounded-xl border border-slate-300 p-5 shadow-sm">
-                   <h3 className="text-sm font-bold text-slate-900 mb-3">Connect</h3>
-                   <div className="flex flex-wrap gap-3">
-                      {socialLinks.map((social) => (<a key={social.key} href={social.url} target="_blank" className={`p-2 rounded-full bg-slate-50 hover:bg-slate-100 text-slate-600 transition-colors`}><social.icon className="w-5 h-5" /></a>))}
-                   </div>
-                </div>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-10 w-10 shrink-0 rounded-full border-slate-200 relative"
+                  onClick={() => setShowFilterModal(true)}
+                >
+                  <Filter className="w-4 h-4 text-slate-600" />
+                  {isFilterActive && (
+                    <span className="absolute top-0 right-0 h-3 w-3 rounded-full bg-blue-600 border-2 border-white"></span>
+                  )}
+                </Button>
+              </div>
             </div>
 
-         </div>
-
-         {/* DESKTOP REVIEWS */}
-         <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm mt-4">
-            <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl font-bold text-slate-900">Recent Reviews</h3>
-                <div className="flex items-center gap-3">
-                   <div className="relative w-64">
-                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                      <Input 
-                         placeholder="Search reviews..." 
-                         className="pl-9 h-10 rounded-full border-slate-300 focus:border-blue-500"
-                         value={searchQuery}
-                         onChange={(e) => setSearchQuery(e.target.value)}
-                      />
-                   </div>
-                   <Button 
-                      variant="outline" 
-                      className="rounded-full border-slate-600 text-slate-600 hover:bg-slate-50 hover:text-slate-900 hover:border-slate-900 gap-2 h-10 px-4"
-                      onClick={() => setShowFilterModal(true)}
-                   >
-                      <Filter className="w-4 h-4" />
-                      Filters
-                      {isFilterActive && <span className="flex h-2 w-2 rounded-full bg-blue-600"></span>}
-                   </Button>
+            <div className="space-y-3">
+              {currentDisplayReviews.length > 0 ? (
+                currentDisplayReviews.map((review: any) => (
+                  <MobileReviewCard
+                    key={review.id}
+                    review={review}
+                    profile={profile}
+                  />
+                ))
+              ) : (
+                <div className="text-center py-12 bg-slate-50 rounded-2xl border border-dashed border-slate-200 px-4">
+                  <p className="text-slate-400 text-sm italic">
+                    No {activeTab} reviews found.
+                  </p>
                 </div>
+              )}
             </div>
-
-            <div className="h-[500px] overflow-y-auto pr-2 custom-scrollbar">
-  {filteredReviews.length > 0 ? (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
-      {filteredReviews.map((review: any) => (
-        <DesktopReviewCard key={review.id} review={review} profile={profile} />
-      ))}
-    </div>
-  ) : (
-    <div className="h-full flex flex-col items-center justify-center text-slate-400">
-      <Search className="w-12 h-12 mb-4 opacity-20" />
-      <p>No reviews match your filters.</p>
-    </div>
-  )}
-</div>
-         </div>
+          </div>
+        </div>
       </div>
 
+      {/* DESKTOP LAYOUT */}
+      <div className="hidden md:block container mx-auto max-w-282 pt-6 px-0">
+        <div className="grid grid-cols-12 gap-6">
+          <div className="col-span-8 space-y-4">
+            <div className="bg-white rounded-xl border border-slate-300 overflow-hidden relative">
+              <div className="h-48 w-full bg-[#A0B4B7] relative"></div>
+              <div className="px-6 pb-6 relative">
+                <div className="-mt-24 mb-4 inline-block rounded-full border-4 border-white bg-white">
+                  <Avatar className="h-40 w-40">
+                    <AvatarImage
+                      src={
+                        profile.avatar_url
+                          ? `${profile.avatar_url}?v=${new Date().getTime()}`
+                          : undefined
+                      }
+                      className="object-cover"
+                    />
+                    <AvatarFallback className="text-6xl font-bold text-slate-400 bg-slate-100">
+                      {profile.full_name?.charAt(0)}
+                    </AvatarFallback>
+                  </Avatar>
+                </div>
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h1 className="text-2xl font-bold text-slate-900">
+                      {profile.full_name}
+                    </h1>
+                    <p className="text-base text-slate-700 mt-1 font-medium">
+                      {profile.profession || "Professional"}
+                    </p>
+                    <div className="flex items-center gap-2 mt-2 text-sm text-slate-500">
+                      {profile.city && (
+                        <span className="flex items-center gap-1">
+                          <MapPin className="w-3.5 h-3.5" />
+                          {profile.city}
+                          {profile.state ? `, ${profile.state}` : ""}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-xl border border-slate-300 p-6">
+              <h2 className="text-xl font-bold text-slate-900 mb-3">About</h2>
+              <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">
+                {profile.bio || "No bio provided."}
+              </p>
+            </div>
+          </div>
+
+          <div className="col-span-4 space-y-4">
+            <Card className="p-6 border-slate-200 shadow-sm">
+              <div className="flex items-end gap-3 mb-6">
+                <span className="text-5xl font-extrabold text-slate-900">
+                  {averageRating}
+                </span>
+                <div className="mb-2">
+                  <div className="flex gap-1 mb-1">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <Star
+                        key={star}
+                        className={`w-5 h-5 ${star <= Math.round(Number(averageRating)) ? "fill-emerald-500 text-emerald-500" : "fill-slate-200 text-slate-200"}`}
+                      />
+                    ))}
+                  </div>
+                  <p className="text-xs text-slate-500 font-medium">
+                    {totalReviews} reviews
+                  </p>
+                </div>
+              </div>
+              <div className="space-y-3">
+                {distribution.map((item) => (
+                  <div
+                    key={item.star}
+                    className="flex items-center gap-3 text-sm"
+                  >
+                    <span className="font-bold w-3 text-slate-700">
+                      {item.star}
+                    </span>
+                    <Star className="w-3 h-3 text-slate-300" />
+                    <Progress
+                      value={item.percentage}
+                      className="h-2 flex-1 bg-slate-100"
+                    />
+                    <span className="text-slate-400 w-8 text-right text-xs">
+                      {item.count}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </Card>
+            <div className="space-y-1">
+              <ReviewButton fullWidth />
+              <ShareProfileButton
+                provider={{
+                  name: profile.full_name,
+                  profession: profile.profession,
+                  city: profile.city,
+                  username: profile.username,
+                }}
+                customTrigger={
+                  <Button
+                    variant="outline"
+                    className="w-full rounded-full border-slate-600 text-slate-600 hover:bg-slate-50 hover:text-slate-900 hover:border-slate-900 font-semibold mt-4"
+                  >
+                    <Share2 className="w-4 h-4 mr-2" /> Share Profile
+                  </Button>
+                }
+              />
+            </div>
+            <div className="bg-white rounded-xl border border-slate-300 p-5 shadow-sm">
+              <h3 className="text-sm font-bold text-slate-900 mb-3">Connect</h3>
+              <div className="flex flex-wrap gap-3">
+                {socialLinks.map((social) => (
+                  <a
+                    key={social.key}
+                    href={social.url}
+                    target="_blank"
+                    className={`p-2 rounded-full bg-slate-50 hover:bg-slate-100 text-slate-600 transition-colors`}
+                  >
+                    <social.icon className="w-5 h-5" />
+                  </a>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* DESKTOP LAYOUT - REVIEWS SECTION */}
+        <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm mt-4">
+          <div className="flex items-center justify-between mb-6">
+            <div className="space-y-1">
+              <h3 className="text-xl font-bold text-slate-900">
+                Professional Reviews
+              </h3>
+              {/* 🆕 DESKTOP TABS */}
+              <div className="flex gap-4 border-b border-slate-100">
+                <button
+                  onClick={() => setActiveTab("verified")}
+                  className={`pb-2 text-sm font-bold transition-all border-b-2 ${activeTab === "verified" ? "border-teal-600 text-teal-700" : "border-transparent text-slate-400 hover:text-slate-600"}`}
+                >
+                  Verified ({verifiedReviews.length})
+                </button>
+                <button
+                  onClick={() => setActiveTab("unverified")}
+                  className={`pb-2 text-sm font-bold transition-all border-b-2 ${activeTab === "unverified" ? "border-teal-600 text-teal-700" : "border-transparent text-slate-400 hover:text-slate-600"}`}
+                >
+                  Unverified ({unverifiedReviews.length})
+                </button>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <div className="relative w-64">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <Input
+                  placeholder="Search reviews..."
+                  className="pl-9 h-10 rounded-full border-slate-300 focus:border-blue-500"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
+              <Button
+                variant="outline"
+                className="rounded-full border-slate-600 text-slate-600 hover:bg-slate-50 hover:text-slate-900 hover:border-slate-900 gap-2 h-10 px-4"
+                onClick={() => setShowFilterModal(true)}
+              >
+                <Filter className="w-4 h-4" />
+                Filters
+                {isFilterActive && (
+                  <span className="flex h-2 w-2 rounded-full bg-blue-600"></span>
+                )}
+              </Button>
+            </div>
+          </div>
+
+          <div className="h-[550px] overflow-y-auto pr-2 custom-scrollbar">
+            {currentDisplayReviews.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
+                {currentDisplayReviews.map((review: any) => (
+                  <DesktopReviewCard
+                    key={review.id}
+                    review={review}
+                    profile={profile}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="h-full flex flex-col items-center justify-center text-slate-400">
+                <ShieldCheck className="w-12 h-12 mb-4 opacity-10" />
+                <p className="font-medium">
+                  No {activeTab} reviews found matching your criteria.
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
     </div>
-  )
+  );
 }

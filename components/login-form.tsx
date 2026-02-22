@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input"
 import { Loader2, ArrowRight, Star, ShieldCheck } from "lucide-react"
 import GoogleAuthButton from "@/app/auth/google-button"
 import Image from "next/image"
+import { toast } from "sonner"
 export default function LoginForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -32,7 +33,7 @@ export default function LoginForm() {
 
     if (error) {
       setIsLoading(false)
-      alert(error.message)
+      toast.error(error.message)
       return
     }
 

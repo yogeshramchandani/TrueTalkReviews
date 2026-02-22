@@ -3,7 +3,7 @@ import { Analytics } from "@vercel/analytics/next"
 import "./globals.css"
 import { Plus_Jakarta_Sans } from "next/font/google";
 import { GoogleAnalytics } from '@next/third-parties/google'// Initialize the font
-
+import { Toaster } from "sonner";
 
 const jakarta = Plus_Jakarta_Sans({
   subsets: ["latin"],
@@ -61,7 +61,7 @@ export default function RootLayout({
 <body className={`${jakarta.variable} font-sans antialiased`}>
        {children}
         <Analytics />
-        
+        <Toaster position="top-center" richColors closeButton />
       </body>
       <GoogleAnalytics gaId="G-7WPX0GQ29B" />
     </html>

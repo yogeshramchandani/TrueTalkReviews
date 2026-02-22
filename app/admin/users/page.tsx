@@ -13,6 +13,7 @@ import {
   Search, Trash2, Loader2, ShieldAlert, User, Briefcase, 
   MoreHorizontal, X, Save, Filter
 } from "lucide-react"
+import { toast } from "sonner"
 
 // --- TYPES ---
 type Profile = {
@@ -98,9 +99,9 @@ export default function AdminUsers() {
         const data = await response.json()
         throw new Error(data.error || "Failed to delete")
       }
-      alert("User deleted permanently.")
+      toast.success("User deleted permanently.")
     } catch (error: any) {
-      alert("Error deleting user: " + error.message)
+      toast.error("Error deleting user: " + error.message)
       fetchUsers() 
     }
   }
@@ -263,7 +264,7 @@ function EditUserDrawer({ user, onClose, onUpdate, onDelete }: {
       .eq('id', user.id)
 
     setIsSaving(false)
-    if (error) alert("Error: " + error.message)
+    if (error) toast.error("Error: " + error.message)
     else onUpdate(formData)
   }
 

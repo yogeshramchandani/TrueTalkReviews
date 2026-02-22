@@ -84,7 +84,7 @@ export function TrendingSection() {
                 </p>
                 <Link href={`/categories?sector=${encodeURIComponent(cat.title)}`}>
                   <Button size="sm" className="mt-4 bg-white text-slate-900 hover:bg-teal-50 border-none font-bold">
-                    View Pros
+                    View Professionals
                   </Button>
                 </Link>
               </div>

@@ -18,6 +18,7 @@ import {
   Loader2, User, Briefcase, Camera, 
   MapPin, Phone, Mail, Lock
 } from "lucide-react"
+import { toast } from "sonner"
 
 export default function SignupForm() {
   const router = useRouter()
@@ -142,7 +143,7 @@ export default function SignupForm() {
     const file = e.target.files?.[0]
     if (!file) return
     if (file.size > 512000) {
-      alert("Image is too large! Please upload an image smaller than 500KB.")
+      toast.error("Image is too large! Please upload an image smaller than 500KB.")
       e.target.value = "" 
       return
     }
@@ -153,7 +154,7 @@ export default function SignupForm() {
 
   const handleLockedFieldClick = () => {
     if (isUpgrading) {
-      alert("Don't worry! You can update this information from your Professional Dashboard after listing your business.")
+      toast.error("Don't worry! You can update this information from your Professional Dashboard after listing your business.")
     }
   }
 
@@ -165,11 +166,11 @@ export default function SignupForm() {
     // Validation
     if (role === 'professional') {
        if (selectedProfession === "Other" && !customProfession) {
-         alert("Please type your specific profession.")
+         toast.error("Please type your specific profession.")
          setIsLoading(false)
          return
        } else if ((!selectedSector || !selectedProfession) && selectedProfession !== "Other") {
-         alert("Please select a sector and profession.")
+         toast.error("Please select a sector and profession.")
          setIsLoading(false)
          return
        }
@@ -193,7 +194,7 @@ export default function SignupForm() {
 
       if (existingUser) {
         setIsLoading(false)
-        alert("This username is already taken. Please choose another.")
+        toast.error("This username is already taken. Please choose another.")
         return 
       }
 
@@ -206,7 +207,7 @@ export default function SignupForm() {
 
       if (existingEmail) {
         setIsLoading(false)
-        alert("User already exists, try to login.")
+        toast.error("User already exists, try to login.")
         // Redirect to Login WITH the next param
         router.push(`/auth/login?next=${encodeURIComponent(next || "")}`)
         return 
@@ -225,10 +226,10 @@ export default function SignupForm() {
     if (error) {
       setIsLoading(false)
       if (error.message.includes("already registered") || error.message.includes("User already exists") || error.message.includes("unique constraint")) {
-        alert("User already exists, try to login.")
+        toast.error("User already exists, try to login.")
         router.push(`/auth/login?next=${encodeURIComponent(next || "")}`) 
       } else {
-        alert(error.message)
+        toast.error(error.message)
       }
       return
     }
@@ -248,7 +249,7 @@ export default function SignupForm() {
 
     if (verifyError || !session) {
       setIsLoading(false)
-      alert("Invalid Code or Verification Failed.")
+      toast.error("Invalid Code or Verification Failed.")
       return
     }
 
@@ -316,12 +317,12 @@ export default function SignupForm() {
     if (profileError) {
        console.error("Profile creation error:", profileError)
        if (!profileError.message.includes("duplicate key")) {
-           alert("Error saving profile: " + profileError.message)
+           toast.error("Error saving profile: " + profileError.message)
        }
     }
 
     setIsLoading(false)
-    alert(isUpgrading ? "Business Listed Successfully!" : "Account Verified & Profile Created!")
+    toast.success(isUpgrading ? "Business Listed Successfully!" : "Account Verified & Profile Created!")
     
     // [CHANGE 2]: REDIRECT LOGIC
     // If 'next' exists, go there. Otherwise, go to dashboard.

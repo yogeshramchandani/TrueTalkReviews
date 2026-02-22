@@ -5,20 +5,23 @@ import { supabase } from "@/lib/supabaseClient"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Loader2, MessageSquare, Pencil, Send } from "lucide-react"
+import { toast } from "sonner"
 
-// 1. UPDATE THE INTERFACE
 interface ReviewReplyFormProps {
   reviewId: string
   existingReply: string | null
-  onReplySaved: () => void
-  providerName: string // <--- ADD THIS
+  // 🎯 UPDATED: Now accepts a boolean for pointsAwarded
+  onReplySaved: (pointsAwarded?: boolean) => void 
+  providerName: string
+  professionalId: string 
 }
 
 export default function ReviewReplyForm({ 
   reviewId, 
   existingReply, 
   onReplySaved,
-  providerName // <--- DESTRUCTURE THIS
+  providerName,
+  professionalId 
 }: ReviewReplyFormProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -32,48 +35,61 @@ export default function ReviewReplyForm({
     }
   }, [existingReply])
 
-  const handleSubmit = async () => {
+ const handleSubmit = async () => {
     if (!draftText.trim()) return
     setIsSubmitting(true)
 
     try {
-      const { error } = await supabase
-        .from('reviews')
-        .update({
-          provider_reply: draftText,
-          provider_reply_at: new Date().toISOString(),
-        })
-        .eq('id', reviewId)
-
-      if (error) throw error
-
-      setCurrentReply(draftText) 
-      setIsEditing(false)
-      onReplySaved()
-
-      // 2. USE THE PROP IN THE API CALL
-      fetch('/api/send-reply-notification', {
+      const response = await fetch('/api/reviews/reply', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          reviewId: reviewId,
-          replyText: draftText,
-          providerName: providerName // <--- PASS IT HERE
+          reviewId,
+          professionalId,
+          replyContent: draftText,
         })
       })
 
-    } catch (error) {
+      const result = await response.json()
+
+      if (!response.ok) throw new Error(result.error || "Failed to update")
+
+      // Update local state
+      setCurrentReply(draftText) 
+      setIsEditing(false)
+      
+      // Notify parent component
+      onReplySaved(result.pointsAwarded)
+      
+      toast.success(result.pointsAwarded 
+        ? "Response posted and score updated!" 
+        : "Response updated."
+      )
+
+      // 🎯 FIXED: Only send notification if it's the first time (points were awarded)
+      if (result.pointsAwarded) {
+        fetch('/api/send-reply-notification', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            reviewId: reviewId,
+            replyText: draftText,
+            providerName: providerName
+          })
+        })
+      }
+
+    } catch (error: any) {
       console.error("Error submitting reply:", error)
+      toast.error(error.message)
     } finally {
       setIsSubmitting(false)
     }
   }
-
-  // ... (Rest of the render code is the same) ...
   // --- VIEW MODE ---
   if (currentReply && !isEditing) {
     return (
-      <div className="bg-slate-50 border border-slate-100 rounded-lg p-4 mt-2 relative group">
+      <div className="bg-slate-50 border border-slate-100 rounded-lg p-2 relative group">
         <div className="flex justify-between items-start gap-2">
           <div>
             <p className="text-xs font-bold text-teal-700 mb-1 flex items-center gap-1">
@@ -86,10 +102,7 @@ export default function ReviewReplyForm({
             variant="ghost"
             size="icon"
             className="h-6 w-6 opacity-50 hover:opacity-100 group-hover:opacity-100 transition-opacity"
-            onClick={() => {
-              setDraftText(currentReply)
-              setIsEditing(true)
-            }}
+            onClick={() => setIsEditing(true)}
           >
             <Pencil className="w-3 h-3" />
             <span className="sr-only">Edit reply</span>
@@ -99,22 +112,7 @@ export default function ReviewReplyForm({
     )
   }
 
-  // --- IDLE MODE ---
-  if (!currentReply && !isEditing) {
-    return (
-      <Button 
-        variant="outline" 
-        size="sm" 
-        className="mt-2 text-slate-500 hover:text-teal-700 hover:bg-teal-50 border-dashed"
-        onClick={() => setIsEditing(true)}
-      >
-        <MessageSquare className="w-4 h-4 mr-2" />
-        Reply to review
-      </Button>
-    )
-  }
-
-  // --- EDIT MODE ---
+  // --- IDLE/EDIT MODES ... (Keep same as your current code)
   return (
     <div className="mt-3 space-y-3">
       <Textarea

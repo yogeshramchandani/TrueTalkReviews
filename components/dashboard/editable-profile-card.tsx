@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Loader2, Edit2, Save, X, Camera, User, Phone, Instagram, Linkedin, Globe, MapPin } from "lucide-react"
+import { toast } from "sonner"
 
 // 0. CUSTOM REDDIT ICON (Updated with Official SVG)
 const RedditIcon = ({ className }: { className?: string }) => (
@@ -82,14 +83,14 @@ const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 
   // ❌ Type check (important)
   if (!file.type.startsWith("image/")) {
-    alert("Only image files are allowed.")
+    toast.error("Only image files are allowed.")
     e.target.value = ""
     return
   }
 
   // ❌ Size check
   if (file.size > MAX_FILE_SIZE) {
-    alert("Image size must be 500 KB or less.")
+    toast.error("Image size must be 500 KB or less.")
     e.target.value = ""
     return
   }
@@ -173,11 +174,11 @@ if (newAvatarFile && newAvatarFile.size > MAX_FILE_SIZE) {
 
       setIsEditing(false)
       onUpdate() 
-      alert("Profile updated successfully!")
+      toast.success("Profile updated successfully!")
 
     } catch (error: any) {
       console.error(error)
-      alert("Error updating profile: " + error.message)
+      toast.error("Error updating profile: " + error.message)
     } finally {
       setIsLoading(false)
     }
@@ -246,20 +247,14 @@ if (newAvatarFile && newAvatarFile.size > MAX_FILE_SIZE) {
                   onChange={(e) => handleChange('full_name', e.target.value)} 
                 />
               ) : (
-                <p className="text-foreground font-semibold text-lg">{profile.full_name}</p>
+                <p className="text-foreground">{profile.full_name}</p>
               )}
             </div>
 
             <div className="space-y-2">
               <label className="text-sm font-medium text-muted-foreground">Profession / Title</label>
-              {isEditing ? (
-                <Input 
-                  value={formData.profession} 
-                  onChange={(e) => handleChange('profession', e.target.value)} 
-                />
-              ) : (
-                <p className="text-foreground">{profile.profession}</p>
-              )}
+              
+                <p className="text-foreground bg-transparent">{profile.profession}</p>
             </div>
           </div>
 

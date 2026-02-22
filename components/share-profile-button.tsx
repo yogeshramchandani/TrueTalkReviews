@@ -68,15 +68,18 @@ export default function ShareProfileButton({ provider, customTrigger }: SharePro
   return (
     <Dialog>
       <DialogTrigger asChild>
-        {customTrigger ? (
-          customTrigger
-        ) : (
-          <Button variant="outline" size="sm" className="w-full md:w-auto gap-2 bg-transparent border-slate-300">
-            <Share2 className="w-4 h-4" />
-            Share
-          </Button>
-        )}
-      </DialogTrigger>
+  {/* Wrapping in a span allows the Dialog to attach its Ref safely */}
+  <span className="cursor-pointer block w-full">
+    {customTrigger ? (
+      customTrigger
+    ) : (
+      <Button variant="outline" size="sm" className="w-full md:w-auto gap-2 bg-transparent border-slate-300">
+        <Share2 className="w-4 h-4" />
+        Share
+      </Button>
+    )}
+  </span>
+</DialogTrigger>
       
       <DialogContent>
         <DialogHeader>
