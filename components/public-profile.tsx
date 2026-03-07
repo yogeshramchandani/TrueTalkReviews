@@ -48,6 +48,7 @@ import {
   LayoutDashboard,
   Briefcase,
   Filter,
+  Edit
 } from "lucide-react";
 import GoogleAuthButton from "@/app/auth/google-button";
 import { toast } from "sonner";
@@ -888,20 +889,20 @@ export default function PublicProfile({
     if (existingReview) {
       return (
         <Button
-          variant="outline"
-          size={size}
-          className={`${fullWidth ? "w-full" : ""} border-teal-600 text-teal-700 hover:bg-teal-50 rounded-full`}
-          onClick={() => setIsReviewOpen(true)}
-        >
-          <div className="flex items-center">
-            {" "}
-            {/* added div for flex layout within button */}
-            <div className="mr-2 h-4 w-4">
-              {/* Place Pencil icon here if imported */}
-            </div>
-            Edit Review
-          </div>
-        </Button>
+  variant="outline"
+  size={size}
+  className={`${fullWidth ? "w-full" : ""} 
+  border-teal-600 text-teal-700 
+  hover:bg-teal-600 hover:text-white hover:border-teal-600
+  rounded-full transition-colors`}
+  onClick={() => setIsReviewOpen(true)}
+>
+  <div className="flex items-center">
+    <div className="mr-2 h-4 w-4" />
+    <Edit className="w-4 h-4 mr-2"/>
+       Edit Review
+  </div>
+</Button>
       );
     }
 

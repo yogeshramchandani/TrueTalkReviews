@@ -26,7 +26,7 @@ export async function generateMetadata(
     .from('profiles')
     .select('full_name, profession, bio, city, avatar_url')
     .eq('username', username)
-    .single()
+    .maybeSingle()
 
   if (!profile) {
     return { title: 'Profile Not Found | TruVouch' }

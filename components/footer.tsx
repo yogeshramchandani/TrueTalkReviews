@@ -86,7 +86,7 @@ export function Footer() {
       <div>
         <h5 className="font-bold text-slate-900 mb-6">Explore</h5>
         <ul className="space-y-4 text-slate-500 font-medium text-sm">
-          <li><Link href="/categories" className="hover:text-teal-700">Categories</Link></li>
+          <li><Link href="/help-center" className="hover:text-teal-700">Help Center</Link></li>
           <li><Link href="/search" className="hover:text-teal-700">Search Professionals</Link></li>
           <li><Link href="/auth/signup?role=professional" className="hover:text-teal-700">For Businesses</Link></li>
         </ul>
